@@ -13,6 +13,8 @@
 #include <sstream>
 #include <string.h>
 
+#include <array>
+
 #include "atom.h"
 
 
@@ -1036,6 +1038,22 @@ public:
         for(unsigned int i=0; i<all_beads.size(); i++) {
             cout << "C" << all_beads[i].type <<  " " << (all_beads[i]*in.scale) + in.com_pos << endl;
         }
+    }
+
+    void printPDB() const
+    {
+    	for (const Atom& atom : all_beads) {
+    	    cout << "ATOM  "
+    	    	 << std::setw(5) << atom.N << " "
+				 << std::setw(4) << atom.type << " "
+				 << std::setw(3) << atom.resname << " "
+    	         << std::setw(1) << atom.mol_tag << " "
+				 << std::setw(4) << atom.mol_tag << "   "
+				 << std::setw(8) << std::fixed << std::setprecision(3)
+				 << atom.x << " " << atom.y << " " << atom.z << "  1.00  0.00           "
+    	         << atom.type << "\n";
+    	  }
+
     }
 };
 

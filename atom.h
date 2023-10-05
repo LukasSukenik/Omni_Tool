@@ -1,6 +1,8 @@
 #ifndef VECTOR_H
 #define VECTOR_H
 
+#include <string>
+
 #include "rng.h"
 
 
@@ -50,9 +52,15 @@ public:
     double q=0;
     int nx=0,ny=0,nz=0;
 
-    int N=1;
-    int type=0;
-    int mol_tag = 0;
+    /*
+     * From pdb: Atom name < Residue name < Chain identifier
+     */
+
+    int N=1; // PDB: Atom serial number
+    int type=0; // PBD: Atom name
+    std::string resname = "   "; // PDB: Residue name
+    int mol_tag = 0; // PDB: Chain identifier and Residue sequence number
+
 
     //
     // not used for output
