@@ -5,10 +5,10 @@
 
 using namespace std;
 
-class Sphere: public Particle {
+class Sphere: public Particles {
 public:
-    Sphere() : Particle("Sphere") {}
-    Sphere(string name) : Particle(name) {}
+    Sphere() : Particles("Sphere") {}
+    Sphere(string name) : Particles(name) {}
 
     void generate( Data& data )
     {

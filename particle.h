@@ -64,7 +64,7 @@ public:
 /**
  * @brief The Particle class - Abstract class of Particle - a assembly made from several beads
  */
-class Particle{
+class Particles{
 public:
     Cuboid pbc;
     string name;
@@ -92,8 +92,8 @@ public:
     //
     // Class stuff
     //
-    Particle(string name) : name(name) {}
-    virtual ~Particle() {}
+    Particles(string name) : name(name) {}
+    virtual ~Particles() {}
 
 
     /**
@@ -254,11 +254,11 @@ public:
 };
 
 
-class LoadParticle : public Particle
+class Empty_Particle : public Particles
 {
 public:
-    LoadParticle() : Particle("LoadParticle") {}
-    LoadParticle(string name) : Particle(name) {}
+	Empty_Particle() : Particles("Empty Particle") {}
+	Empty_Particle(string name) : Particles(name) {}
     void generate( Data& data ) {}
 };
 
