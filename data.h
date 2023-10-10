@@ -123,8 +123,8 @@ public:
     {
         stringstream ss;
 
-        ss << "Generating type: " << nano_type << endl;
-        ss << "Out type: " << out_type << endl;
+        ss << "Particle_type: " << nano_type << endl;
+        ss << "Output_type: " << out_type << endl;
         ss << "Number of beads: " << num_of_beads << endl;
         ss << "Scale: " << scale << endl;
         ss << "Offset: " << offset << endl;
@@ -281,7 +281,9 @@ bool sort_Bond_by_type(const Bond& i, const Bond& j) {
 class Data
 {
 public:
+	//
     /// lammps data stuff
+	//
     vector< Atom > all_beads;
     vector< Bond > all_bonds;
     vector<Angle> all_angles;
@@ -292,12 +294,16 @@ public:
     vector< Bond > temp_bonds;
     vector<Angle> temp_angles;
 
+    //
     /// force field stuff
+    //
     array<array<double, 100>, 100> all_sigma;
     int all_sigma_size = 0;
     array< array<bool, 100>, 100> all_sigma_cosatt;
 
+    //
     /// For lammps file IO
+    //
     vector<My_string > file_head;
     double box[6] = {0};
 
@@ -1042,23 +1048,43 @@ public:
 
     void printPDB() const
     {
+    	vector<string> type_to_atom_name;
+    	type_to_atom_name.push_back("H");
+    	type_to_atom_name.push_back("B");
+    	type_to_atom_name.push_back("C");
+    	type_to_atom_name.push_back("N");
+    	type_to_atom_name.push_back("O");
+    	type_to_atom_name.push_back("F");
+    	type_to_atom_name.push_back("P");
+    	type_to_atom_name.push_back("K");
+
     	for (const Atom& atom : all_beads) {
-    	    cout << "ATOM  "
-    	    	 << std::setw(5) << atom.N << " "
-				 << std::setw(4) << atom.type << " "
-				 << std::setw(3) << atom.resname << " "
-    	         << std::setw(1) << atom.mol_tag << " "
-				 << std::setw(4) << atom.mol_tag << "   "
-				 << std::setw(8) << std::fixed << std::setprecision(3)
-				 << atom.x << " " << atom.y << " " << atom.z << "  1.00  0.00           "
-    	         << atom.type << "\n";
+    	    cout << "ATOM" << "  " // 1-4, 5-6:empty
+    	    	 << std::setw(5) << atom.N << " " // 7-11: atom serial number, 12:empty
+ 				 << std::setw(4) << std::left << type_to_atom_name[atom.type] << " " // 13-16:atom name, 17:empty
+				 << std::setw(3) << std::right << atom.type << " " // 18-20: Residue name, 21:empty
+    	         << std::setw(1) << atom.mol_tag // 22: chain identifier
+				 << std::setw(4) << atom.type // 23-26: Residue sequence number
+				 << " " << "   " // 27:code for insertion of residues, 28-30:empty
+				 << std::setw(8) << std::fixed << std::setprecision(3) << atom.x // 31-38
+				 << std::setw(8) << std::fixed << std::setprecision(3) << atom.y // 39-46
+				 << std::setw(8) << std::fixed << std::setprecision(3) << atom.z // 47-54
+				 << "   1.0" // 55-60: Occupancy
+				 << "   1.0" // 61-66: Temperature factor
+				 << "      " // 67-72: Empty
+				 << "    " // 73-76: Segment identifier (optional)
+				 << std::setw(2) << type_to_atom_name[atom.type] // 77-78 Element symbol
+				 << "  " << "\n"; // 79-80 Charge (optional)
     	  }
 
     }
 };
 
 
-
+/**
+ * Load Lammps full data format file, ignores velocities
+ * - in_file - Lammps file name
+ */
 void Data::load(string in_file)
 {
     if(in_file.empty()) {

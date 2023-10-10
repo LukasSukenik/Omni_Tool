@@ -6,11 +6,11 @@
 #include "atom.h"
 #include "particle.h"
 
-class Cow : public Particle
+class Cow : public Particles
 {
 public:
-    Cow() : Particle("Cow")  {}
-    Cow(string name) : Particle(name) {}
+    Cow() : Particles("Cow")  {}
+    Cow(string name) : Particles(name) {}
 
     void generate( Data& data  )
     {

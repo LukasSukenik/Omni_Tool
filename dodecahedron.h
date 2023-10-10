@@ -6,7 +6,7 @@
 
 
 
-class Dodecahedron : public Particle
+class Dodecahedron : public Particles
 {
 public:
     IcoVertice edge;
@@ -26,7 +26,7 @@ public:
 
     interface interface_type = UNIFORM;
 
-    Dodecahedron(string name) : Particle(name) {}
+    Dodecahedron(string name) : Particles(name) {}
 
     virtual void generate( Data& data ) override
     {

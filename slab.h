@@ -5,11 +5,11 @@
 #include "particle.h"
 #include "cow.h"
 
-class Slab1D : public Particle
+class Slab1D : public Particles
 {
 public:
-    Slab1D() : Particle("Slab") {}
-    Slab1D(string name) : Particle(name) {}
+    Slab1D() : Particles("Slab") {}
+    Slab1D(string name) : Particles(name) {}
 
     void generate( Data& data )
     {
@@ -33,11 +33,11 @@ public:
     }
 };
 
-class Slab : public Particle
+class Slab : public Particles
 {
 public:
-    Slab() : Particle("Slab") {}
-    Slab(string name) : Particle(name) {}
+    Slab() : Particles("Slab") {}
+    Slab(string name) : Particles(name) {}
 
     void generate( Data& data )
     {
@@ -95,11 +95,11 @@ private:
 };
 
 
-class NettedSlab : public Particle
+class NettedSlab : public Particles
 {
 public:
-    NettedSlab() : Particle("Slab") {}
-    NettedSlab(string name) : Particle(name) {}
+    NettedSlab() : Particles("Slab") {}
+    NettedSlab(string name) : Particles(name) {}
 
     void generate( Data& data )
     {

@@ -34,7 +34,7 @@ public:
 };
 
 template<class Surface>
-class Icosahedron : public Particle {
+class Icosahedron : public Particles {
     Surface surface;
 public:
     IcoVertice edge;
@@ -43,7 +43,7 @@ public:
     int ligandModulo;
     int offset;
 
-    Icosahedron(string name) : Particle(name), surface(edge, beads) {}
+    Icosahedron(string name) : Particles(name), surface(edge, beads) {}
 
     virtual void generate( Data& data )
     {
