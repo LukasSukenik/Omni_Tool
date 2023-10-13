@@ -80,6 +80,9 @@ std::ostream& operator<<(std::ostream& os, const Output_Type out)
     return os;
 }
 
+
+
+
 class Output{
 public:
     Output() {}

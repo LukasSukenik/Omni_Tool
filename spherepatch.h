@@ -7,8 +7,10 @@
 class SpherePatch : public Sphere
 {
 public:
-    SpherePatch() : Sphere("SpherePatch") {}
-    SpherePatch(string name) : Sphere(name) {}
+    inline static const string keyword = "sphere_patch";
+    const string name = "sphere_patch";
+
+    SpherePatch() : Sphere("sphere_patch") {}
 
     void generate( Data& data )
     {

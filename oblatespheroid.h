@@ -11,8 +11,11 @@ using namespace std;
  * @brief The OblateSpheroid class - generate oblate spheroid with surface area of 4*PI (equivalent to sphere of unit radius)
  */
 class OblateSpheroid: public Sphere {
-public:   
-    OblateSpheroid() : Sphere("OblateSpheroid") {}
+public:
+    inline static const string keyword = "oblate_spheroid";
+    const string name = "oblate_spheroid";
+
+    OblateSpheroid() : Sphere("oblate_spheroid") {}
 
     /**
      * @brief generate (x^2+y^2)/(a^2) + (z^2/c^2) = 1, c > 1 prolate, a>1 oblate

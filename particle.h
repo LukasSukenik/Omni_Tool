@@ -61,13 +61,17 @@ public:
 };
 
 
+
+
 /**
  * @brief The Particle class - Abstract class of Particle - a assembly made from several beads
  */
 class Particles{
 public:
+    inline static const string keyword = "Abstract class of Particle";
+    const string name = "Abstract class of Particle";
+
     Cuboid pbc;
-    string name;
     const double degToRad = 0.0174532925;
 
     /// Local data for structure, need to save to Data class for output
@@ -92,6 +96,7 @@ public:
     //
     // Class stuff
     //
+    Particles() {}
     Particles(string name) : name(name) {}
     virtual ~Particles() {}
 
@@ -257,8 +262,9 @@ public:
 class Empty_Particle : public Particles
 {
 public:
-	Empty_Particle() : Particles("Empty Particle") {}
-	Empty_Particle(string name) : Particles(name) {}
+    inline static const string keyword = "empty";
+    const string name = "empty";
+    Empty_Particle() : Particles("empty") {}
     void generate( Data& data ) {}
 };
 

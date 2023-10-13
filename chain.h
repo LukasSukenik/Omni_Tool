@@ -17,8 +17,10 @@ bool sort_by_dist(Atom& i, Atom& j)
 class Chain : public Particles
 {
 public:
-    Chain() : Particles("Dodecahedron chain") {}
-    Chain(string name) : Particles(name) {}
+    inline static const string keyword = "chain";
+    const string name = "chain";
+
+    Chain() : Particles("chain") {}
 
     const bool angle_pot = false;
     int chain_size= 3705;

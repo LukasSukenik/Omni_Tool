@@ -19,33 +19,61 @@
 #include <algorithm>
 
 #include <vector>
+#include <map>
 
 using namespace std;
 
 void helpMessage(vector<Particles*>& nano);
+
+class test{
+public:
+    inline static const string name = "test";
+};
+
+class test_child : public test {
+public:
+    inline static const string name = "test_child";
+};
 
 int main(int argc, char* argv[]) // // $num of beads per edge, box dimensions X(same as Y) $beg $end, $position in Z, $offset
 {
     Data data;
 
     /**
-     * @brief nano
-     * array of classes, each generating a different structure
+     * @brief structure
+     * map classes, each generating a different structure
      */
     vector<Particles*> nano;
     nano.push_back( new Empty_Particle() );                                         // 1
-    nano.push_back( new Icosahedron<Surface>("Icosahedron") );                      // 2
+    nano.push_back( new Icosahedron<Surface>() );                      // 2
     nano.push_back( new Sphere() );                                                 // 3
     nano.push_back( new TennisBall() );                                             // 4
     nano.push_back( new OblateSpheroid() );                                         // 5
     nano.push_back( new SpherePatch() );                                            // 6
-    nano.push_back( new Pentamer<PentaSurface>("Icosahedron + PentaSurface" ) );    // 7
-    nano.push_back( new Dodecahedron("Dodecahedron") );                             // 8
+    nano.push_back( new Pentamer<PentaSurface>() );    // 7
+    nano.push_back( new Dodecahedron() );                             // 8
     nano.push_back( new Chain() );                                                  // 9
     nano.push_back( new Slab() );                                                   // 10
     nano.push_back( new NettedSlab());                                              // 11
     nano.push_back( new SphereJanus());                                             // 12
     nano.push_back( new Cow());                                                     // 13
+
+    map<string, Particles*> structure;
+    structure[Empty_Particle::keyword] = new Empty_Particle();
+    structure[Icosahedron<Surface>::keyword] = new Icosahedron<Surface>();
+    structure[Sphere::keyword] = new Sphere();
+    structure[TennisBall::keyword] = new TennisBall();
+    structure[OblateSpheroid::keyword] = new OblateSpheroid();
+
+    structure[SpherePatch::keyword] = new SpherePatch();
+    structure[Pentamer<PentaSurface>::keyword] = new Pentamer<PentaSurface>();
+    structure[Dodecahedron::keyword] = new Dodecahedron();
+    structure[Chain::keyword] = new Chain();
+    structure[Slab::keyword] = new Slab();
+
+    structure[NettedSlab::keyword] = new NettedSlab();
+    structure[SphereJanus::keyword] = new SphereJanus();
+    structure[Cow::keyword] = new Cow();
 
     //
     // Input safeguard

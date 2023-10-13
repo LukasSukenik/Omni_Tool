@@ -37,13 +37,23 @@ template<class Surface>
 class Icosahedron : public Particles {
     Surface surface;
 public:
+    inline static const string keyword = "icosahedron";
+    const string name = "icosahedron";
+
+    Icosahedron() : Particles("icosahedron"), surface(edge, beads) {}
+    Icosahedron(string str) : Particles(str), surface(edge, beads) {}
+
+
+
     IcoVertice edge;
     vector<int> types;
     int molTag_offset;
     int ligandModulo;
     int offset;
 
-    Icosahedron(string name) : Particles(name), surface(edge, beads) {}
+
+
+
 
     virtual void generate( Data& data )
     {

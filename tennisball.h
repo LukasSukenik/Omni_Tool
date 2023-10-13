@@ -9,13 +9,11 @@ class TennisBall: public Sphere {
 private:
     int angle = 10;
 
-
-
-
 public:
-    TennisBall() : Sphere("TennisBall") {}
-    TennisBall(string name) : Sphere(name) {}
+    inline static const string keyword = "tennisball";
+    const string name = "tennisball";
 
+    TennisBall() : Sphere("tennisball") {}
 
     void generate( Data& data )
     {
@@ -79,7 +77,9 @@ protected:
 
 class TennisBall2: public Sphere {
 public:
-    TennisBall2() : Sphere("TennisBall") {}
+    inline static const string name = "tennis_ball_2";
+
+    TennisBall2() : Sphere() {}
 
     void generate( Data data )
     {

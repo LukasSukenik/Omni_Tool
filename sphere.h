@@ -7,8 +7,12 @@ using namespace std;
 
 class Sphere: public Particles {
 public:
-    Sphere() : Particles("Sphere") {}
-    Sphere(string name) : Particles(name) {}
+    inline static const string keyword = "sphere";
+
+    const string name = "sphere";
+
+    Sphere() : Particles("sphere") {}
+    Sphere(string str) : Particles(str) {}
 
     void generate( Data& data )
     {
@@ -138,8 +142,10 @@ private:
 class SphereJanus : public Sphere
 {
 public:
-    SphereJanus() : Sphere("SphereJanus") {}
-    SphereJanus(string name) : Sphere(name) {}
+    inline static const string keyword = "sphere_janus";
+    const string name = "sphere_janus";
+
+    SphereJanus() : Sphere("sphere_janus") {}
 
     void generate( Data& data ) {
 

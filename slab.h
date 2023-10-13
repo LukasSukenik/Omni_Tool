@@ -8,8 +8,9 @@
 class Slab1D : public Particles
 {
 public:
-    Slab1D() : Particles("Slab") {}
-    Slab1D(string name) : Particles(name) {}
+    inline static const string keyword = "slab1D";
+
+    Slab1D() : Particles() {}
 
     void generate( Data& data )
     {
@@ -36,8 +37,10 @@ public:
 class Slab : public Particles
 {
 public:
-    Slab() : Particles("Slab") {}
-    Slab(string name) : Particles(name) {}
+    inline static const string keyword = "slab";
+    const string name = "slab";
+
+    Slab() : Particles("slab") {}
 
     void generate( Data& data )
     {
@@ -98,8 +101,11 @@ private:
 class NettedSlab : public Particles
 {
 public:
-    NettedSlab() : Particles("Slab") {}
-    NettedSlab(string name) : Particles(name) {}
+    inline static const string keyword = "netted_slab";
+    const string name = "netted_slab";
+
+
+    NettedSlab() : Particles("netted_slab") {}
 
     void generate( Data& data )
     {

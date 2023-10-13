@@ -9,6 +9,11 @@
 class Dodecahedron : public Particles
 {
 public:
+    inline static const string keyword = "dodecahedron";
+    const string name = "dodecahedron";
+
+    Dodecahedron() : Particles("dodecahedron") {}
+
     IcoVertice edge;
 
     myFloat shiftTop;
@@ -26,7 +31,7 @@ public:
 
     interface interface_type = UNIFORM;
 
-    Dodecahedron(string name) : Particles(name) {}
+
 
     virtual void generate( Data& data ) override
     {

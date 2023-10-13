@@ -9,8 +9,10 @@
 class Cow : public Particles
 {
 public:
-    Cow() : Particles("Cow")  {}
-    Cow(string name) : Particles(name) {}
+    inline static const string keyword = "cow";
+    const string name = "cow";
+
+    Cow() : Particles("cow")  {}
 
     void generate( Data& data  )
     {

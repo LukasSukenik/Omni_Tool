@@ -7,11 +7,14 @@
 template<class Surface>
 class Pentamer : public Icosahedron<Surface> {
 public:
+    inline static const string keyword = "icosahedron_penta";
+    const string name = "icosahedron_penta";
+
+    Pentamer() : Icosahedron<Surface>("icosahedron_penta")  {}
+
     using Icosahedron<Surface>::edge;
     using Icosahedron<Surface>::beads;
     using Icosahedron<Surface>::bonds;
-
-    Pentamer(string name) : Icosahedron<Surface>(name)  {}
 
     virtual void generate( Data& data ) override
     {
