@@ -14,6 +14,7 @@ SOURCES += main.cpp \
     xdrfile-1.1.4/src/xdrfile_xtc.c
 
 HEADERS += \
+    input.h \
     particle.h \
     icosahedron.h \
     oblatespheroid.h \

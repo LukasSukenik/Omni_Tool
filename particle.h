@@ -74,7 +74,7 @@ public:
     vector<Atom> beads;
     vector< Bond > bonds;
     vector<Angle> angles;
-    vector<BeadParam> bparam;
+    vector<LJParam> bparam;
 
     int typeNano = 1;
     int typeLig = 2;

@@ -16,248 +16,12 @@
 #include <array>
 
 #include "atom.h"
-
+#include "input.h"
 
 using namespace std;
 
-class BeadParam {
-public:
-    BeadParam(){}
-    BeadParam(int type, double epsilon, double sigma, double cutoff) : type(type), epsilon(epsilon), sigma(sigma), cutoff(cutoff) {}
 
-    int type=-1;
-    double epsilon=1.0;
-    double sigma=1.0;
-    double cutoff=25.0;
 
-    string toString()
-    {
-        stringstream ss;
-        ss << type << " " << epsilon << " " << sigma << " " << cutoff << endl;
-        return ss.str();
-    }
-};
-
-class CosParam {
-public:
-    CosParam(){}
-    CosParam(int type1, int type2, double epsilon, double start_dis, double range) : type1(type1), type2(type2), epsilon(epsilon), start_dis(start_dis), range(range){}
-
-    int type1;
-    int type2;
-    double epsilon;
-    double start_dis;
-    double range;
-
-    string toString()
-    {
-        stringstream ss;
-        ss << type1 << " " << type2 << " " << epsilon << " " << start_dis << " " << range << endl;
-        return ss.str();
-    }
-};
-
-/**
- * @brief The Input class - Parameters for particle generation
- */
-class Input{
-public:
-    Input() {}
-
-    int nano_type;
-    int out_type;
-    int num_of_beads;
-    myFloat scale = 0.0;
-    int offset = 1;
-    int seed=0;
-    myFloat c;
-    int num_lig;
-    int chain_type=-1;
-    int mol_tag=-1;
-    int atom_type=1;
-    bool center=false;
-    int mtag_1=-1;
-    int mtag_2=-1;
-    Atom ivx = Atom(0.0, 0.0, 0.0);
-    bool fit = false;
-    Atom boxm = Atom(-1,-1,-1);
-    Atom boxp = Atom(-1,-1,-1);
-    Atom com_pos = Atom(0.0, 0.0, 0.0);
-    Atom patch_1 = Atom(1,1,1,0);
-    Atom patch_2 = Atom(1,1,1,0);
-    string infile;
-
-    vector<BeadParam> bparam;
-    vector<CosParam> cparam;
-    vector<int> types;
-
-    bool is_mtag_12()
-    {
-        if( mtag_1 != -1 && mtag_2 != -1 )
-            return false;
-        return true;
-    }
-
-    bool is_mol_tag()
-    {
-        if(mol_tag == -1)
-            return false;
-        return true;
-    }
-
-    bool isCOM_pos()
-    {
-        if(com_pos.x == 0.0 && com_pos.y == 0.0 && com_pos.z == 0.0)
-            return false;
-        return true;
-    }
-
-    bool isScale()
-    {
-        if(scale == 0.0)
-            return false;
-        return true;
-    }
-
-    string toString()
-    {
-        stringstream ss;
-
-        ss << "Particle_type: " << nano_type << endl;
-        ss << "Output_type: " << out_type << endl;
-        ss << "Number of beads: " << num_of_beads << endl;
-        ss << "Scale: " << scale << endl;
-        ss << "Offset: " << offset << endl;
-        ss << "c: " << c << endl;
-        ss << "Number of ligands: " << num_lig << endl;
-        ss << "Box: (" << boxm.x << ", " << boxp.x << ", " << boxm.y << ", " << boxp.y << ", " << boxm.z << ", " << boxp.z << ")" << endl;
-        ss << "Position: (" << com_pos.x << ", " << com_pos.y << ", " << com_pos.z << ")" << endl;
-        ss << "Patch_1: (" << patch_1.x << "-" << patch_1.vx << ", " << patch_1.y << "-" << patch_1.vy << ", " << patch_1.z << "-" << patch_1.vz << ", " << patch_1.type << ")" << endl;
-        ss << "Patch_1: (" << patch_2.x << ", " << patch_2.y << ", " << patch_2.z << ", " << patch_2.type << ")" << endl;
-
-        ss << "Beads_lj/cut:" << endl;
-        for(auto i : bparam)
-        {
-            ss << i.toString();
-        }
-
-        ss << "Cosatt:" << endl;
-        for(auto i : cparam)
-        {
-            ss << i.toString();
-        }
-
-        return ss.str();
-    }
-
-    bool loadInput(string input)
-    {
-        std::fstream fs( input, std::fstream::in );
-        string line, what;
-        stringstream ss;
-        int len=0;
-
-        while( !fs.eof() ) // Lines in input
-        {
-            ss.flush();
-            ss.clear();
-            getline(fs, line);
-            ss.str(line);
-
-            ss >> what;
-            if( what.compare("Particle_type:") == 0 )   { ss >> nano_type; }
-            if( what.compare("Output_type:") == 0 )     { ss >> out_type; }
-            if( what.compare("Num_of_beads:") == 0 )    { ss >> num_of_beads; }
-            if( what.compare("Scale:") == 0 )           { ss >> scale; }
-            if( what.compare("Lammps_offset:") == 0 )   { ss >> offset; }
-            if( what.compare("c:") == 0 )               { ss >> c; }
-            if( what.compare("Number_of_ligands:") == 0 ) { ss >> num_lig; }
-            if( what.compare("Chain_type:") == 0 ) { ss >> chain_type; }
-            if( what.compare("Box:") == 0 )             { ss >> boxm.x >> boxp.x >> boxm.y >> boxp.y >> boxm.z >> boxp.z; }
-            if( what.compare("Position_shift:") == 0 )  { ss >> com_pos.x >> com_pos.y >> com_pos.z; }
-            if( what.compare("Load_file:") == 0 )  { ss >> infile; }
-            if( what.compare("Center") == 0 )  { center=true; }
-            if( what.compare("Fit") == 0 )  { fit=true; }
-            if( what.compare("Align:") == 0 )  { ss >> mtag_1 >> mtag_2;  }
-            if( what.compare("Impact_vector:") == 0 )  { ss >> ivx.x >> ivx.y >> ivx.z; }
-            if( what.compare("Patch_1:") == 0 )  { ss >> patch_1.vx >> patch_1.x >> patch_1.vy >> patch_1.y >> patch_1.vz >> patch_1.z >> patch_1.type; }
-            if( what.compare("Patch_2:") == 0 )  { ss >> patch_2.vx >> patch_2.x >> patch_2.vy >> patch_2.y >> patch_2.vz >> patch_2.z >> patch_2.type; }
-            if( what.compare("Seed:") == 0 )  { ss >> seed; rng.seed(seed); }
-
-            if( what.compare("Mol_tag:") == 0 ) { ss >> mol_tag; }
-            if( what.compare("Atom_type:") == 0 ) { ss >> atom_type; }
-
-            if( what.compare("Beads_lj/cut:") == 0 )
-            {
-                ss >> len;
-                for(int i=0; i < len; ++i)
-                {
-                    ss.flush();
-                    ss.clear();
-                    getline(fs, line);
-                    ss.str(line);
-                    bparam.push_back(BeadParam());
-                    ss >> bparam.back().type >> bparam.back().epsilon >> bparam.back().sigma >> bparam.back().cutoff;
-                }
-                len=0;
-            }
-
-            if( what.compare("Cosatt:") == 0 )
-            {
-                ss >> len;
-                for(int i=0; i < len; ++i)
-                {
-                    ss.flush();
-                    ss.clear();
-                    getline(fs, line);
-                    ss.str(line);
-                    cparam.push_back(CosParam());
-                    ss >> cparam.back().type1 >> cparam.back().type2 >> cparam.back().epsilon >> cparam.back().start_dis >> cparam.back().range;
-                }
-            }
-
-            what.clear();
-        }
-        fs.close();
-
-        for(auto i : bparam)
-        {
-            types.push_back(i.type);
-        }
-        return true;
-    }
-
-    void clear()
-    {
-        nano_type=-1;
-        out_type=-1;
-        num_of_beads=-1;
-        scale=0.0;
-        offset=1;
-        c=0;
-        num_lig=0;
-        chain_type=-1;
-        mol_tag=-1;
-        atom_type=1;
-
-        center=false;
-        fit = false;
-        mtag_1=-1;
-        mtag_2=-1;
-
-        boxm=Atom(-1,-1,-1);
-        boxp=Atom(-1,-1,-1);
-        com_pos=Atom(0.0, 0.0, 0.0);
-        patch_1=Atom(1,1,1,0);
-        patch_2=Atom(1,1,1,0);
-        ivx=Atom(0.0, 0.0, 0.0);
-
-        infile.clear();
-        bparam.clear();
-        cparam.clear();
-        types.clear();
-    }
-};
 
 class My_string{
 public:
@@ -287,7 +51,7 @@ public:
     vector< Atom > all_beads;
     vector< Bond > all_bonds;
     vector<Angle> all_angles;
-    vector<BeadParam> all_bparam;
+    vector<LJParam> all_bparam;
     vector<CosParam> all_cparam;
 
     vector< Atom > temp_beads;
@@ -683,7 +447,7 @@ public:
         return false;
     }
 
-    BeadParam getBeadParam(int type)
+    LJParam getBeadParam(int type)
     {
         for(auto item : all_bparam)
         {
@@ -692,7 +456,7 @@ public:
                 return item;
             }
         }
-        return BeadParam();
+        return LJParam();
     }
 
     string toString()
@@ -944,6 +708,22 @@ public:
             }
         }
         return dist;
+    }
+
+    void print() const
+    {
+        if( in.out.type == Output_Type::lammps_full)
+        {
+            printLammps();
+        }
+        if( in.out.type == Output_Type::xyz)
+        {
+            printXYZ();
+        }
+        if( in.out.type == Output_Type::pdb)
+        {
+            printPDB();
+        }
     }
 
     void printLammps() const

@@ -27,8 +27,13 @@ void helpMessage(vector<Particles*>& nano);
 int main(int argc, char* argv[]) // // $num of beads per edge, box dimensions X(same as Y) $beg $end, $position in Z, $offset
 {
     Data data;
+
+    /**
+     * @brief nano
+     * array of classes, each generating a different structure
+     */
     vector<Particles*> nano;
-    nano.push_back( new Empty_Particle() );                      // 1
+    nano.push_back( new Empty_Particle() );                                         // 1
     nano.push_back( new Icosahedron<Surface>("Icosahedron") );                      // 2
     nano.push_back( new Sphere() );                                                 // 3
     nano.push_back( new TennisBall() );                                             // 4
@@ -42,18 +47,33 @@ int main(int argc, char* argv[]) // // $num of beads per edge, box dimensions X(
     nano.push_back( new SphereJanus());                                             // 12
     nano.push_back( new Cow());                                                     // 13
 
+    //
+    // Input safeguard
+    //
     if( argc == 1 || strcmp(argv[1], "-h") == 0 ) {
         cout << "No input file specified" << endl;
         helpMessage(nano);
         exit(1);
     }
 
+    //
+    // Loop over command line arguments
+    //
     for(int i=1; i<argc; ++i)
     {
+        //
+        // Load the input file [i]
+        //
         data.loadInput(argv[i]);
 
+        //
+        // Report what was loaded
+        //
         cerr << data.in.toString() << endl;
 
+        //
+        // Load a particle if specified
+        //
         if( data.isDefined() )
         {
             data.load(data.in.infile);      // Load Data from file "data.in.infile"
@@ -75,7 +95,7 @@ int main(int argc, char* argv[]) // // $num of beads per edge, box dimensions X(
 
             data.add(); // temp_data to all_data
         }
-        else
+        else // or generate a particle
         {
             if(data.in.nano_type < 1 || data.in.nano_type > nano.size()) {
                 cerr << "Bad nanoparticle type selected" << endl;
@@ -95,21 +115,8 @@ int main(int argc, char* argv[]) // // $num of beads per edge, box dimensions X(
     //data.roundBondDist(dist);
     //data.removeDuplicateBond();
 
-    if( data.in.out_type == 1)
-    {
-        data.printLammps();
-        cerr << "Lammps out" << endl;
-    }
-    if( data.in.out_type == 0)
-    {
-        data.printXYZ();
-        cerr << "XYZ out" << endl;
-    }
-    if( data.in.out_type == 2)
-    {
-    	data.printPDB();
-    	cerr << "PDB out" << endl;
-    }
+    data.print();
+    cerr << data.in.out.type << endl;
 
     for(int i=0; i<nano.size(); ++i)
         delete nano[i];
