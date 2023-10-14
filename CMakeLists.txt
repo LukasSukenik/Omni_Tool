@@ -50,6 +50,7 @@ surface.h
 tennisball.h 
 xtcanalysis.h 
 welford.h
+force_field.h
 )
 
 target_include_directories(ico PUBLIC "xdrfile-1.1.4/include/")

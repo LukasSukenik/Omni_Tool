@@ -15,6 +15,7 @@
 
 #include <array>
 
+#include "force_field.h"
 #include "atom.h"
 #include "input.h"
 
@@ -35,9 +36,29 @@ bool sortN(const Atom& i, const Atom& j) {
     return i.N < j.N;
 }
 
-bool sort_Bond_by_type(const Bond& i, const Bond& j) {
-    return ( i.type < j.type ) || ( (i.at1 < j.at1) && (i.type == j.type) ) ;
-}
+class Atoms : public vector< Atom >
+{
+public:
+    void move(Atom move)
+    {
+        for(Atom& item : (*this))
+            item += move;
+        cerr << "move " << move.x << " " << move.y << " " << move.z << " done" << endl;
+    }
+
+    int getMaxMolTag()
+    {
+        int max=0;
+        for(auto& a : (*this))
+        {
+            if(a.mol_tag > max)
+            {
+                max = a.mol_tag;
+            }
+        }
+        return max;
+    }
+};
 
 /**
  * @brief The Data class - Generated data from class particle
@@ -48,14 +69,14 @@ public:
 	//
     /// lammps data stuff
 	//
-    vector< Atom > all_beads;
-    vector< Bond > all_bonds;
+	Atoms all_beads;
+    Bonds all_bonds;
     vector<Angle> all_angles;
-    vector<LJParam> all_bparam;
-    vector<CosParam> all_cparam;
+    vector<LJ> all_bparam;
+    vector<CosSQ> all_cparam;
 
-    vector< Atom > temp_beads;
-    vector< Bond > temp_bonds;
+    Atoms temp_beads;
+    Bonds temp_bonds;
     vector<Angle> temp_angles;
 
     //
@@ -69,9 +90,8 @@ public:
     /// For lammps file IO
     //
     vector<My_string > file_head;
-    double box[6] = {0};
 
-    bool first_file=true;
+    double box[6] = {0}; // box
 
     myFloat x_min = 0.0;
     myFloat x_max = 0.0;
@@ -79,6 +99,8 @@ public:
     myFloat y_max = 0.0;
     myFloat z_min = 0.0;
     myFloat z_max = 0.0;
+
+    bool first_file=true;
 
     Input in;
 
@@ -94,29 +116,17 @@ public:
 
     bool isDefined()
     {
-        if(!in.infile.empty())
-            return true;
-        return false;
+        return !in.infile.empty();
     }
 
     int getMaxMolTag()
     {
-        int max=0;
-        for(auto& a : all_beads)
-        {
-            if(a.mol_tag > max)
-            {
-                max = a.mol_tag;
-            }
-        }
-        return max;
+    	return all_beads.getMaxMolTag();
     }
 
     void move(Atom move)
     {
-        for(Atom& item : temp_beads)
-            item += move;
-        cerr << "move " << move.x << " " << move.y << " " << move.z << " done" << endl;
+    	temp_beads.move(move);
     }
 
     /**
@@ -207,7 +217,7 @@ public:
     }
 
     /**
-     * @brief fit - positions the loaded/generated structure next to previosly generated/loadedd structure
+     * @brief fit positions the loaded/generated structure next to previosly generated/loadedd structure
      * - used for ideal collision position of two liposomes and a nanoparticle
      * see Fit_function.blend, need blender 2.9
      */
@@ -447,7 +457,7 @@ public:
         return false;
     }
 
-    LJParam getBeadParam(int type)
+    LJ getBeadParam(int type)
     {
         for(auto item : all_bparam)
         {
@@ -456,7 +466,7 @@ public:
                 return item;
             }
         }
-        return LJParam();
+        return LJ();
     }
 
     string toString()
@@ -608,7 +618,7 @@ public:
             }
         }
 
-        return bond_types.size();
+        return all_bonds.calcBondTypes();
     }
 
 
@@ -768,10 +778,10 @@ public:
         // Print Box
         //
         cout << "\n";
-        if(in.boxm.x != -1) {
-            cout << in.boxm.x << " " << in.boxp.x << " xlo xhi\n";
-            cout << in.boxm.y << " " << in.boxp.y << " ylo yhi\n";
-            cout << in.boxm.z << " " << in.boxp.z << " zlo zhi\n";
+        if( in.sim_box.xlo != 0.0 ) {
+            cout << in.sim_box.xlo << " " << in.sim_box.xhi << " xlo xhi\n";
+            cout << in.sim_box.ylo << " " << in.sim_box.yhi << " ylo yhi\n";
+            cout << in.sim_box.zlo << " " << in.sim_box.zhi << " zlo zhi\n";
         } else {
             cout << ( box[0]-((x_min+x_max)/2.0) ) << " " << ( box[1]-((x_min+x_max)/2.0) ) << " xlo xhi\n";
             cout << ( box[2]-((x_min+x_max)/2.0) ) << " " << ( box[3]-((x_min+x_max)/2.0) ) << " ylo yhi\n";

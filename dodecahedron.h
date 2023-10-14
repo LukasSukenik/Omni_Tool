@@ -38,9 +38,9 @@ public:
         // LOAD DATA
         this->size = data.in.num_of_beads;
         this->c = data.in.c;
-        this->pbc.box.x = data.in.boxp.x - data.in.boxm.x;
-        this->pbc.box.y = data.in.boxp.y - data.in.boxm.y;
-        this->pbc.box.z = data.in.boxp.z - data.in.boxm.z;
+        this->pbc.box.x = data.in.sim_box.xhi - data.in.sim_box.xlo;
+        this->pbc.box.y = data.in.sim_box.yhi - data.in.sim_box.ylo;
+        this->pbc.box.z = data.in.sim_box.zhi - data.in.sim_box.zlo;
         this->offset = data.all_beads.size();
 
         init(size);// set shift, fscale

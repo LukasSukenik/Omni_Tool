@@ -139,9 +139,9 @@ public:
             Atom next;
             bool clash=true;
             while(clash) {
-                double x = ((0.20+ran()/10*6)*data.in.boxp.x - data.in.com_pos.x) / data.in.scale;
-                double y = ( (0.20+ran()/4) *data.in.boxp.y - data.in.com_pos.y) / data.in.scale;
-                double z = ((0.20+ran()/10*6)*data.in.boxp.z - data.in.com_pos.z) / data.in.scale;
+                double x = ((0.20+ran()/10*6)*data.in.sim_box.xhi - data.in.com_pos.x) / data.in.scale;
+                double y = ( (0.20+ran()/4) *data.in.sim_box.yhi - data.in.com_pos.y) / data.in.scale;
+                double z = ((0.20+ran()/10*6)*data.in.sim_box.zhi - data.in.com_pos.z) / data.in.scale;
 
                 next = Atom(x,y,z,2);
 

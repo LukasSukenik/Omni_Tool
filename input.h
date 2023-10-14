@@ -19,14 +19,17 @@
 
 using namespace std;
 
+
+
+
 /**
  * @brief The BeadParam class
  * Bead LJ parameters
  */
-class LJParam {
+class LJ {
 public:
-    LJParam(){}
-    LJParam(int type, double epsilon, double sigma, double cutoff) : type(type), epsilon(epsilon), sigma(sigma), cutoff(cutoff) {}
+	LJ(){}
+	LJ(int type, double epsilon, double sigma, double cutoff) : type(type), epsilon(epsilon), sigma(sigma), cutoff(cutoff) {}
 
     int type=-1;
     double epsilon=1.0;
@@ -41,10 +44,10 @@ public:
     }
 };
 
-class CosParam {
+class CosSQ {
 public:
-    CosParam(){}
-    CosParam(int type1, int type2, double epsilon, double start_dis, double range) : type1(type1), type2(type2), epsilon(epsilon), start_dis(start_dis), range(range){}
+	CosSQ(){}
+	CosSQ(int type1, int type2, double epsilon, double start_dis, double range) : type1(type1), type2(type2), epsilon(epsilon), start_dis(start_dis), range(range){}
 
     int type1;
     int type2;
@@ -59,6 +62,47 @@ public:
         return ss.str();
     }
 };
+
+
+
+
+class Force_Field
+{
+public:
+	Force_Field() {}
+
+	vector<LJ> lj;
+	vector<CosSQ> cos;
+};
+
+
+
+
+class Simluation_Box
+{
+public:
+	Simluation_Box() {}
+
+    myFloat xlo = 0.0;
+    myFloat xhi = 0.0;
+    myFloat ylo = 0.0;
+    myFloat yhi = 0.0;
+    myFloat zlo = 0.0;
+    myFloat zhi = 0.0;
+
+    friend std::istream& operator>>(std::istream& is, Simluation_Box& sim_box)
+    {
+    	is >> sim_box.xlo >> sim_box.xhi >> sim_box.ylo >> sim_box.yhi >> sim_box.zlo >> sim_box.zhi;
+        return is;
+    }
+
+    friend std::ostream& operator<<(std::ostream& os, const Simluation_Box& box)
+    {
+    	os << box.xlo << ", " << box.xhi << ", " << box.ylo << ", " << box.yhi << ", " << box.zlo << ", " << box.zhi;
+        return os;
+    }
+};
+
 
 
 
@@ -128,9 +172,6 @@ public:
 
 
 
-
-
-
 /**
  * @brief The Input class - Parameters for particle generation
  */
@@ -138,34 +179,51 @@ class Input{
 public:
     Input() {}
 
+    //
+    // Data updated per input file
+    //
     Output out; /// Output type - none, pdb, lammps_full, xyz
+    string gen_structure; /// keyword identifying the structure class
 
-    int nano_type;
-    string gen_structure;
-
-    int num_of_beads;
+    /// Transformation of the generated structure
     myFloat scale = 0.0;
+    bool center=false;
+    Atom com_pos = Atom(0.0, 0.0, 0.0);
+
+    // structure variables
+    int num_of_beads=-1;
+    int num_lig=-1;
+
+    //
+    // Persistent data
+    //
+    Simluation_Box sim_box;
+
+
+
     int offset = 1;
     int seed=0;
     myFloat c;
-    int num_lig;
+
+    ///
+    /// Atom Types
+    ///
     int chain_type=-1;
     int mol_tag=-1;
     int atom_type=1;
-    bool center=false;
     int mtag_1=-1;
     int mtag_2=-1;
+
     Atom ivx = Atom(0.0, 0.0, 0.0);
     bool fit = false;
-    Atom boxm = Atom(-1,-1,-1);
-    Atom boxp = Atom(-1,-1,-1);
-    Atom com_pos = Atom(0.0, 0.0, 0.0);
+
+
     Atom patch_1 = Atom(1,1,1,0);
     Atom patch_2 = Atom(1,1,1,0);
     string infile;
 
-    vector<LJParam> bparam;
-    vector<CosParam> cparam;
+    vector<LJ> bparam;
+    vector<CosSQ> cparam;
     vector<int> types;
 
     bool loadInput(string input)
@@ -191,7 +249,7 @@ public:
             if( what.compare("c:") == 0 )               { ss >> c; }
             if( what.compare("Number_of_ligands:") == 0 ) { ss >> num_lig; }
             if( what.compare("Chain_type:") == 0 ) { ss >> chain_type; }
-            if( what.compare("Box:") == 0 )             { ss >> boxm.x >> boxp.x >> boxm.y >> boxp.y >> boxm.z >> boxp.z; }
+            if( what.compare("Box:") == 0 )             { ss >> sim_box; }
             if( what.compare("Position_shift:") == 0 )  { ss >> com_pos.x >> com_pos.y >> com_pos.z; }
             if( what.compare("Load_file:") == 0 )  { ss >> infile; }
             if( what.compare("Center") == 0 )  { center=true; }
@@ -214,7 +272,7 @@ public:
                     ss.clear();
                     getline(fs, line);
                     ss.str(line);
-                    bparam.push_back(LJParam());
+                    bparam.push_back(LJ());
                     ss >> bparam.back().type >> bparam.back().epsilon >> bparam.back().sigma >> bparam.back().cutoff;
                 }
                 len=0;
@@ -229,7 +287,7 @@ public:
                     ss.clear();
                     getline(fs, line);
                     ss.str(line);
-                    cparam.push_back(CosParam());
+                    cparam.push_back(CosSQ());
                     ss >> cparam.back().type1 >> cparam.back().type2 >> cparam.back().epsilon >> cparam.back().start_dis >> cparam.back().range;
                 }
             }
@@ -249,14 +307,14 @@ public:
     {
         stringstream ss;
 
-        ss << "Particle_type: " << nano_type << endl;
+        ss << "Particle_type: " << gen_structure << endl;
         ss << "Output_type: " << out << endl;
         ss << "Number of beads: " << num_of_beads << endl;
         ss << "Scale: " << scale << endl;
         ss << "Offset: " << offset << endl;
         ss << "c: " << c << endl;
         ss << "Number of ligands: " << num_lig << endl;
-        ss << "Box: (" << boxm.x << ", " << boxp.x << ", " << boxm.y << ", " << boxp.y << ", " << boxm.z << ", " << boxp.z << ")" << endl;
+        ss << "Box: ( " << sim_box << " )" << endl;
         ss << "Position: (" << com_pos.x << ", " << com_pos.y << ", " << com_pos.z << ")" << endl;
         ss << "Patch_1: (" << patch_1.x << "-" << patch_1.vx << ", " << patch_1.y << "-" << patch_1.vy << ", " << patch_1.z << "-" << patch_1.vz << ", " << patch_1.type << ")" << endl;
         ss << "Patch_1: (" << patch_2.x << ", " << patch_2.y << ", " << patch_2.z << ", " << patch_2.type << ")" << endl;
@@ -278,9 +336,7 @@ public:
 
     void clear()
     {
-        nano_type=-1;
         gen_structure.clear();
-        out.clear();
         num_of_beads=-1;
         scale=0.0;
         offset=1;
@@ -295,8 +351,7 @@ public:
         mtag_1=-1;
         mtag_2=-1;
 
-        boxm=Atom(-1,-1,-1);
-        boxp=Atom(-1,-1,-1);
+
         com_pos=Atom(0.0, 0.0, 0.0);
         patch_1=Atom(1,1,1,0);
         patch_2=Atom(1,1,1,0);
@@ -310,12 +365,6 @@ public:
 
     void help()
     {
-	    cout << "\nGenerated structure types keyword is \"Particle_type: number\"" << endl;
-
-	    cout << "Keywords:" << endl;
-	    cout << "Ouput/Input category:" << endl;
-	    cout << "Output_type: 1 = Lammps" << endl;
-	    cout << "             0 = XYZ" << endl;
 	    cout << "Lammps_offset: integer" << endl;
 	    cout << " - offset the generated structure for manual insertion into another lammps structure file" << endl;
 	    cout << "Load_file: filename" << endl;

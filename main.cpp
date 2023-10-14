@@ -33,7 +33,7 @@ class Structure_Container : public map<string, Particles*>
 public:
 	void helpMessage()
 	{
-		cout << "No input file specified, run $ ./ico filename_1 filename_2 ...\n\n" << endl;
+		cout << "Specify input files, run $ ./ico filename_1 filename_2 ...\n\n" << endl;
 		cout << "Example input files:\n" << endl;
 
 		for (auto& [key, val] : *this)
