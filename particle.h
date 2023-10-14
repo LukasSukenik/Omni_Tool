@@ -256,6 +256,15 @@ public:
 
         return cluscm;
     }
+
+    virtual string help()
+    {
+    	stringstream ss;
+    	ss << "Abstract class Particle\n";
+    	ss << "Contains functions intended for inheritance\n";
+    	ss << "Does not generate anything\n";
+    	return ss.str();
+    }
 };
 
 
@@ -266,6 +275,16 @@ public:
     const string name = "empty";
     Empty_Particle() : Particles("empty") {}
     void generate( Data& data ) {}
+
+    string help()
+    {
+    	stringstream ss;
+
+    	ss << "Particle_type: empty\n";
+    	ss << "Output_type: pdb # other keywords: xyz pdb lammps_full\n";
+
+    	return ss.str();
+    }
 };
 
 #endif // PARTICLE_H

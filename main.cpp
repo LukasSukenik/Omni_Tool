@@ -14,51 +14,47 @@
 #include <iomanip>
 #include <cmath>
 #include <limits>
-
 #include <cstdlib>
 #include <algorithm>
-
 #include <vector>
 #include <map>
 
 using namespace std;
 
-void helpMessage(vector<Particles*>& nano);
 
-class test{
+
+
+/**
+ * @brief Structure_Container
+ * map classes, each generating a different structure
+ */
+class Structure_Container : public map<string, Particles*>
+{
 public:
-    inline static const string name = "test";
+	void helpMessage()
+	{
+		cout << "No input file specified, run $ ./ico filename_1 filename_2 ...\n\n" << endl;
+		cout << "Example input files:\n" << endl;
+
+		for (auto& [key, val] : *this)
+		{
+		    std::cout << (*val).help() << std::endl;
+		}
+	}
 };
 
-class test_child : public test {
-public:
-    inline static const string name = "test_child";
-};
+
+
 
 int main(int argc, char* argv[]) // // $num of beads per edge, box dimensions X(same as Y) $beg $end, $position in Z, $offset
 {
     Data data;
 
-    /**
-     * @brief structure
-     * map classes, each generating a different structure
-     */
-    vector<Particles*> nano;
-    nano.push_back( new Empty_Particle() );                                         // 1
-    nano.push_back( new Icosahedron<Surface>() );                      // 2
-    nano.push_back( new Sphere() );                                                 // 3
-    nano.push_back( new TennisBall() );                                             // 4
-    nano.push_back( new OblateSpheroid() );                                         // 5
-    nano.push_back( new SpherePatch() );                                            // 6
-    nano.push_back( new Pentamer<PentaSurface>() );    // 7
-    nano.push_back( new Dodecahedron() );                             // 8
-    nano.push_back( new Chain() );                                                  // 9
-    nano.push_back( new Slab() );                                                   // 10
-    nano.push_back( new NettedSlab());                                              // 11
-    nano.push_back( new SphereJanus());                                             // 12
-    nano.push_back( new Cow());                                                     // 13
+    Structure_Container structure;
 
-    map<string, Particles*> structure;
+    //
+    // Adding a structure generating class
+    //
     structure[Empty_Particle::keyword] = new Empty_Particle();
     structure[Icosahedron<Surface>::keyword] = new Icosahedron<Surface>();
     structure[Sphere::keyword] = new Sphere();
@@ -79,8 +75,7 @@ int main(int argc, char* argv[]) // // $num of beads per edge, box dimensions X(
     // Input safeguard
     //
     if( argc == 1 || strcmp(argv[1], "-h") == 0 ) {
-        cout << "No input file specified" << endl;
-        helpMessage(nano);
+        structure.helpMessage();
         exit(1);
     }
 
@@ -105,6 +100,7 @@ int main(int argc, char* argv[]) // // $num of beads per edge, box dimensions X(
         if( data.isDefined() )
         {
             data.load(data.in.infile);      // Load Data from file "data.in.infile"
+
             if(data.in.isScale())
                 data.rescale(data.in.scale);    // Rescale atom positions by data.in.scale - usually 1
             if(data.in.isCOM_pos())
@@ -123,18 +119,26 @@ int main(int argc, char* argv[]) // // $num of beads per edge, box dimensions X(
 
             data.add(); // temp_data to all_data
         }
-        else // or generate a particle
-        {
-            if(data.in.nano_type < 1 || data.in.nano_type > nano.size()) {
-                cerr << "Bad nanoparticle type selected" << endl;
-                exit(2);
-            }
 
-            cerr << "Generating: " << nano[data.in.nano_type-1]->name << endl;
-            nano[data.in.nano_type-1]->generate( data );
-            nano[data.in.nano_type-1]->rescale( data.in.scale );
-            nano[data.in.nano_type-1]->move( data.in.com_pos );
-            nano[data.in.nano_type-1]->add(data); // particle data
+        //
+        // generate a particle when no input particle is specified
+        //
+        if( ! data.isDefined() )
+        {
+            if(structure.count(data.in.gen_structure) > 0)
+            {
+                cerr << "Generating: " << structure[ data.in.gen_structure ]->name << endl;
+
+				structure[ data.in.gen_structure ]->generate( data );
+                structure[ data.in.gen_structure ]->rescale( data.in.scale );
+                structure[ data.in.gen_structure ]->move( data.in.com_pos );
+                structure[ data.in.gen_structure ]->add(data); // particle data
+            }
+            else
+            {
+            	cerr << "not found keyword " << data.in.gen_structure << endl;
+            	exit(2);
+            }
         }
     }
 
@@ -144,67 +148,19 @@ int main(int argc, char* argv[]) // // $num of beads per edge, box dimensions X(
     //data.removeDuplicateBond();
 
     data.print();
-    cerr << data.in.out.type << endl;
 
-    for(int i=0; i<nano.size(); ++i)
-        delete nano[i];
+    //
+    // free memory
+    //
+    for (auto const& [key, val] : structure)
+    {
+         delete val;
+    }
 
+    //
+    // Report on the Final structure
+    //
     cerr << data.toString() << endl;
 
     return 0;
-}
-
-
-
-
-void helpMessage(vector<Particles*>& nano)
-{
-    cout << "./ico filename_1 filename_2" << endl;
-
-    cout << "\nGenerated structure types keyword is \"Particle_type: number\"" << endl;
-
-    for(int i=0; i< nano.size(); ++i)
-    {
-    	cout << i+1 << " is " << nano[i]->name << endl;
-    }
-
-    cout << "Keywords:" << endl;
-    cout << "Ouput/Input category:" << endl;
-    cout << "Output_type: 1 = Lammps" << endl;
-    cout << "             0 = XYZ" << endl;
-    cout << "Lammps_offset: integer" << endl;
-    cout << " - offset the generated structure for manual insertion into another lammps structure file" << endl;
-    cout << "Load_file: filename" << endl;
-
-
-    cout << "Num_of_beads: integer" << endl;
-    cout << " - Particle_type: 1,6,7 = number of beads per edge" << endl;
-    cout << " - other Particle_type = number of beads for entire nanoparticle/structure" << endl;
-    cout << "Scale: floating_point_number - nanoparticle radius" << endl;
-    cout << "c: float " << endl;
-    cout << " - Particle_type: 4 = oblate spheroid < 1, prolate spheroid > 1, 1.0 - ERROR, not defined" << endl;
-    cout << " - Particle_type: 3 = width of patch (0.0 to 2.0)" << endl;
-    cout << "Number_of_ligands: integer" << endl;
-    cout << "Mol_tag: integer" << endl;
-    cout << " - change mol_tag of generated/loaded structure " << endl;
-    cout << "Atom_type: integer" << endl;
-    cout << " - Atom_type of generated structure, if structure has more atom_types they are incremented from provided value " << endl;
-    cout << "Janus: float float float" << endl;
-
-    cout << "\nPosition/Box properties category:" << endl;
-    cout << "Box: float float float float float float" << endl;
-    cout << "position_shift: float float float" << endl;
-    cout << "Center = centers particles at 0.0" << endl;
-    cout << "Align: mol_tag_1 mol_tag_2 integer" << endl;
-    cout << " - align mol_tag_1 with x-axis" << endl;
-    cout << " - center mol_tag_2 around z axis" << endl;
-    cout << "Impact_vector: float float float" << endl;
-    cout << "Fit" << endl;
-    cout << " - positions the loaded/generated structure next to previosly generated/loadedd structure" << endl;
-    cout << " - used for ideal collision position of two liposomes and a nanoparticle" << endl;
-
-    cout << "\nForce-Field category:" << endl;
-    cout << "Beads_lj/cut:" << endl;
-
-    cout << "\nSeed: intege = radom generator" << endl;
 }

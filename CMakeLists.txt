@@ -5,7 +5,7 @@ project(ico)
 #   Compiler Flags
 # ------------------
 
-set (CMAKE_CXX_FLAGS " -O2 -march=native -std=c++11 -Wno-unused-parameter -Wno-sign-compare ")
+set (CMAKE_CXX_FLAGS " -O2 -march=native -std=c++17 -Wno-unused-parameter -Wno-sign-compare ")
 
 #add_subdirectory(xdrfile-1.1.4)
 

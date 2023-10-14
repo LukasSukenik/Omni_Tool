@@ -73,6 +73,7 @@ public:
     //
     Atom() : to_type(-1) {}
     Atom(myFloat x, myFloat y, myFloat z, int type=0): x(x), y(y), z(z), type(type), to_type(-1) {}
+    Atom(myFloat x, myFloat y, myFloat z, myFloat vx, myFloat vy, myFloat vz, int type=0): x(x), y(y), z(z), vx(vx), vy(vy), vz(vz), type(type), to_type(-1) {}
     Atom(myFloat x, myFloat y, myFloat z, int type, int mol_tag): x(x), y(y), z(z), type(type), mol_tag(mol_tag), to_type(-1) {}
 
     bool operator==(const Atom& o) const {

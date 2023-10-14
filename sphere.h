@@ -18,24 +18,25 @@ public:
     {
         vector<Atom> ligand;
         int nano_start = beads.size();
+        data.in.c=1.0;
 
         fibonacci_sphere( beads, data.in.num_of_beads, typeNano);
         fibonacci_sphere_z_distrib_linear( ligand, data.in.num_lig, data.in.c, typeTemp); // second fib. sphere
-        Atom patch = Atom(1,1,1,typeLig);
+        Atom patch = Atom(1,1,1,-1,-1,-1,typeLig);
+        data.in.c=1.0;
         gen_ligands( data, ligand, patch, typeNano); // find closest spheres on first fib. sphere and change their type
-
-
         beads.erase(beads.begin()+data.in.num_of_beads, beads.end()); // erase second fib sphere
 
         int nano_end = beads.size();
-        for(int i=nano_start; i<nano_end; ++i) {
-            beads[i] = ((beads[i]*data.in.scale) + data.in.com_pos);
-            beads[i].mol_tag = 2;
+        for(auto& atom : ligand)
+        {
+        	atom.mol_tag = data.in.mol_tag;
         }
     }
 
 
-    void fibonacci_sphere(vector<Atom>& container, int samples, int type, int mol_tag=0) {
+    void fibonacci_sphere(vector<Atom>& container, int samples, int type, int mol_tag=0)
+    {
         const double PI = 3.141592653589793;
         double offset = 2.0/samples;
         double increment = PI * (3.0 - sqrt(5.0));
@@ -54,14 +55,30 @@ public:
         }
     }
 
-    void move(Atom move) {
+    void move(Atom move)
+    {
         for(Atom& item : this->beads)
             item += move;
     }
 
-    void rescale(double rescale) {
+    void rescale(double rescale)
+    {
         for(Atom& item : this->beads)
             item *= rescale;
+    }
+
+    string help()
+    {
+    	stringstream ss;
+
+    	ss << "Particle_type: sphere\n";
+    	ss << "Output_type: pdb # other keywords: xyz pdb lammps_full\n";
+		ss << "Num_of_beads: 500\n";
+		ss << "Scale: 5.0\n";
+		ss << "Number_of_ligands: 50\n";
+		ss << "Mol_tag:: 2\n";
+
+    	return ss.str();
     }
 
 protected:    
@@ -93,7 +110,8 @@ protected:
      * @param samples
      * @param type
      */
-    void fibonacci_sphere_z_distrib_linear(vector<Atom>& container, int samples, double S, int type) {
+    void fibonacci_sphere_z_distrib_linear(vector<Atom>& container, int samples, double S, int type)
+    {
         const double PI = 3.141592653589793;
         double offset = 2.0/samples;
         double increment = PI * (3.0 - sqrt(5.0));
@@ -115,7 +133,8 @@ protected:
     }
 
 
-    void testDistribution() {
+    void testDistribution()
+    {
         int size = 20;
         int hist[size] = {0};
         for(int i=0; i<beads.size(); ++i) {
@@ -131,7 +150,8 @@ protected:
     }
 
 private:
-    double transform(double z, double param) {
+    double transform(double z, double param)
+    {
         if(z < 0)
             return -( param * pow(fabs(z), 0.5)) - (1-param);
         else

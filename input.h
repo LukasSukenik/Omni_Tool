@@ -141,6 +141,7 @@ public:
     Output out; /// Output type - none, pdb, lammps_full, xyz
 
     int nano_type;
+    string gen_structure;
 
     int num_of_beads;
     myFloat scale = 0.0;
@@ -182,7 +183,7 @@ public:
             ss.str(line);
 
             ss >> what;
-            if( what.compare("Particle_type:") == 0 )   { ss >> nano_type; }
+            if( what.compare("Particle_type:") == 0 )   { ss >> gen_structure; }
             if( what.compare("Output_type:") == 0 )     { ss >> out; }
             if( what.compare("Num_of_beads:") == 0 )    { ss >> num_of_beads; }
             if( what.compare("Scale:") == 0 )           { ss >> scale; }
@@ -278,6 +279,7 @@ public:
     void clear()
     {
         nano_type=-1;
+        gen_structure.clear();
         out.clear();
         num_of_beads=-1;
         scale=0.0;
@@ -304,6 +306,51 @@ public:
         bparam.clear();
         cparam.clear();
         types.clear();
+    }
+
+    void help()
+    {
+	    cout << "\nGenerated structure types keyword is \"Particle_type: number\"" << endl;
+
+	    cout << "Keywords:" << endl;
+	    cout << "Ouput/Input category:" << endl;
+	    cout << "Output_type: 1 = Lammps" << endl;
+	    cout << "             0 = XYZ" << endl;
+	    cout << "Lammps_offset: integer" << endl;
+	    cout << " - offset the generated structure for manual insertion into another lammps structure file" << endl;
+	    cout << "Load_file: filename" << endl;
+
+
+	    cout << "Num_of_beads: integer" << endl;
+	    cout << " - Particle_type: 1,6,7 = number of beads per edge" << endl;
+	    cout << " - other Particle_type = number of beads for entire nanoparticle/structure" << endl;
+	    cout << "Scale: floating_point_number - nanoparticle radius" << endl;
+	    cout << "c: float " << endl;
+	    cout << " - Particle_type: 4 = oblate spheroid < 1, prolate spheroid > 1, 1.0 - ERROR, not defined" << endl;
+	    cout << " - Particle_type: 3 = width of patch (0.0 to 2.0)" << endl;
+	    cout << "Number_of_ligands: integer" << endl;
+	    cout << "Mol_tag: integer" << endl;
+	    cout << " - change mol_tag of generated/loaded structure " << endl;
+	    cout << "Atom_type: integer" << endl;
+	    cout << " - Atom_type of generated structure, if structure has more atom_types they are incremented from provided value " << endl;
+	    cout << "Janus: float float float" << endl;
+
+	    cout << "\nPosition/Box properties category:" << endl;
+	    cout << "Box: float float float float float float" << endl;
+	    cout << "position_shift: float float float" << endl;
+	    cout << "Center = centers particles at 0.0" << endl;
+	    cout << "Align: mol_tag_1 mol_tag_2 integer" << endl;
+	    cout << " - align mol_tag_1 with x-axis" << endl;
+	    cout << " - center mol_tag_2 around z axis" << endl;
+	    cout << "Impact_vector: float float float" << endl;
+	    cout << "Fit" << endl;
+	    cout << " - positions the loaded/generated structure next to previosly generated/loadedd structure" << endl;
+	    cout << " - used for ideal collision position of two liposomes and a nanoparticle" << endl;
+
+	    cout << "\nForce-Field category:" << endl;
+	    cout << "Beads_lj/cut:" << endl;
+
+	    cout << "\nSeed: integer = random generator" << endl;
     }
 
     bool is_mtag_12()
