@@ -16,64 +16,9 @@
 #include <array>
 
 #include "atom.h"
+#include "force_field.h"
 
 using namespace std;
-
-
-
-
-/**
- * @brief The BeadParam class
- * Bead LJ parameters
- */
-class LJ {
-public:
-	LJ(){}
-	LJ(int type, double epsilon, double sigma, double cutoff) : type(type), epsilon(epsilon), sigma(sigma), cutoff(cutoff) {}
-
-    int type=-1;
-    double epsilon=1.0;
-    double sigma=1.0;
-    double cutoff=25.0;
-
-    string toString()
-    {
-        stringstream ss;
-        ss << type << " " << epsilon << " " << sigma << " " << cutoff << endl;
-        return ss.str();
-    }
-};
-
-class CosSQ {
-public:
-	CosSQ(){}
-	CosSQ(int type1, int type2, double epsilon, double start_dis, double range) : type1(type1), type2(type2), epsilon(epsilon), start_dis(start_dis), range(range){}
-
-    int type1;
-    int type2;
-    double epsilon;
-    double start_dis;
-    double range;
-
-    string toString()
-    {
-        stringstream ss;
-        ss << type1 << " " << type2 << " " << epsilon << " " << start_dis << " " << range << endl;
-        return ss.str();
-    }
-};
-
-
-
-
-class Force_Field
-{
-public:
-	Force_Field() {}
-
-	vector<LJ> lj;
-	vector<CosSQ> cos;
-};
 
 
 
@@ -90,6 +35,43 @@ public:
     myFloat zlo = 0.0;
     myFloat zhi = 0.0;
 
+    inline double volume() {
+        return (xhi-xlo)*(yhi-ylo)*(zhi-zlo);
+    }
+
+    Atom get_random_pos()
+    {
+    	Atom a;
+    	a.x = ran() * (xhi-xlo) + xlo;
+    	a.y = ran() * (yhi-ylo) + ylo;
+    	a.z = ran() * (zhi-zlo) + zlo;
+    	return a;
+    }
+
+    Atom usePBC(Atom& pos_orig, double scale) const {
+        Atom pos = pos_orig;
+
+        while (pos.x < 0.0) {
+            pos.x += xhi/scale;
+        }
+        while (pos.x > xhi/scale) {
+            pos.x -= xhi/scale;
+        }
+        while (pos.y < 0.0) {
+            pos.y += yhi/scale;
+        }
+        while (pos.y > yhi/scale) {
+            pos.y -= yhi/scale;
+        }
+        while (pos.z < 0.0) {
+            pos.z += zhi/scale;
+        }
+        while (pos.z > zhi/scale) {
+            pos.z -= zhi/scale;
+        }
+        return pos;
+    }
+
     friend std::istream& operator>>(std::istream& is, Simluation_Box& sim_box)
     {
     	is >> sim_box.xlo >> sim_box.xhi >> sim_box.ylo >> sim_box.yhi >> sim_box.zlo >> sim_box.zhi;
@@ -102,7 +84,6 @@ public:
         return os;
     }
 };
-
 
 
 
@@ -171,6 +152,55 @@ public:
 
 
 
+/**
+ * @brief Populate
+ * Defines the population of particles in the simulation box
+ */
+class Population
+{
+public:
+	Population(){}
+
+	bool random=false;
+	int count=0;
+
+	void clear()
+	{
+		random=false;
+		count=0;
+	}
+
+    friend std::ostream& operator<<(std::ostream& os, const Population& pop)
+    {
+    	if(pop.random)
+    	{
+    		os << pop.count << " random";
+    	}
+    	else
+    	{
+    		os << "not defined";
+    	}
+        return os;
+    }
+
+	friend std::istream& operator>>(std::istream& is, Population& pop)
+	{
+	    string str;
+	    is >> pop.count >> str;
+
+	    transform(str.begin(), str.end(), str.begin(), ::tolower);
+
+	    if (str == "random")
+	    {
+	    	pop.random = true;
+	    }
+
+	    return is;
+	}
+};
+
+
+
 
 /**
  * @brief The Input class - Parameters for particle generation
@@ -184,6 +214,7 @@ public:
     //
     Output out; /// Output type - none, pdb, lammps_full, xyz
     string gen_structure; /// keyword identifying the structure class
+    string infile; /// name of the filename with lammps_full atoms
 
     /// Transformation of the generated structure
     myFloat scale = 0.0;
@@ -193,34 +224,32 @@ public:
     // structure variables
     int num_of_beads=-1;
     int num_lig=-1;
-
-    //
-    // Persistent data
-    //
-    Simluation_Box sim_box;
-
-
-
-    int offset = 1;
-    int seed=0;
     myFloat c;
+    Atom patch_1 = Atom(1,1,1,0);
+    Atom patch_2 = Atom(1,1,1,0);
 
-    ///
     /// Atom Types
-    ///
     int chain_type=-1;
     int mol_tag=-1;
     int atom_type=1;
     int mtag_1=-1;
     int mtag_2=-1;
 
+    /// Population data
+    Population population;
+
+    //
+    // Persistent data
+    //
+    Simluation_Box sim_box;
+
+    int offset = 1;
+    int seed=0;
+
     Atom ivx = Atom(0.0, 0.0, 0.0);
     bool fit = false;
 
 
-    Atom patch_1 = Atom(1,1,1,0);
-    Atom patch_2 = Atom(1,1,1,0);
-    string infile;
 
     vector<LJ> bparam;
     vector<CosSQ> cparam;
@@ -241,27 +270,36 @@ public:
             ss.str(line);
 
             ss >> what;
-            if( what.compare("Particle_type:") == 0 )   { ss >> gen_structure; }
             if( what.compare("Output_type:") == 0 )     { ss >> out; }
-            if( what.compare("Num_of_beads:") == 0 )    { ss >> num_of_beads; }
-            if( what.compare("Scale:") == 0 )           { ss >> scale; }
-            if( what.compare("Lammps_offset:") == 0 )   { ss >> offset; }
-            if( what.compare("c:") == 0 )               { ss >> c; }
-            if( what.compare("Number_of_ligands:") == 0 ) { ss >> num_lig; }
-            if( what.compare("Chain_type:") == 0 ) { ss >> chain_type; }
-            if( what.compare("Box:") == 0 )             { ss >> sim_box; }
-            if( what.compare("Position_shift:") == 0 )  { ss >> com_pos.x >> com_pos.y >> com_pos.z; }
+            if( what.compare("Particle_type:") == 0 )   { ss >> gen_structure; }
             if( what.compare("Load_file:") == 0 )  { ss >> infile; }
+
+            if( what.compare("Scale:") == 0 )           { ss >> scale; }
             if( what.compare("Center") == 0 )  { center=true; }
+            if( what.compare("Position_shift:") == 0 )  { ss >> com_pos.x >> com_pos.y >> com_pos.z; }
+
+            if( what.compare("Num_of_beads:") == 0 )    { ss >> num_of_beads; }
+            if( what.compare("Number_of_ligands:") == 0 ) { ss >> num_lig; }
+            if( what.compare("c:") == 0 )               { ss >> c; }
+            if( what.compare("Patch_1:") == 0 )  		{ ss >> patch_1.vx >> patch_1.x >> patch_1.vy >> patch_1.y >> patch_1.vz >> patch_1.z >> patch_1.type; }
+            if( what.compare("Patch_2:") == 0 )  		{ ss >> patch_2.vx >> patch_2.x >> patch_2.vy >> patch_2.y >> patch_2.vz >> patch_2.z >> patch_2.type; }
+
+            if( what.compare("Chain_type:") == 0 ) 		{ ss >> chain_type; }
+            if( what.compare("Mol_tag:") == 0 ) 		{ ss >> mol_tag; }
+            if( what.compare("Atom_type:") == 0 ) 		{ ss >> atom_type; }
+            if( what.compare("Align:") == 0 )  			{ ss >> mtag_1 >> mtag_2; }
+
+            if( what.compare("Populate:") == 0 )  		{ ss >> population; }
+
+            if( what.compare("Sim_box:") == 0 )             { ss >> sim_box; }
+
             if( what.compare("Fit") == 0 )  { fit=true; }
-            if( what.compare("Align:") == 0 )  { ss >> mtag_1 >> mtag_2;  }
+
             if( what.compare("Impact_vector:") == 0 )  { ss >> ivx.x >> ivx.y >> ivx.z; }
-            if( what.compare("Patch_1:") == 0 )  { ss >> patch_1.vx >> patch_1.x >> patch_1.vy >> patch_1.y >> patch_1.vz >> patch_1.z >> patch_1.type; }
-            if( what.compare("Patch_2:") == 0 )  { ss >> patch_2.vx >> patch_2.x >> patch_2.vy >> patch_2.y >> patch_2.vz >> patch_2.z >> patch_2.type; }
+
             if( what.compare("Seed:") == 0 )  { ss >> seed; rng.seed(seed); }
 
-            if( what.compare("Mol_tag:") == 0 ) { ss >> mol_tag; }
-            if( what.compare("Atom_type:") == 0 ) { ss >> atom_type; }
+            if( what.compare("Lammps_offset:") == 0 )   { ss >> offset; }
 
             if( what.compare("Beads_lj/cut:") == 0 )
             {
@@ -318,6 +356,7 @@ public:
         ss << "Position: (" << com_pos.x << ", " << com_pos.y << ", " << com_pos.z << ")" << endl;
         ss << "Patch_1: (" << patch_1.x << "-" << patch_1.vx << ", " << patch_1.y << "-" << patch_1.vy << ", " << patch_1.z << "-" << patch_1.vz << ", " << patch_1.type << ")" << endl;
         ss << "Patch_1: (" << patch_2.x << ", " << patch_2.y << ", " << patch_2.z << ", " << patch_2.type << ")" << endl;
+        ss << "Populate: " << population << endl;
 
         ss << "Beads_lj/cut:" << endl;
         for(auto i : bparam)
@@ -351,12 +390,12 @@ public:
         mtag_1=-1;
         mtag_2=-1;
 
-
         com_pos=Atom(0.0, 0.0, 0.0);
         patch_1=Atom(1,1,1,0);
         patch_2=Atom(1,1,1,0);
         ivx=Atom(0.0, 0.0, 0.0);
 
+        population.clear();
         infile.clear();
         bparam.clear();
         cparam.clear();
@@ -411,23 +450,12 @@ public:
 
     bool is_mol_tag()
     {
-        if(mol_tag == -1)
-            return false;
-        return true;
-    }
-
-    bool isCOM_pos()
-    {
-        if(com_pos.x == 0.0 && com_pos.y == 0.0 && com_pos.z == 0.0)
-            return false;
-        return true;
+    	return (mol_tag != -1);
     }
 
     bool isScale()
     {
-        if(scale == 0.0)
-            return false;
-        return true;
+        return (scale != 0.0);
     }
 };
 

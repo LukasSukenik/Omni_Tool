@@ -11,18 +11,14 @@ double ran() {
     return unif(rng);
 }
 
+
+
+
 class Quat{
 public:
     myFloat w,x,y,z;
 
     Quat(myFloat w,myFloat x, myFloat y, myFloat z): w(w), x(x), y(y), z(z) {}
-};
-
-class Angle {
-public:
-    Angle() : N(-1), type(-1), at1(-1), at2(-1), at3(-1) {}
-    Angle(int N, int type, int at1, int at2, int at3) : N(N), type(type), at1(at1), at2(at2), at3(at3) {}
-    int N, type, at1, at2, at3;
 };
 
 
@@ -241,12 +237,143 @@ public:
 };
 
 
+
+
 bool isAproxSame(const myFloat& a, const myFloat& b, myFloat approx = 0.000001) {
     return (a < b+approx && a > b - approx);
 }
 
 
+
+
 bool myfunction (Atom i,Atom j) { return (i.size()<j.size()); }
 
+
+
+
+class Atoms : public vector< Atom >
+{
+public:
+	void set_mol_tag(int mtag)
+	{
+	    for(Atom& item : (*this))
+	        item.mol_tag = mtag;
+	}
+
+    void move(Atom move)
+    {
+        for(Atom& item : (*this))
+            item += move;
+    }
+
+    void scale(double scale)
+    {
+        for(Atom& item : (*this))
+            item *= scale;
+    }
+
+    int getMaxMolTag()
+    {
+        int max=0;
+        for(auto& a : (*this))
+        {
+            if(a.mol_tag > max)
+            {
+                max = a.mol_tag;
+            }
+        }
+        return max;
+    }
+
+    bool is_overlap(Atoms other)
+    {
+    	for(Atom& a : (*this))
+    	{
+    		for(Atom& o : other)
+    		{
+    			if(a.distSQ(o) < 1.0)
+    				return true;
+    		}
+    	}
+    	return false;
+    }
+
+    static Atom clusterCM(vector<Atom>& cluster) {
+
+        Atom cluscm(0.0, 0.0, 0.0);
+
+        for(unsigned int i=0; i<cluster.size(); i++) {
+            cluscm.x += cluster[i].x;
+            cluscm.y += cluster[i].y;
+            cluscm.z += cluster[i].z;
+        }
+
+        cluscm.x /= cluster.size();
+        cluscm.y /= cluster.size();
+        cluscm.z /= cluster.size();
+
+        return cluscm;
+    }
+
+    static void clusterRotate(vector<Atom>& cluster, double angle, Atom axis) {
+        double vc,vs;
+
+        Atom cluscm = clusterCM(cluster);
+
+        axis.normalise();
+
+        vc = cos( angle );
+        vs = sqrt(1.0 - vc*vc);
+
+        Quat newquat(vc, axis.x*vs, axis.y*vs, axis.z*vs);
+
+        //quatsize=sqrt(newquat.w*newquat.w+newquat.x*newquat.x+newquat.y*newquat.y+newquat.z*newquat.z);
+
+        //shift position to geometrical center
+        for(unsigned int i=0; i<cluster.size(); ++i) {
+            //shift position to geometrical center
+            cluster[i].x -= cluscm.x;
+            cluster[i].y -= cluscm.y;
+            cluster[i].z -= cluscm.z;
+            //do rotation
+            cluster[i].rotate(newquat);
+            //shift positions back
+            cluster[i].x += cluscm.x;
+            cluster[i].y += cluscm.y;
+            cluster[i].z += cluscm.z;
+        }
+    }
+
+    static void clusterRotate_random(vector<Atom>& cluster, double max_angle) {
+        double vc,vs;
+        Atom newaxis;
+
+        Atom cluscm = clusterCM(cluster);
+
+        // create rotation quaternion
+        newaxis.randomUnitSphere(); // random axes for rotation
+        vc = cos(max_angle * ( 0.0001 * (rand()%10000) ) );
+        if (( 0.0001 * (rand()%10000) ) <0.5) vs = sqrt(1.0 - vc*vc);
+        else vs = -sqrt(1.0 - vc*vc); // randomly choose orientation of direction of rotation clockwise or counterclockwise
+
+        Quat newquat(vc, newaxis.x*vs, newaxis.y*vs, newaxis.z*vs);
+
+        //quatsize=sqrt(newquat.w*newquat.w+newquat.x*newquat.x+newquat.y*newquat.y+newquat.z*newquat.z);
+
+        //shift position to geometrical center
+        for(unsigned int i=0; i<cluster.size(); ++i) {
+            //shift position to geometrical center
+            cluster[i].x -= cluscm.x;
+            cluster[i].y -= cluscm.y;
+            cluster[i].z -= cluscm.z;
+            //do rotation
+            cluster[i].rotate(newquat);
+            //shift positions back
+            cluster[i].x += cluscm.x;
+            cluster[i].y += cluscm.y;
+            cluster[i].z += cluscm.z;
+        }
+    }
+};
 
 #endif // VECTOR_H

@@ -36,29 +36,7 @@ bool sortN(const Atom& i, const Atom& j) {
     return i.N < j.N;
 }
 
-class Atoms : public vector< Atom >
-{
-public:
-    void move(Atom move)
-    {
-        for(Atom& item : (*this))
-            item += move;
-        cerr << "move " << move.x << " " << move.y << " " << move.z << " done" << endl;
-    }
 
-    int getMaxMolTag()
-    {
-        int max=0;
-        for(auto& a : (*this))
-        {
-            if(a.mol_tag > max)
-            {
-                max = a.mol_tag;
-            }
-        }
-        return max;
-    }
-};
 
 /**
  * @brief The Data class - Generated data from class particle
@@ -72,6 +50,7 @@ public:
 	Atoms all_beads;
     Bonds all_bonds;
     vector<Angle> all_angles;
+
     vector<LJ> all_bparam;
     vector<CosSQ> all_cparam;
 
@@ -91,14 +70,7 @@ public:
     //
     vector<My_string > file_head;
 
-    double box[6] = {0}; // box
-
-    myFloat x_min = 0.0;
-    myFloat x_max = 0.0;
-    myFloat y_min = 0.0;
-    myFloat y_max = 0.0;
-    myFloat z_min = 0.0;
-    myFloat z_max = 0.0;
+    Simluation_Box box;
 
     bool first_file=true;
 
@@ -127,6 +99,7 @@ public:
     void move(Atom move)
     {
     	temp_beads.move(move);
+    	cerr << "move " << move.x << " " << move.y << " " << move.z << " done" << endl;
     }
 
     /**
@@ -431,11 +404,13 @@ public:
         }
     }
 
-    void rescale(double rescale)
+    void scale(double scale)
     {
-        for(Atom& item : temp_beads)
-            item *= rescale;
-        cerr << "rescale " << rescale << " done" << endl;
+    	if(in.scale != 0.0)
+    	{
+    		temp_beads.scale(scale);
+    	}
+    	cerr << "scale " << scale << " done" << endl;
     }
 
     bool loadInput(string input)
@@ -778,15 +753,9 @@ public:
         // Print Box
         //
         cout << "\n";
-        if( in.sim_box.xlo != 0.0 ) {
-            cout << in.sim_box.xlo << " " << in.sim_box.xhi << " xlo xhi\n";
-            cout << in.sim_box.ylo << " " << in.sim_box.yhi << " ylo yhi\n";
-            cout << in.sim_box.zlo << " " << in.sim_box.zhi << " zlo zhi\n";
-        } else {
-            cout << ( box[0]-((x_min+x_max)/2.0) ) << " " << ( box[1]-((x_min+x_max)/2.0) ) << " xlo xhi\n";
-            cout << ( box[2]-((x_min+x_max)/2.0) ) << " " << ( box[3]-((x_min+x_max)/2.0) ) << " ylo yhi\n";
-            cout << box[4] << " " << box[5] << " zlo zhi\n";
-        }
+        cout << in.sim_box.xlo << " " << in.sim_box.xhi << " xlo xhi\n";
+        cout << in.sim_box.ylo << " " << in.sim_box.yhi << " ylo yhi\n";
+        cout << in.sim_box.zlo << " " << in.sim_box.zhi << " zlo zhi\n";
 
         //
         // Print Masses
@@ -919,19 +888,19 @@ void Data::loadBox()
         //cout << file_head[i].str << endl;
         if(strstr(file_head[i].str, "xlo xhi") != nullptr) {
             str << file_head[i].str;
-            str >> box[0] >> box[1];
+            str >> box.xlo >> box.xhi;
             continue;
         }
 
         if(strstr(file_head[i].str, "ylo yhi") != nullptr) {
             str2 << file_head[i].str;
-            str2 >> box[2] >> box[3];
+            str2 >> box.ylo >> box.yhi;
             continue;
         }
 
         if(strstr(file_head[i].str, "zlo zhi") != nullptr) {
             str3 << file_head[i].str;
-            str3 >> box[4] >> box[5];
+            str3 >> box.zlo >> box.zhi;
             continue;
         }
     }

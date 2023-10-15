@@ -100,16 +100,15 @@ int main(int argc, char* argv[]) // // $num of beads per edge, box dimensions X(
         if( data.isDefined() )
         {
             data.load(data.in.infile);      // Load Data from file "data.in.infile"
+            data.scale(data.in.scale);    // Rescale atom positions by data.in.scale
+            data.move(data.in.com_pos);     // Move by vector defined in input file
 
-            if(data.in.isScale())
-                data.rescale(data.in.scale);    // Rescale atom positions by data.in.scale - usually 1
-            if(data.in.isCOM_pos())
-                data.move(data.in.com_pos);     // Move by vector defined in input file
             if(data.in.is_mol_tag())
                 data.mol_tag(data.in.mol_tag);  // Change mol_tag of all particles to one set by input
             if(data.in.is_mtag_12())
                 data.align(data.in.mtag_1, data.in.mtag_2); // align mol_tag particles in z axis and XY plane
 
+            // if generating into an existing structure that you did not load, give the number of particles as offset
             data.offset(data.all_beads.size());
 
             if( data.in.fit )
@@ -128,10 +127,10 @@ int main(int argc, char* argv[]) // // $num of beads per edge, box dimensions X(
             if(structure.count(data.in.gen_structure) > 0)
             {
                 cerr << "Generating: " << structure[ data.in.gen_structure ]->name << endl;
-
 				structure[ data.in.gen_structure ]->generate( data );
-                structure[ data.in.gen_structure ]->rescale( data.in.scale );
+                structure[ data.in.gen_structure ]->scale( data.in.scale );
                 structure[ data.in.gen_structure ]->move( data.in.com_pos );
+                structure[ data.in.gen_structure ]->populate( data );
                 structure[ data.in.gen_structure ]->add(data); // particle data
             }
             else

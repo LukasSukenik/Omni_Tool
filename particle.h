@@ -21,45 +21,6 @@
 
 using namespace std;
 
-/**
- * @brief The Cuboid class - Represents standart simulation box - orthogonal with PBC
- */
-class Cuboid {
-public:
-    Atom box; // starts at 0
-
-    Cuboid() {}
-    Cuboid(Atom box) : box(box) {}
-
-    inline double volume() {
-        return box.x*box.y*box.z;
-    }
-
-    Atom usePBC(Atom& pos_orig, double scale) const {
-        Atom pos = pos_orig;
-
-        while (pos.x < 0.0) {
-            pos.x += box.x/scale;
-        }
-        while (pos.x > box.x/scale) {
-            pos.x -= box.x/scale;
-        }
-        while (pos.y < 0.0) {
-            pos.y += box.y/scale;
-        }
-        while (pos.y > box.y/scale) {
-            pos.y -= box.y/scale;
-        }
-        while (pos.z < 0.0) {
-            pos.z += box.z/scale;
-        }
-        while (pos.z > box.z/scale) {
-            pos.z -= box.z/scale;
-        }
-        return pos;
-    }
-};
-
 
 
 
@@ -71,12 +32,13 @@ public:
     inline static const string keyword = "Abstract class of Particle";
     const string name = "Abstract class of Particle";
 
-    Cuboid pbc;
+    Simluation_Box box;
+
     const double degToRad = 0.0174532925;
 
     /// Local data for structure, need to save to Data class for output
-    vector<Atom> beads;
-    vector< Bond > bonds;
+    Atoms beads;
+    Bonds bonds;
     vector<Angle> angles;
     vector<LJ> bparam;
 
@@ -110,34 +72,54 @@ public:
      */
     virtual void generate( Data& data )=0;
 
-    void printSigma()
+    void populate(Data& data)
     {
-        cerr << "printSigma:" << endl;
-        for(unsigned int i=0; i<sigma_size; ++i)
-        {
-            cerr << "[" << i+1 << "][" << i+1 << "] = "  << sigma[i][i] << endl;
-        }
-    }
+    	Atoms copy(beads);
+    	beads.clear();
+    	Atoms temp;
+    	Atom com_pos;
 
-    void printSigma(int j)
-    {
-        cerr << "printSigma type " << j << ":" << endl;
-        for(unsigned int i=0; i<sigma_size; ++i)
-        {
-            cerr << "[" << j+1 << "][" << i+1 << "] = "  << sigma[j][i] << " == " << sigma[i][j] << endl;
-        }
+    	if( data.in.population.random )
+    	{
+    		for(int i=0; i < data.in.population.count; ++i)
+    		{
+    			com_pos = data.in.sim_box.get_random_pos();
+    			temp = copy;
+    			temp.move(com_pos);
+
+    			int tries=0;
+    			while( beads.is_overlap(temp) )
+    			{
+    				com_pos = data.in.sim_box.get_random_pos();
+    				temp = copy;
+    				temp.move(com_pos);
+
+    				if(tries > 1000)
+    				{
+    					cerr << "Can't generate any more particles, simulation box is full, tries " << tries << endl;
+    					exit(3);
+    				}
+    				++tries;
+    			}
+
+    			temp.set_mol_tag(i+1);
+    			beads.insert( beads.end(), temp.begin(), temp.end() );
+    			cerr << "Generating population, particle " << i << " of " << data.in.population.count << ", successful on try " << tries << endl;
+    		}
+    	}
+    	cerr << "populate " << data.in.population << endl;
     }
 
     void move(Atom move)
     {
-        for(Atom& item : this->beads)
-            item += move;
+    	beads.move(move);
+    	cerr << "move " << move.x << " " << move.y << " " << move.z << endl;
     }
 
-    void rescale(double rescale)
+    void scale(double scale)
     {
-        for(Atom& item : this->beads)
-            item *= rescale;
+    	beads.scale(scale);
+    	cerr << "scale " << scale << endl;
     }
 
     bool isSame (vector<Atom>& container, Atom& push)
@@ -178,85 +160,6 @@ public:
         }
     }
 
-
-    void clusterRotate_random(vector<Atom>& cluster, double max_angle) {
-        double vc,vs;
-        Atom newaxis;
-
-        Atom cluscm = clusterCM(cluster);
-
-        // create rotation quaternion
-        newaxis.randomUnitSphere(); // random axes for rotation
-        vc = cos(max_angle * ( 0.0001 * (rand()%10000) ) );
-        if (( 0.0001 * (rand()%10000) ) <0.5) vs = sqrt(1.0 - vc*vc);
-        else vs = -sqrt(1.0 - vc*vc); // randomly choose orientation of direction of rotation clockwise or counterclockwise
-
-        Quat newquat(vc, newaxis.x*vs, newaxis.y*vs, newaxis.z*vs);
-
-        //quatsize=sqrt(newquat.w*newquat.w+newquat.x*newquat.x+newquat.y*newquat.y+newquat.z*newquat.z);
-
-        //shift position to geometrical center
-        for(unsigned int i=0; i<cluster.size(); ++i) {
-            //shift position to geometrical center
-            cluster[i].x -= cluscm.x;
-            cluster[i].y -= cluscm.y;
-            cluster[i].z -= cluscm.z;
-            //do rotation
-            cluster[i].rotate(newquat);
-            //shift positions back
-            cluster[i].x += cluscm.x;
-            cluster[i].y += cluscm.y;
-            cluster[i].z += cluscm.z;
-        }
-    }
-
-    void clusterRotate(vector<Atom>& cluster, double angle, Atom axis) {
-        double vc,vs;
-
-        Atom cluscm = clusterCM(cluster);
-
-        axis.normalise();
-
-        vc = cos( angle );
-        vs = sqrt(1.0 - vc*vc);
-
-        Quat newquat(vc, axis.x*vs, axis.y*vs, axis.z*vs);
-
-        //quatsize=sqrt(newquat.w*newquat.w+newquat.x*newquat.x+newquat.y*newquat.y+newquat.z*newquat.z);
-
-        //shift position to geometrical center
-        for(unsigned int i=0; i<cluster.size(); ++i) {
-            //shift position to geometrical center
-            cluster[i].x -= cluscm.x;
-            cluster[i].y -= cluscm.y;
-            cluster[i].z -= cluscm.z;
-            //do rotation
-            cluster[i].rotate(newquat);
-            //shift positions back
-            cluster[i].x += cluscm.x;
-            cluster[i].y += cluscm.y;
-            cluster[i].z += cluscm.z;
-        }
-    }
-
-
-    Atom clusterCM(vector<Atom>& cluster) {
-
-        Atom cluscm(0.0, 0.0, 0.0);
-
-        for(unsigned int i=0; i<cluster.size(); i++) {
-            cluscm.x += cluster[i].x;
-            cluscm.y += cluster[i].y;
-            cluscm.z += cluster[i].z;
-        }
-
-        cluscm.x /= cluster.size();
-        cluscm.y /= cluster.size();
-        cluscm.z /= cluster.size();
-
-        return cluscm;
-    }
-
     virtual string help()
     {
     	stringstream ss;
@@ -264,6 +167,24 @@ public:
     	ss << "Contains functions intended for inheritance\n";
     	ss << "Does not generate anything\n";
     	return ss.str();
+    }
+
+    void printSigma()
+    {
+        cerr << "printSigma:" << endl;
+        for(unsigned int i=0; i<sigma_size; ++i)
+        {
+            cerr << "[" << i+1 << "][" << i+1 << "] = "  << sigma[i][i] << endl;
+        }
+    }
+
+    void printSigma(int j)
+    {
+        cerr << "printSigma type " << j << ":" << endl;
+        for(unsigned int i=0; i<sigma_size; ++i)
+        {
+            cerr << "[" << j+1 << "][" << i+1 << "] = "  << sigma[j][i] << " == " << sigma[i][j] << endl;
+        }
     }
 };
 

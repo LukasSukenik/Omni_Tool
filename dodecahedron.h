@@ -38,9 +38,7 @@ public:
         // LOAD DATA
         this->size = data.in.num_of_beads;
         this->c = data.in.c;
-        this->pbc.box.x = data.in.sim_box.xhi - data.in.sim_box.xlo;
-        this->pbc.box.y = data.in.sim_box.yhi - data.in.sim_box.ylo;
-        this->pbc.box.z = data.in.sim_box.zhi - data.in.sim_box.zlo;
+        this->box = data.in.sim_box;
         this->offset = data.all_beads.size();
 
         init(size);// set shift, fscale
@@ -684,7 +682,7 @@ private:
         temp.resize( particles.size() );
         // Random translate
         int q=0;
-        myFloat box_len = pbc.box.x / scale;
+        myFloat box_len = (box.xhi-box.xlo) / scale;
 
         bool clash = true;
         while(clash) {
@@ -700,10 +698,10 @@ private:
                 temp[i].mol_tag = particles[i].mol_tag;
             }
 
-            clusterRotate_random(temp, 180);
+            Atoms::clusterRotate_random(temp, 180);
 
             for(int i=0; i< temp.size(); ++i) {
-                temp[i] = pbc.usePBC( temp[i], scale );
+                temp[i] = box.usePBC( temp[i], scale );
             }
 
             clash = false;

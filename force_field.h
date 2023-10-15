@@ -55,4 +55,70 @@ public:
     }
 };
 
+
+
+
+class Angle {
+public:
+    Angle() : N(-1), type(-1), at1(-1), at2(-1), at3(-1) {}
+    Angle(int N, int type, int at1, int at2, int at3) : N(N), type(type), at1(at1), at2(at2), at3(at3) {}
+    int N, type, at1, at2, at3;
+};
+
+
+
+
+/**
+ * @brief The BeadParam class
+ * Bead LJ parameters
+ */
+class LJ {
+public:
+	LJ(){}
+	LJ(int type, double epsilon, double sigma, double cutoff) : type(type), epsilon(epsilon), sigma(sigma), cutoff(cutoff) {}
+
+    int type=-1;
+    double epsilon=1.0;
+    double sigma=1.0;
+    double cutoff=25.0;
+
+    string toString()
+    {
+        stringstream ss;
+        ss << type << " " << epsilon << " " << sigma << " " << cutoff << endl;
+        return ss.str();
+    }
+};
+
+class CosSQ {
+public:
+	CosSQ(){}
+	CosSQ(int type1, int type2, double epsilon, double start_dis, double range) : type1(type1), type2(type2), epsilon(epsilon), start_dis(start_dis), range(range){}
+
+    int type1;
+    int type2;
+    double epsilon;
+    double start_dis;
+    double range;
+
+    string toString()
+    {
+        stringstream ss;
+        ss << type1 << " " << type2 << " " << epsilon << " " << start_dis << " " << range << endl;
+        return ss.str();
+    }
+};
+
+
+
+
+class Force_Field
+{
+public:
+	Force_Field() {}
+
+	vector<LJ> lj;
+	vector<CosSQ> cos;
+};
+
 #endif // FORCE_FIELD_H
