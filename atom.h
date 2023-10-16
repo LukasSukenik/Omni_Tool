@@ -4,7 +4,7 @@
 #include <string>
 
 #include "rng.h"
-
+#include "force_field.h"
 
 
 double ran() {
@@ -285,13 +285,13 @@ public:
         return max;
     }
 
-    bool is_overlap(Atoms other)
+    bool is_overlap(Atoms other, Force_Field ff)
     {
     	for(Atom& a : (*this))
     	{
     		for(Atom& o : other)
     		{
-    			if(a.distSQ(o) < 1.0)
+                if(a.distSQ(o) < ff.get_cutoff(a.type, o.type)*ff.get_cutoff(a.type, o.type))
     				return true;
     		}
     	}

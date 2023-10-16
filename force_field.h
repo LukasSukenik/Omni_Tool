@@ -1,8 +1,10 @@
 #ifndef FORCE_FIELD_H
 #define FORCE_FIELD_H
 
+#include <sstream>
 #include <vector>
 #include <string>
+#include <iostream>
 
 using namespace std;
 
@@ -82,30 +84,42 @@ public:
     double sigma=1.0;
     double cutoff=25.0;
 
-    string toString()
+    friend std::ostream& operator<<(std::ostream& os, const LJ& lj)
     {
-        stringstream ss;
-        ss << type << " " << epsilon << " " << sigma << " " << cutoff << endl;
-        return ss.str();
+        os << lj.type << " " << lj.epsilon << " " << lj.sigma << " " << lj.cutoff;
+        return os;
+    }
+
+    friend std::istream& operator>>(std::istream& is, LJ& lj)
+    {
+        is >> lj.type >> lj.epsilon >> lj.sigma >> lj.cutoff;
+        return is;
     }
 };
 
 class CosSQ {
 public:
 	CosSQ(){}
+    CosSQ(int type, double epsilon, double start_dis, double range) : type(type), epsilon(epsilon), start_dis(start_dis), range(range) {}
 	CosSQ(int type1, int type2, double epsilon, double start_dis, double range) : type1(type1), type2(type2), epsilon(epsilon), start_dis(start_dis), range(range){}
 
+    int type=-1;
     int type1;
     int type2;
-    double epsilon;
-    double start_dis;
-    double range;
+    double epsilon=1.0;
+    double start_dis=1.0;
+    double range=1.0;
 
-    string toString()
+    friend std::ostream& operator<<(std::ostream& os, const CosSQ& cos)
     {
-        stringstream ss;
-        ss << type1 << " " << type2 << " " << epsilon << " " << start_dis << " " << range << endl;
-        return ss.str();
+        os << cos.type << " " << cos.epsilon << " " << cos.start_dis << " " << cos.range;
+        return os;
+    }
+
+    friend std::istream& operator>>(std::istream& is, CosSQ& cos)
+    {
+        is >> cos.type >> cos.epsilon >> cos.start_dis >> cos.range;
+        return is;
     }
 };
 
@@ -115,10 +129,34 @@ public:
 class Force_Field
 {
 public:
-	Force_Field() {}
+    Force_Field() {
+        lj.push_back(LJ(0,0,0,0)); // Types for lammps start at 1, but in c++ array starts at 0, so we fill the 0 position
+        cos.push_back(CosSQ(0,0,0,0));
+    }
 
+    vector<int> types;
 	vector<LJ> lj;
 	vector<CosSQ> cos;
+
+    double get_cutoff(int type1, int type2)
+    {
+        //cerr << type1 << ":" << type2 << " = " << 0.5 * ( lj[type1].sigma + lj[type2].sigma ) << endl;
+        return ( lj[type1].sigma + lj[type2].sigma );
+    }
+
+    friend std::ostream& operator<<(std::ostream& os, const Force_Field& ff)
+    {
+        os << "\n";
+        for(int i = 1; i < ff.lj.size(); ++i)
+        {
+            os << "LJ" << i << ": " << ff.lj[i] << "\n";
+        }
+        for(int i = 1; i < ff.cos.size(); ++i)
+        {
+            os << "CosSQ" << i << ": " << ff.cos[i] << "\n";
+        }
+        return os;
+    }
 };
 
 #endif // FORCE_FIELD_H

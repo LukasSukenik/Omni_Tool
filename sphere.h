@@ -21,10 +21,13 @@ public:
         data.in.c=1.0;
 
         fibonacci_sphere( beads, data.in.num_of_beads, typeNano);
-        fibonacci_sphere_z_distrib_linear( ligand, data.in.num_lig, data.in.c, typeTemp); // second fib. sphere
-        Atom patch = Atom(1,1,1,-1,-1,-1,typeLig);
-        data.in.c=1.0;
-        gen_ligands( data, ligand, patch, typeNano); // find closest spheres on first fib. sphere and change their type
+        fibonacci_sphere_z_distrib_linear( ligand, data.in.num_lig, data.in.c, typeTemp); // second fib.
+
+        for(auto& patch : data.in.patches)
+        {
+            gen_ligands_2( data, ligand, patch, typeNano); // find closest spheres on first fib. sphere and change their type
+        }
+
         beads.erase(beads.begin()+data.in.num_of_beads, beads.end()); // erase second fib sphere
 
         int nano_end = beads.size();
@@ -76,7 +79,7 @@ public:
 		ss << "Num_of_beads: 500\n";
 		ss << "Scale: 5.0\n";
 		ss << "Number_of_ligands: 50\n";
-		ss << "Mol_tag:: 2\n";
+        ss << "Mol_tag: 2\n";
 
     	return ss.str();
     }
@@ -91,6 +94,27 @@ protected:
                lig.z < patch.z && lig.z > patch.vz)
             {
                 Atom* select = &beads[0]; // Stupid C++, for some reason reference dont work
+                for(auto& item : beads)
+                {
+                    if(select->dist(lig) > item.dist(lig) && item.type == type_from )
+                    {
+                        select = &item;
+                    }
+                }
+                if( select->type == type_from )
+                    select->type = patch.type;
+            }
+        }
+    }
+
+    void gen_ligands_2( Data& data, vector<Atom>& ligand, Atom patch, int type_from, int type_temp=-1)
+    {
+        for(auto& lig : ligand)
+        {
+            // plane equation a*x-x_coord + ... > 0
+            if( (patch.x*(lig.x - patch.vx)) + (patch.y*(lig.y - patch.vy)) + (patch.z*(lig.z - patch.vz)) > 0 )
+            {
+                Atom* select = &beads[0];
                 for(auto& item : beads)
                 {
                     if(select->dist(lig) > item.dist(lig) && item.type == type_from )

@@ -74,13 +74,13 @@ public:
 
     void populate(Data& data)
     {
-    	Atoms copy(beads);
-    	beads.clear();
-    	Atoms temp;
-    	Atom com_pos;
-
     	if( data.in.population.random )
     	{
+            Atoms copy(beads);
+            beads.clear();
+            Atoms temp;
+            Atom com_pos;
+
     		for(int i=0; i < data.in.population.count; ++i)
     		{
     			com_pos = data.in.sim_box.get_random_pos();
@@ -88,7 +88,7 @@ public:
     			temp.move(com_pos);
 
     			int tries=0;
-    			while( beads.is_overlap(temp) )
+                while( beads.is_overlap(temp, data.in.ff) )
     			{
     				com_pos = data.in.sim_box.get_random_pos();
     				temp = copy;

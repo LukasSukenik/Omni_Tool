@@ -14,31 +14,15 @@ SOURCES += main.cpp \
     xdrfile-1.1.4/src/xdrfile_xtc.c
 
 HEADERS += \
+    atom.h \
+    chain.h \
+    cow.h \
+    data.h \
+    dodecahedron.h \
+    force_field.h \
+    globular_sphere.h \
+    icosahedron.h \
     input.h \
-    particle.h \
-    icosahedron.h \
-    oblatespheroid.h \
-    sphere.h \
-    tennisball.h \
-    spherepatch.h \
-    pentamer.h \
-    dodecahedron.h \
-    surface.h \
-    chain.h \
-    data.h \
-    slab.h \
-    atom.h \
-    cow.h \
-    rng.h \
-    xdrfile-1.1.4/include/xdrfile.h \
-    xdrfile-1.1.4/include/xdrfile_trr.h \
-    xdrfile-1.1.4/include/xdrfile_xtc.h \
-    atom.h \
-    chain.h \
-    cow.h \
-    data.h \
-    dodecahedron.h \
-    icosahedron.h \
     oblatespheroid.h \
     particle.h \
     pentamer.h \
@@ -49,5 +33,10 @@ HEADERS += \
     surface.h \
     tennisball.h \
     xtcanalysis.h \
-    welford.h
+    welford.h \
+    xdrfile-1.1.4/include/xdrfile.h \
+    xdrfile-1.1.4/include/xdrfile_trr.h \
+    xdrfile-1.1.4/include/xdrfile_xtc.h
+
+
 

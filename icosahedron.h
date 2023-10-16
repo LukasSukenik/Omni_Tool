@@ -60,7 +60,7 @@ public:
         //bparam.push_back();
         molTag_offset = data.getMaxMolTag();
         offset = data.all_beads.size();
-        this->types = data.in.types;
+        this->types = data.in.ff.types;
         ligandModulo = data.in.num_lig;
 
         this->icoFrame( data.in.num_of_beads, data.in.scale, data.in.com_pos); // generate icosahedron

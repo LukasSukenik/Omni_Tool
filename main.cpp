@@ -8,6 +8,7 @@
 #include "dodecahedron.h"
 #include "chain.h"
 #include "slab.h"
+#include "globular_sphere.h"
 
 #include <iostream>
 #include <fstream>
@@ -70,6 +71,7 @@ int main(int argc, char* argv[]) // // $num of beads per edge, box dimensions X(
     structure[NettedSlab::keyword] = new NettedSlab();
     structure[SphereJanus::keyword] = new SphereJanus();
     structure[Cow::keyword] = new Cow();
+    structure[Globular_Sphere::keyword] = new Globular_Sphere();
 
     //
     // Input safeguard
@@ -159,7 +161,14 @@ int main(int argc, char* argv[]) // // $num of beads per edge, box dimensions X(
     //
     // Report on the Final structure
     //
-    cerr << data.toString() << endl;
+    if(data.all_beads.empty())
+    {
+        cerr << "!!! Nothing generated !!!" << endl;
+    }
+    else
+    {
+        cerr << data.toString() << endl;
+    }
 
     return 0;
 }

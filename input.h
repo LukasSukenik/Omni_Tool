@@ -225,8 +225,9 @@ public:
     int num_of_beads=-1;
     int num_lig=-1;
     myFloat c;
-    Atom patch_1 = Atom(1,1,1,0);
-    Atom patch_2 = Atom(1,1,1,0);
+    vector<Atom> patches;
+    Atom patch_1 = Atom(0,0,0,0);
+    Atom patch_2 = Atom(0,0,0,0);
 
     /// Atom Types
     int chain_type=-1;
@@ -238,22 +239,22 @@ public:
     /// Population data
     Population population;
 
+    int seed=0;
+
     //
     // Persistent data
     //
     Simluation_Box sim_box;
 
-    int offset = 1;
-    int seed=0;
-
     Atom ivx = Atom(0.0, 0.0, 0.0);
     bool fit = false;
 
+    int offset = 1;
 
-
+    // Force-Field
+    Force_Field ff;
     vector<LJ> bparam;
     vector<CosSQ> cparam;
-    vector<int> types;
 
     bool loadInput(string input)
     {
@@ -281,8 +282,8 @@ public:
             if( what.compare("Num_of_beads:") == 0 )    { ss >> num_of_beads; }
             if( what.compare("Number_of_ligands:") == 0 ) { ss >> num_lig; }
             if( what.compare("c:") == 0 )               { ss >> c; }
-            if( what.compare("Patch_1:") == 0 )  		{ ss >> patch_1.vx >> patch_1.x >> patch_1.vy >> patch_1.y >> patch_1.vz >> patch_1.z >> patch_1.type; }
-            if( what.compare("Patch_2:") == 0 )  		{ ss >> patch_2.vx >> patch_2.x >> patch_2.vy >> patch_2.y >> patch_2.vz >> patch_2.z >> patch_2.type; }
+            if( what.compare("Patch:") == 0 )  		{ patches.push_back(Atom()); ss >> patches.back().x >> patches.back().y >> patches.back().z >> patches.back().vx >> patches.back().vy >> patches.back().vz >> patches.back().type; }
+
 
             if( what.compare("Chain_type:") == 0 ) 		{ ss >> chain_type; }
             if( what.compare("Mol_tag:") == 0 ) 		{ ss >> mol_tag; }
@@ -301,43 +302,13 @@ public:
 
             if( what.compare("Lammps_offset:") == 0 )   { ss >> offset; }
 
-            if( what.compare("Beads_lj/cut:") == 0 )
-            {
-                ss >> len;
-                for(int i=0; i < len; ++i)
-                {
-                    ss.flush();
-                    ss.clear();
-                    getline(fs, line);
-                    ss.str(line);
-                    bparam.push_back(LJ());
-                    ss >> bparam.back().type >> bparam.back().epsilon >> bparam.back().sigma >> bparam.back().cutoff;
-                }
-                len=0;
-            }
+            // force-field
+            if( what.compare("ff_lj:") == 0 ) { LJ lj; ss >> lj; ff.lj.push_back(lj); }
+            if( what.compare("ff_cos2:") == 0 ) { CosSQ cos; ss >> cos; ff.cos.push_back(cos); }
 
-            if( what.compare("Cosatt:") == 0 )
-            {
-                ss >> len;
-                for(int i=0; i < len; ++i)
-                {
-                    ss.flush();
-                    ss.clear();
-                    getline(fs, line);
-                    ss.str(line);
-                    cparam.push_back(CosSQ());
-                    ss >> cparam.back().type1 >> cparam.back().type2 >> cparam.back().epsilon >> cparam.back().start_dis >> cparam.back().range;
-                }
-            }
-
-            what.clear();
         }
         fs.close();
 
-        for(auto i : bparam)
-        {
-            types.push_back(i.type);
-        }
         return true;
     }
 
@@ -358,17 +329,7 @@ public:
         ss << "Patch_1: (" << patch_2.x << ", " << patch_2.y << ", " << patch_2.z << ", " << patch_2.type << ")" << endl;
         ss << "Populate: " << population << endl;
 
-        ss << "Beads_lj/cut:" << endl;
-        for(auto i : bparam)
-        {
-            ss << i.toString();
-        }
-
-        ss << "Cosatt:" << endl;
-        for(auto i : cparam)
-        {
-            ss << i.toString();
-        }
+        ss << "Force-Field: " << ff << endl;
 
         return ss.str();
     }
@@ -391,15 +352,18 @@ public:
         mtag_2=-1;
 
         com_pos=Atom(0.0, 0.0, 0.0);
-        patch_1=Atom(1,1,1,0);
-        patch_2=Atom(1,1,1,0);
+
+        patches.clear();
+
+        patch_1=Atom(0,0,0,0);
+        patch_2=Atom(0,0,0,0);
+
         ivx=Atom(0.0, 0.0, 0.0);
 
         population.clear();
         infile.clear();
         bparam.clear();
         cparam.clear();
-        types.clear();
     }
 
     void help()
