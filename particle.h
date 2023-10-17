@@ -142,13 +142,9 @@ public:
 
     void add(Data& data)
     {
-        bool overlap = false;
-        for(auto& item : this->beads)
+        if(data.all_beads.is_overlap(beads, data.in.ff))
         {
-            if( data.isOverlap(item) )
-            {
-                overlap = true;
-            }
+            cerr << "WARNING: overlap detected" << endl;
         }
 
         data.all_beads.insert(data.all_beads.end(), this->beads.begin(), this->beads.end());
@@ -158,11 +154,6 @@ public:
         data.all_sigma = this->sigma;
         data.all_sigma_size = this->sigma_size;
         data.all_sigma_cosatt = this->sigma_cosatt;
-
-        if(overlap)
-        {
-            cerr << "WARNING: overlap detected" << endl;
-        }
     }
 
     virtual string help()
@@ -207,6 +198,29 @@ public:
     	stringstream ss;
 
     	ss << "Particle_type: empty\n";
+    	ss << "Output_type: pdb # other keywords: xyz pdb lammps_full\n";
+
+    	return ss.str();
+    }
+};
+
+class Monomer : public Particles
+{
+public:
+    inline static const string keyword = "monomer";
+    const string name = "monomer";
+    Monomer() : Particles("monomer") {}
+
+    void generate( Data& data )
+    {
+    	beads.push_back(Atom(0,0,0,data.in.ff.lj[1].type,data.in.mol_tag));
+    }
+
+    string help()
+    {
+    	stringstream ss;
+
+    	ss << "Particle_type: monomer\n";
     	ss << "Output_type: pdb # other keywords: xyz pdb lammps_full\n";
 
     	return ss.str();

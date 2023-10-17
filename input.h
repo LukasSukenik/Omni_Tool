@@ -210,51 +210,59 @@ public:
     Input() {}
 
     //
+    //
     // Data updated per input file
     //
-    Output out; /// Output type - none, pdb, lammps_full, xyz
-    string gen_structure; /// keyword identifying the structure class
+    //
+
     string infile; /// name of the filename with lammps_full atoms
 
-    /// Transformation of the generated structure
-    myFloat scale = 0.0;
-    bool center=false;
-    Atom com_pos = Atom(0.0, 0.0, 0.0);
-
-    // structure variables
+    //
+    // particle data
+    //
+    string gen_structure; /// keyword identifying the structure class
     int num_of_beads=-1;
+    int type_of_beads=-1;
     int num_lig=-1;
-    myFloat c;
-    vector<Atom> patches;
-    Atom patch_1 = Atom(0,0,0,0);
-    Atom patch_2 = Atom(0,0,0,0);
     int subdiv_beads=-1;
     int subdiv_lig=-1;
-
-    /// Atom Types
-    int chain_type=-1;
     int mol_tag=-1;
-    int atom_type=1;
-    int mtag_1=-1;
-    int mtag_2=-1;
+    myFloat scale = 1.0;
+    vector<Atom> patches;
 
     /// Population data
     Population population;
 
-    int seed=0;
-
+    //
     //
     // Persistent data
     //
+    //
     Simluation_Box sim_box;
+    Force_Field ff;
+    Output out; /// Output type - none, pdb, lammps_full, xyz
 
+
+
+    //
+    // Yet unsorted
+    //
+    bool center=false;
+    Atom com_pos = Atom(0.0, 0.0, 0.0);
+    myFloat c;
+    Atom patch_1 = Atom(0,0,0,0);
+    Atom patch_2 = Atom(0,0,0,0);
+
+    ///  Types
+    int chain_type=-1;
+    int mtag_1=-1;
+    int mtag_2=-1;
+    int seed=0;
     Atom ivx = Atom(0.0, 0.0, 0.0);
     bool fit = false;
-
     int offset = 1;
 
     // Force-Field
-    Force_Field ff;
     vector<LJ> bparam;
     vector<CosSQ> cparam;
 
@@ -273,42 +281,58 @@ public:
             ss.str(line);
 
             ss >> what;
-            if( what.compare("Output_type:") == 0 )     { ss >> out; }
-            if( what.compare("Particle_type:") == 0 )   { ss >> gen_structure; }
-            if( what.compare("Load_file:") == 0 )  { ss >> infile; }
 
-            if( what.compare("Scale:") == 0 )           { ss >> scale; }
-            if( what.compare("Center") == 0 )  { center=true; }
-            if( what.compare("Position_shift:") == 0 )  { ss >> com_pos.x >> com_pos.y >> com_pos.z; }
+            if( what.compare("Load_file:") == 0 )          { ss >> infile; }
 
+            //
+            // Define the particle
+            //
+            if( what.compare("Particle_type:") == 0 )      { ss >> gen_structure; }
             if( what.compare("Number_of_beads:") == 0 )    { ss >> num_of_beads; }
-            if( what.compare("Number_of_ligands:") == 0 ) { ss >> num_lig; }
-            if( what.compare("c:") == 0 )               { ss >> c; }
-            if( what.compare("Patch:") == 0 )  		{ patches.push_back(Atom()); ss >> patches.back().x >> patches.back().y >> patches.back().z >> patches.back().vx >> patches.back().vy >> patches.back().vz >> patches.back().type; }
+            if( what.compare("Type_of_beads:") == 0 )      { ss >> type_of_beads; }
+            if( what.compare("Number_of_ligands:") == 0 )  { ss >> num_lig; }
             if( what.compare("Subdiv_of_beads:") == 0 )    { ss >> subdiv_beads; }
-            if( what.compare("Subdiv_of_ligands:") == 0 )    { ss >> subdiv_lig; }
+            if( what.compare("Subdiv_of_ligands:") == 0 )  { ss >> subdiv_lig; }
+            if( what.compare("Mol_tag:") == 0 ) 		   { ss >> mol_tag; }
+            if( what.compare("Scale:") == 0 )              { ss >> scale; }
+            if( what.compare("Patch:") == 0 )
+            {
+            	patches.push_back(Atom());
+            	ss >> patches.back().x >> patches.back().y >> patches.back().z;
+            	ss >> patches.back().vx >> patches.back().vy >> patches.back().vz;
+            	ss >> patches.back().type;
+            }
 
-            if( what.compare("Chain_type:") == 0 ) 		{ ss >> chain_type; }
-            if( what.compare("Mol_tag:") == 0 ) 		{ ss >> mol_tag; }
-            if( what.compare("Atom_type:") == 0 ) 		{ ss >> atom_type; }
-            if( what.compare("Align:") == 0 )  			{ ss >> mtag_1 >> mtag_2; }
-
+            //
+            // Define the population of the particle
+            //
             if( what.compare("Populate:") == 0 )  		{ ss >> population; }
 
+            //
+            // Define the simulation box - persistent data
+            //
             if( what.compare("Sim_box:") == 0 )             { ss >> sim_box; }
 
-            if( what.compare("Fit") == 0 )  { fit=true; }
-
-            if( what.compare("Impact_vector:") == 0 )  { ss >> ivx.x >> ivx.y >> ivx.z; }
-
-            if( what.compare("Seed:") == 0 )  { ss >> seed; rng.seed(seed); }
-
-            if( what.compare("Lammps_offset:") == 0 )   { ss >> offset; }
-
-            // force-field
+            //
+            // Define the force-field - persistent
+            //
             if( what.compare("ff_lj:") == 0 ) { LJ lj; ss >> lj; ff.lj.push_back(lj); }
             if( what.compare("ff_cos2:") == 0 ) { CosSQ cos; ss >> cos; ff.cos.push_back(cos); }
 
+            //
+            // Define the output type
+            //
+            if( what.compare("Output_type:") == 0 )     { ss >> out; }
+
+            if( what.compare("Center") == 0 )           { center=true; }
+            if( what.compare("Position_shift:") == 0 )  { ss >> com_pos.x >> com_pos.y >> com_pos.z; }
+            if( what.compare("c:") == 0 )               { ss >> c; }
+            if( what.compare("Chain_type:") == 0 ) 		{ ss >> chain_type; }
+            if( what.compare("Align:") == 0 )  			{ ss >> mtag_1 >> mtag_2; }
+            if( what.compare("Fit") == 0 )              { fit=true; }
+            if( what.compare("Impact_vector:") == 0 )   { ss >> ivx.x >> ivx.y >> ivx.z; }
+            if( what.compare("Seed:") == 0 )            { ss >> seed; rng.seed(seed); }
+            if( what.compare("Lammps_offset:") == 0 )   { ss >> offset; }
         }
         fs.close();
 
@@ -339,22 +363,34 @@ public:
         return ss.str();
     }
 
+    bool is_mtag_12()
+    {
+        if( mtag_1 != -1 && mtag_2 != -1 )
+            return false;
+        return true;
+    }
+
+    bool is_mol_tag()
+    {
+    	return (mol_tag != -1);
+    }
+
     void clear()
     {
         gen_structure.clear();
 
+        type_of_beads=-1;
         num_of_beads=-1;
         num_lig=-1;
         subdiv_beads=-1;
         subdiv_lig=-1;
 
-        scale=0.0;
+        scale=1.0;
         offset=1;
         c=0;
 
         chain_type=-1;
         mol_tag=-1;
-        atom_type=1;
 
         center=false;
         fit = false;
@@ -413,23 +449,6 @@ public:
 	    cout << "Beads_lj/cut:" << endl;
 
 	    cout << "\nSeed: integer = random generator" << endl;
-    }
-
-    bool is_mtag_12()
-    {
-        if( mtag_1 != -1 && mtag_2 != -1 )
-            return false;
-        return true;
-    }
-
-    bool is_mol_tag()
-    {
-    	return (mol_tag != -1);
-    }
-
-    bool isScale()
-    {
-        return (scale != 0.0);
     }
 };
 

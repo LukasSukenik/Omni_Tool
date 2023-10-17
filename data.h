@@ -126,7 +126,7 @@ public:
     {
         if(! temp_beads.empty())
         {
-            Atom cm = center_of_mass(mtag);
+            Atom cm = temp_beads.center_of_mass(mtag);
             cm*=-1.0;
             move( cm );
             cerr << "center of " << mtag << " done" << endl;
@@ -146,29 +146,7 @@ public:
     	cerr << "scale " << scale << " done" << endl;
     }
 
-    /**
-     * @brief center_of_mass - function computes Center-Of-Mass (COM) of particles with a given mol_tag
-     * @param mtag - mol_tag of particles for COM calculation, -1 = all particles regardless of mol_tag
-     */
-    Atom center_of_mass(int mtag=-1, int start=-1, int stop=-1)
-    {
-        int count=0;
-        int total=0;
-        Atom cm;
-        for(Atom& item : temp_beads)
-        {
-            if( (item.mol_tag == mtag || mtag == -1) && total >= start && (total < stop || stop == -1) )
-            {
-                cm += item;
-                ++count;
-            }
 
-            if(item.mol_tag == mtag || mtag == -1)
-                ++total;
-        }
-        cm *= 1.0/count;
-        return cm;
-    }
 
     /**
      * @brief impact - Deprecated, don't use
@@ -181,7 +159,7 @@ public:
             Atom impact = Atom(0.0, 0.0, 0.0);
 
             // move the liposome to COM
-            Atom com = center_of_mass();
+            Atom com = temp_beads.center_of_mass();
             com *= -1;
             move(com);
 
@@ -304,8 +282,8 @@ public:
         // -- 1/4 beads from each end identify the poles (tips)
         //
         int count = temp_beads.count_Mol_tag(mtag);             // number of mtag (nanoparticle beads)
-        Atom nano1 = center_of_mass(mtag, 0, count/4);         // first 1/4 COM of mtag beads
-        Atom nano2 = center_of_mass(mtag, 1+3*count/4, count); // last 1/4 COM of mtag beads
+        Atom nano1 = temp_beads.center_of_mass(mtag, 0, count/4);         // first 1/4 COM of mtag beads
+        Atom nano2 = temp_beads.center_of_mass(mtag, 1+3*count/4, count); // last 1/4 COM of mtag beads
         Atom nano_axis = nano1-nano2;                          // Axis of mtag beads
         nano_axis.normalise();                                 // normalise axis vector for correct rotation
         //
@@ -324,7 +302,7 @@ public:
         // Rotate mtag so that COM of mtag2 is (*,*,0) = centered around z axis
         // - to keep it aligned with x axis, we rotate only around x axis
         //
-        Atom com_mtag2 = center_of_mass(mtag2);
+        Atom com_mtag2 = temp_beads.center_of_mass(mtag2);
         com_mtag2.x = 0.0;
         com_mtag2.normalise();
         double angle = acos( com_mtag2.dot(z_axis) );
@@ -391,28 +369,6 @@ public:
     // all_beads functions
     //
 
-    int getMaxMolTag()
-    {
-    	return all_beads.getMaxMolTag();
-    }
-
-    int countAtomType( int atype)
-    {
-    	return all_beads.count_Atom_Type(atype);
-    }
-
-    bool isOverlap(Atom& a)
-    {
-        for(Atom& item : all_beads)
-        {
-            if( item.dist(a) > getBeadParam(item.type).cutoff * 2)
-            {
-                return true;
-            }
-        }
-        return false;
-    }
-
     LJ getBeadParam(int type)
     {
         for(auto item : all_bparam)
@@ -433,15 +389,15 @@ public:
 
         ss << "Beads: " << all_beads.size() << endl;
         ss << types.size() << " atom types:" << endl;
-        for(int atp=0; atp< types.size(); ++atp)
+        for(int atom_type : types)
         {
-            ss << "Atom type " << types[atp] << " " << countAtomType(types[atp]) << endl;
+            ss << "Atom type " << atom_type << " of " << all_beads.count_Atom_Type(atom_type) << endl;
         }
 
         ss << moltags.size() << " molTypes:" << endl;
-        for(int moltg=0; moltg< moltags.size(); ++moltg)
+        for(int mol_tag : moltags)
         {
-            ss << "Molecule " << moltags[moltg] << " " << all_beads.count_Mol_tag(moltags[moltg]) << endl;
+            ss << "Molecule " << mol_tag << " of " << all_beads.count_Mol_tag(mol_tag) << endl;
         }
 
         return ss.str();

@@ -302,6 +302,30 @@ public:
     //
     //
 
+    /**
+     * @brief center_of_mass - function computes Center-Of-Mass (COM) of particles with a given mol_tag
+     * @param mtag - mol_tag of particles for COM calculation, -1 = all particles regardless of mol_tag
+     */
+    Atom center_of_mass(int mtag=-1, int start=-1, int stop=-1) const
+    {
+        int count=0;
+        int total=0;
+        Atom cm;
+        for(const Atom& item : (*this))
+        {
+            if( (item.mol_tag == mtag || mtag == -1) && total >= start && (total < stop || stop == -1) )
+            {
+                cm += item;
+                ++count;
+            }
+
+            if(item.mol_tag == mtag || mtag == -1)
+                ++total;
+        }
+        cm *= 1.0/count;
+        return cm;
+    }
+
     int count_Atom_Type( int atype) const
     {
         int count = 0;
@@ -348,7 +372,7 @@ public:
         return atom_types;
     }
 
-    int getMaxMolTag()
+    int get_Max_Mol_Tag()
     {
         int max=0;
         for(auto& a : (*this))
@@ -361,14 +385,25 @@ public:
         return max;
     }
 
-    bool is_overlap(Atoms other, Force_Field ff) const
+    bool is_overlap(Atom& b, Force_Field& ff) const
     {
-    	for(const Atom& a : (*this))
+        for(const Atom& a : (*this))
+        {
+            if( b.dist(a) > ff.get_cutoff(a.type, b.type)*ff.get_cutoff(a.type, b.type) )
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    bool is_overlap(Atoms& other, Force_Field& ff) const
+    {
+    	for(Atom& o : other)
     	{
-    		for(const Atom& o : other)
+    		if( is_overlap(o, ff) )
     		{
-                if(a.distSQ(o) < ff.get_cutoff(a.type, o.type)*ff.get_cutoff(a.type, o.type))
-    				return true;
+    			return true;
     		}
     	}
     	return false;
