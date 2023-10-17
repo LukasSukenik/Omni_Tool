@@ -298,6 +298,16 @@ public:
     	return false;
     }
 
+    void project_to_unit_sphere()
+    {
+    	Atom zero = Atom(0.0,0.0,0.0);
+
+    	for(Atom& a : (*this))
+    	{
+    		a *= 1.0/a.dist(zero);
+    	}
+    }
+
     static Atom clusterCM(vector<Atom>& cluster) {
 
         Atom cluscm(0.0, 0.0, 0.0);

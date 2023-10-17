@@ -21,6 +21,7 @@ xdrfile-1.1.4/src/xdrfile_xtc.c
 particle.h 
 icosahedron.h 
 oblatespheroid.h 
+globular_sphere.h
 sphere.h 
 tennisball.h 
 spherepatch.h 

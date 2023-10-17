@@ -228,6 +228,8 @@ public:
     vector<Atom> patches;
     Atom patch_1 = Atom(0,0,0,0);
     Atom patch_2 = Atom(0,0,0,0);
+    int subdiv_beads=-1;
+    int subdiv_lig=-1;
 
     /// Atom Types
     int chain_type=-1;
@@ -279,11 +281,12 @@ public:
             if( what.compare("Center") == 0 )  { center=true; }
             if( what.compare("Position_shift:") == 0 )  { ss >> com_pos.x >> com_pos.y >> com_pos.z; }
 
-            if( what.compare("Num_of_beads:") == 0 )    { ss >> num_of_beads; }
+            if( what.compare("Number_of_beads:") == 0 )    { ss >> num_of_beads; }
             if( what.compare("Number_of_ligands:") == 0 ) { ss >> num_lig; }
             if( what.compare("c:") == 0 )               { ss >> c; }
             if( what.compare("Patch:") == 0 )  		{ patches.push_back(Atom()); ss >> patches.back().x >> patches.back().y >> patches.back().z >> patches.back().vx >> patches.back().vy >> patches.back().vz >> patches.back().type; }
-
+            if( what.compare("Subdiv_of_beads:") == 0 )    { ss >> subdiv_beads; }
+            if( what.compare("Subdiv_of_ligands:") == 0 )    { ss >> subdiv_lig; }
 
             if( what.compare("Chain_type:") == 0 ) 		{ ss >> chain_type; }
             if( what.compare("Mol_tag:") == 0 ) 		{ ss >> mol_tag; }
@@ -319,10 +322,12 @@ public:
         ss << "Particle_type: " << gen_structure << endl;
         ss << "Output_type: " << out << endl;
         ss << "Number of beads: " << num_of_beads << endl;
+        ss << "Number of ligands: " << num_lig << endl;
+        ss << "Subdiv of beads: " << subdiv_beads << endl;
+        ss << "Subdiv of ligands: " << subdiv_lig << endl;
         ss << "Scale: " << scale << endl;
         ss << "Offset: " << offset << endl;
         ss << "c: " << c << endl;
-        ss << "Number of ligands: " << num_lig << endl;
         ss << "Box: ( " << sim_box << " )" << endl;
         ss << "Position: (" << com_pos.x << ", " << com_pos.y << ", " << com_pos.z << ")" << endl;
         ss << "Patch_1: (" << patch_1.x << "-" << patch_1.vx << ", " << patch_1.y << "-" << patch_1.vy << ", " << patch_1.z << "-" << patch_1.vz << ", " << patch_1.type << ")" << endl;
@@ -337,11 +342,16 @@ public:
     void clear()
     {
         gen_structure.clear();
+
         num_of_beads=-1;
+        num_lig=-1;
+        subdiv_beads=-1;
+        subdiv_lig=-1;
+
         scale=0.0;
         offset=1;
         c=0;
-        num_lig=0;
+
         chain_type=-1;
         mol_tag=-1;
         atom_type=1;
