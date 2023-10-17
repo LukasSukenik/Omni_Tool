@@ -22,15 +22,27 @@ public:
     double K; /// energy/distance^2 -> 1/2 included
 
     string coeff_name;
+
+    static bool sort_Bond_by_type(const Bond& i, const Bond& j)
+    {
+        return ( i.type < j.type ) || ( (i.at1 < j.at1) && (i.type == j.type) ) ;
+    }
 };
 
-bool sort_Bond_by_type(const Bond& i, const Bond& j) {
-    return ( i.type < j.type ) || ( (i.at1 < j.at1) && (i.type == j.type) ) ;
-}
 
 class Bonds : public vector< Bond >
 {
 public:
+    void offset(int offs)
+    {
+        for(Bond& item : (*this))
+        {
+            item.N += offs;
+            item.at1 += offs;
+            item.at2 += offs;
+        }
+    }
+
     int calc_Bond_Types() const
     {
         vector<int> bond_types;
@@ -84,7 +96,20 @@ public:
     int N, type, at1, at2, at3;
 };
 
-
+class Angles : public vector< Angle >
+{
+public:
+    void offset(int offs)
+    {
+        for(Angle& item : (*this))
+        {
+            item.N += offs;
+            item.at1 += offs;
+            item.at2 += offs;
+            item.at3 += offs;
+        }
+    }
+};
 
 
 /**
@@ -121,8 +146,8 @@ public:
 	CosSQ(int type1, int type2, double epsilon, double start_dis, double range) : type1(type1), type2(type2), epsilon(epsilon), start_dis(start_dis), range(range){}
 
     int type=-1;
-    int type1;
-    int type2;
+    int type1=-1;
+    int type2=-1;
     double epsilon=1.0;
     double start_dis=1.0;
     double range=1.0;

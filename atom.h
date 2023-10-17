@@ -288,6 +288,14 @@ public:
     	}
     }
 
+    void offset(int offs)
+    {
+        for(Atom& item : (*this))
+        {
+            item.N += offs;
+        }
+    }
+
     //
     //
     // Methods const

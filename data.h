@@ -49,14 +49,14 @@ public:
 	//
 	Atoms all_beads;
     Bonds all_bonds;
-    vector<Angle> all_angles;
+    Angles all_angles;
 
     vector<LJ> all_bparam;
     vector<CosSQ> all_cparam;
 
     Atoms temp_beads;
     Bonds temp_bonds;
-    vector<Angle> temp_angles;
+    Angles temp_angles;
 
     //
     /// force field stuff
@@ -101,25 +101,9 @@ public:
     //
     void offset(int offs)
     {
-        for(Atom& item : temp_beads)
-        {
-            item.N += offs;
-        }
-
-        for(Bond& item : temp_bonds)
-        {
-            item.N += offs;
-            item.at1 += offs;
-            item.at2 += offs;
-        }
-
-        for(Angle& item : temp_angles)
-        {
-            item.N += offs;
-            item.at1 += offs;
-            item.at2 += offs;
-            item.at3 += offs;
-        }
+    	temp_beads.offset(offs);
+    	temp_bonds.offset(offs);
+    	temp_angles.offset(offs);
     }
 
     void set_mol_tag(int mtag)
@@ -849,7 +833,7 @@ void Data::loadBonds(string filename)
     }
     in.close();
 
-    std::sort(temp_bonds.begin(), temp_bonds.end(), sort_Bond_by_type);
+    std::sort(temp_bonds.begin(), temp_bonds.end(), Bond::sort_Bond_by_type);
 
     for(int i=0; i<temp_bonds.size(); i++)
     {
