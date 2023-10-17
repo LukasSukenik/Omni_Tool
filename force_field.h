@@ -31,7 +31,7 @@ bool sort_Bond_by_type(const Bond& i, const Bond& j) {
 class Bonds : public vector< Bond >
 {
 public:
-    int calcBondTypes() const
+    int calc_Bond_Types() const
     {
         vector<int> bond_types;
         bool exist = false;
@@ -54,6 +54,23 @@ public:
         }
 
         return bond_types.size();
+    }
+
+    void removeDuplicateBond()
+    {
+        int count = 0;
+        for(auto& a : (*this))
+        {
+            for(auto& b : (*this))
+            {
+                if(a.at1 == b.at1 && a.at2 == b.at2 && a.N != b.N)
+                {
+                    cerr << "Duplicate bond " << a.N << "==" << b.N << endl;
+                    ++count;
+                }
+            }
+        }
+        cerr << count << endl;
     }
 };
 

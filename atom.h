@@ -254,6 +254,12 @@ bool myfunction (Atom i,Atom j) { return (i.size()<j.size()); }
 class Atoms : public vector< Atom >
 {
 public:
+	//
+	//
+	// Methods that change something in the container
+	//
+	//
+
 	void set_mol_tag(int mtag)
 	{
 	    for(Atom& item : (*this))
@@ -272,6 +278,68 @@ public:
             item *= scale;
     }
 
+    void project_to_unit_sphere()
+    {
+    	Atom zero = Atom(0.0,0.0,0.0);
+
+    	for(Atom& a : (*this))
+    	{
+    		a *= 1.0/a.dist(zero);
+    	}
+    }
+
+    //
+    //
+    // Methods const
+    //
+    //
+
+    int count_Atom_Type( int atype) const
+    {
+        int count = 0;
+        for(const Atom& item : (*this))
+        {
+            if( item.type == atype)
+            {
+                ++count;
+            }
+        }
+        return count;
+    }
+
+    int count_Mol_tag(int mTag) const
+    {
+        int count = 0;
+        for(const Atom& item : (*this))
+        {
+            if( item.mol_tag == mTag)
+            {
+                ++count;
+            }
+        }
+        return count;
+    }
+
+    vector<int> get_Atom_Types() const
+    {
+        vector<int> atom_types;
+        bool exist = false;
+
+        atom_types.push_back((*this)[0].type);
+        for(const Atom& a : (*this))
+        {
+            exist = false;
+            for(int j=0; j<atom_types.size(); ++j)
+            {
+                if(atom_types[j] == a.type)
+                    exist = true;
+            }
+            if(!exist)
+                atom_types.push_back( a.type );
+        }
+        return atom_types;
+    }
+
     int getMaxMolTag()
     {
         int max=0;
@@ -285,11 +353,11 @@ public:
         return max;
     }
 
-    bool is_overlap(Atoms other, Force_Field ff)
+    bool is_overlap(Atoms other, Force_Field ff) const
     {
-    	for(Atom& a : (*this))
+    	for(const Atom& a : (*this))
     	{
-    		for(Atom& o : other)
+    		for(const Atom& o : other)
     		{
                 if(a.distSQ(o) < ff.get_cutoff(a.type, o.type)*ff.get_cutoff(a.type, o.type))
     				return true;
@@ -298,15 +366,11 @@ public:
     	return false;
     }
 
-    void project_to_unit_sphere()
-    {
-    	Atom zero = Atom(0.0,0.0,0.0);
-
-    	for(Atom& a : (*this))
-    	{
-    		a *= 1.0/a.dist(zero);
-    	}
-    }
+    //
+    //
+    // static methods
+    //
+    //
 
     static Atom clusterCM(vector<Atom>& cluster) {
 

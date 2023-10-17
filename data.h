@@ -70,8 +70,6 @@ public:
     //
     vector<My_string > file_head;
 
-    Simluation_Box box;
-
     bool first_file=true;
 
     Input in;
@@ -91,9 +89,43 @@ public:
         return !in.infile.empty();
     }
 
-    int getMaxMolTag()
+    bool loadInput(string input)
     {
-    	return all_beads.getMaxMolTag();
+        in.clear();
+        in.loadInput(input);
+        return true;
+    }
+
+    //
+    // temp_beads methods
+    //
+    void offset(int offs)
+    {
+        for(Atom& item : temp_beads)
+        {
+            item.N += offs;
+        }
+
+        for(Bond& item : temp_bonds)
+        {
+            item.N += offs;
+            item.at1 += offs;
+            item.at2 += offs;
+        }
+
+        for(Angle& item : temp_angles)
+        {
+            item.N += offs;
+            item.at1 += offs;
+            item.at2 += offs;
+            item.at3 += offs;
+        }
+    }
+
+    void set_mol_tag(int mtag)
+    {
+    	temp_beads.set_mol_tag(mtag);
+        cerr << "All beads changed to mol_tag = " << mtag << endl;
     }
 
     void move(Atom move)
@@ -103,8 +135,36 @@ public:
     }
 
     /**
-     * @brief center_of_mass - function computes Center-Of-Mass (COM) of particles with a givem mol_tag
-     * @param mtag - mol_tag of particles for COM calculation, -1 = all particles regarles of mol_tag
+     * @brief center - moves structure, so that center_of_mass is (0,0,0)
+     * @param mtag
+     */
+    void center(int mtag=-1)
+    {
+        if(! temp_beads.empty())
+        {
+            Atom cm = center_of_mass(mtag);
+            cm*=-1.0;
+            move( cm );
+            cerr << "center of " << mtag << " done" << endl;
+        }
+        else
+        {
+            cerr << "Error: No atoms loaded" << endl;
+        }
+    }
+
+    void scale(double scale)
+    {
+    	if(in.scale != 0.0)
+    	{
+    		temp_beads.scale(scale);
+    	}
+    	cerr << "scale " << scale << " done" << endl;
+    }
+
+    /**
+     * @brief center_of_mass - function computes Center-Of-Mass (COM) of particles with a given mol_tag
+     * @param mtag - mol_tag of particles for COM calculation, -1 = all particles regardless of mol_tag
      */
     Atom center_of_mass(int mtag=-1, int start=-1, int stop=-1)
     {
@@ -259,7 +319,7 @@ public:
         // - nanoparticle generated from poles = tips in prolate form, same as in oblate form
         // -- 1/4 beads from each end identify the poles (tips)
         //
-        int count = countMoltag(mtag, temp_beads);             // number of mtag (nanoparticle beads)
+        int count = temp_beads.count_Mol_tag(mtag);             // number of mtag (nanoparticle beads)
         Atom nano1 = center_of_mass(mtag, 0, count/4);         // first 1/4 COM of mtag beads
         Atom nano2 = center_of_mass(mtag, 1+3*count/4, count); // last 1/4 COM of mtag beads
         Atom nano_axis = nano1-nano2;                          // Axis of mtag beads
@@ -343,81 +403,18 @@ public:
         temp_angles.clear();
     }
 
-    void offset(int offs)
+    //
+    // all_beads functions
+    //
+
+    int getMaxMolTag()
     {
-        for(Atom& item : temp_beads)
-        {
-            item.N += offs;
-        }
-
-        for(Bond& item : temp_bonds)
-        {
-            item.N += offs;
-            item.at1 += offs;
-            item.at2 += offs;
-        }
-
-        for(Angle& item : temp_angles)
-        {
-            item.N += offs;
-            item.at1 += offs;
-            item.at2 += offs;
-            item.at3 += offs;
-        }
+    	return all_beads.getMaxMolTag();
     }
 
-    void mol_tag(int mtag)
+    int countAtomType( int atype)
     {
-        for(Atom& item : temp_beads)
-        {
-            item.mol_tag = mtag;
-        }
-        cerr << "All beads changed to mol_tag = " << mtag << endl;
-    }
-
-    void printAllSigma()
-    {
-        cerr << "printAllSigma:" << endl;
-        for(unsigned int i=0; i<all_sigma_size; ++i)
-        {
-            cerr << "[" << i+1 << "][" << i+1 << "] = "  << all_sigma[i][i] << endl;
-        }
-    }
-
-
-    /**
-     * @brief center - moves structure, so that center_of_mass is (0,0,0)
-     * @param mtag
-     */
-    void center(int mtag=-1)
-    {
-        if(! temp_beads.empty())
-        {
-            Atom cm = center_of_mass(mtag);
-            cm*=-1.0;
-            move( cm );
-            cerr << "center of " << mtag << " done" << endl;
-        }
-        else
-        {
-            cerr << "Error: No atoms loaded" << endl;
-        }
-    }
-
-    void scale(double scale)
-    {
-    	if(in.scale != 0.0)
-    	{
-    		temp_beads.scale(scale);
-    	}
-    	cerr << "scale " << scale << " done" << endl;
-    }
-
-    bool loadInput(string input)
-    {
-        in.clear();
-        in.loadInput(input);
-        return true;
+    	return all_beads.count_Atom_Type(atype);
     }
 
     bool isOverlap(Atom& a)
@@ -448,7 +445,7 @@ public:
     {
         stringstream ss;
         vector<int> moltags = getMolTypes();
-        vector<int> types = getAtomTypes();
+        vector<int> types = all_beads.get_Atom_Types();
 
         ss << "Beads: " << all_beads.size() << endl;
         ss << types.size() << " atom types:" << endl;
@@ -460,36 +457,10 @@ public:
         ss << moltags.size() << " molTypes:" << endl;
         for(int moltg=0; moltg< moltags.size(); ++moltg)
         {
-            ss << "Molecule " << moltags[moltg] << " " << countMoltag(moltags[moltg], all_beads) << endl;
+            ss << "Molecule " << moltags[moltg] << " " << all_beads.count_Mol_tag(moltags[moltg]) << endl;
         }
 
         return ss.str();
-    }
-
-    int countAtomType( int atype)
-    {
-        int count = 0;
-        for(Atom& item : all_beads)
-        {
-            if( item.type == atype)
-            {
-                ++count;
-            }
-        }
-        return count;
-    }
-
-    int countMoltag(int mTag, vector< Atom >& container)
-    {
-        int count = 0;
-        for(Atom& item : container)
-        {
-            if( item.mol_tag == mTag)
-            {
-                ++count;
-            }
-        }
-        return count;
     }
 
     vector<int> getMolTypes()
@@ -512,6 +483,15 @@ public:
             }
         }
         return moltags;
+    }
+
+    void printAllSigma()
+    {
+        cerr << "printAllSigma:" << endl;
+        for(unsigned int i=0; i<all_sigma_size; ++i)
+        {
+            cerr << "[" << i+1 << "][" << i+1 << "] = "  << all_sigma[i][i] << endl;
+        }
     }
 
 
@@ -547,56 +527,6 @@ public:
         }
         in.close();
     }
-    //////////////////////////////////////////////////
-
-    vector<int> getAtomTypes() const
-    {
-        vector<int> atom_types;
-        bool exist = false;
-
-        atom_types.push_back(all_beads[0].type);
-        for(int i=0; i<all_beads.size(); ++i) {
-            exist = false;
-            for(int j=0; j<atom_types.size(); ++j) {
-                if(atom_types[j] == all_beads[i].type)
-                    exist = true;
-            }
-            if(!exist)
-                atom_types.push_back( all_beads[i].type );
-        }
-        return atom_types;
-    }
-
-    /**
-     * @brief calcBondTypes - count all bond types
-     * @return
-     */
-    int calcBondTypes() const
-    {
-        vector<int> bond_types;
-        bool exist = false;
-
-        if(!all_bonds.empty())
-        {
-            bond_types.push_back(all_bonds[0].type);
-            for(auto& bond : all_bonds) {
-
-                exist = false;
-                for(auto btype : bond_types) {
-                    if(btype == bond.type) {
-                        exist = true;
-                    }
-                }
-                if(!exist) {
-                    bond_types.push_back( bond.type );
-                }
-            }
-        }
-
-        return all_bonds.calcBondTypes();
-    }
-
-
 
     void printForceField(vector<double>& dist, vector<string> &dist_coeff, double scale ) const
     {
@@ -649,22 +579,7 @@ public:
         }
     }
 
-    void removeDuplicateBond()
-    {
-        int count = 0;
-        for(auto& a : all_bonds)
-        {
-            for(auto& b : all_bonds)
-            {
-                if(a.at1 == b.at1 && a.at2 == b.at2 && a.N != b.N)
-                {
-                    cerr << "Duplicate bond " << a.N << "==" << b.N << endl;
-                    ++count;
-                }
-            }
-        }
-        cerr << count << endl;
-    }
+
 
     vector<double> createBondGroups(vector<string> &bond_coeff, double precision=1000.0) const
     {
@@ -724,13 +639,13 @@ public:
         dist = createBondGroups(dist_coeff);
         printForceField(dist, dist_coeff, in.scale);
 
-        int bond_types = calcBondTypes();
-        int num_a_types = getAtomTypes().size();
+        int bond_types = all_bonds.calc_Bond_Types();
+        int num_a_types = all_beads.get_Atom_Types().size();
 
         //
         // Print Head
         //
-        cout << "LAMMPS data file via gen_membrane\n" << endl;
+        cout << "LAMMPS data file via Omni_Tool\n" << endl;
         cout << all_beads.size() << " atoms\n";
         cout << num_a_types << " atom types\n";
 
@@ -769,7 +684,7 @@ public:
         //
         cout <<"\nAtoms # full\n" << endl;
         for(auto& a : all_beads) {
-            cout << a.N << " " << a.mol_tag << " " << a.type << " " << 0 << " " << a << " 0 0 0" << endl;
+            cout << a.N << " " << a.mol_tag << " " << a.type << " " << 0 << " " << a << " 0 0 0" << "\n";
         }
 
         //
@@ -800,8 +715,9 @@ public:
     void printXYZ() const
     {
         cout << all_beads.size() << "\nparticle\n";
-        for(unsigned int i=0; i<all_beads.size(); i++) {
-            cout << "C" << all_beads[i].type <<  " " << (all_beads[i]*in.scale) + in.com_pos << endl;
+        for (const Atom& atom : all_beads)
+        {
+        	cout << "C" << atom.type <<  " " << atom << "\n";
         }
     }
 
@@ -888,19 +804,19 @@ void Data::loadBox()
         //cout << file_head[i].str << endl;
         if(strstr(file_head[i].str, "xlo xhi") != nullptr) {
             str << file_head[i].str;
-            str >> box.xlo >> box.xhi;
+            str >> in.sim_box.xlo >> in.sim_box.xhi;
             continue;
         }
 
         if(strstr(file_head[i].str, "ylo yhi") != nullptr) {
             str2 << file_head[i].str;
-            str2 >> box.ylo >> box.yhi;
+            str2 >> in.sim_box.ylo >> in.sim_box.yhi;
             continue;
         }
 
         if(strstr(file_head[i].str, "zlo zhi") != nullptr) {
             str3 << file_head[i].str;
-            str3 >> box.zlo >> box.zhi;
+            str3 >> in.sim_box.zlo >> in.sim_box.zhi;
             continue;
         }
     }

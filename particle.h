@@ -103,7 +103,12 @@ public:
     			}
 
     			temp.set_mol_tag(i+1);
+
+    			// rotate copied structure
+    			Atoms::clusterRotate_random(temp, 180.0*degToRad);
+
     			beads.insert( beads.end(), temp.begin(), temp.end() );
+
     			cerr << "Generating population, particle " << i << " of " << data.in.population.count << ", successful on try " << tries << endl;
     		}
     	}

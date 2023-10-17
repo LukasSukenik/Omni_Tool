@@ -106,7 +106,7 @@ int main(int argc, char* argv[]) // // $num of beads per edge, box dimensions X(
             data.move(data.in.com_pos);     // Move by vector defined in input file
 
             if(data.in.is_mol_tag())
-                data.mol_tag(data.in.mol_tag);  // Change mol_tag of all particles to one set by input
+            	data.set_mol_tag(data.in.mol_tag); // Change mol_tag of all particles to one set by input
             if(data.in.is_mtag_12())
                 data.align(data.in.mtag_1, data.in.mtag_2); // align mol_tag particles in z axis and XY plane
 
