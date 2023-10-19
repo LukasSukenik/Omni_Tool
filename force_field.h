@@ -5,6 +5,7 @@
 #include <vector>
 #include <string>
 #include <iostream>
+#include <map>
 
 using namespace std;
 
@@ -171,14 +172,11 @@ public:
 class Force_Field
 {
 public:
-    Force_Field() {
-        lj.push_back(LJ(0,0,0,0)); // Types for lammps start at 1, but in c++ array starts at 0, so we fill the 0 position
-        cos.push_back(CosSQ(0,0,0,0));
-    }
+    Force_Field() {}
 
     vector<int> types;
-	vector<LJ> lj;
-	vector<CosSQ> cos;
+    map<int, LJ> lj;
+    map<int,CosSQ> cos;
 
     double get_cutoff(int type1, int type2)
     {
@@ -186,19 +184,20 @@ public:
         return ( lj[type1].sigma + lj[type2].sigma );
     }
 
-    friend std::ostream& operator<<(std::ostream& os, const Force_Field& ff)
+    friend std::ostream& operator<<(std::ostream& os, Force_Field& ff)
     {
         os << "\n";
-        for(int i = 1; i < ff.lj.size(); ++i)
+        for(auto& [key, val] : ff.lj)
         {
-            os << "LJ" << i << ": " << ff.lj[i] << "\n";
+            os << "LJ" << key << ": " << val << "\n";
         }
-        for(int i = 1; i < ff.cos.size(); ++i)
+        for(auto& [key, val] : ff.cos)
         {
-            os << "CosSQ" << i << ": " << ff.cos[i] << "\n";
+            os << "CosSQ" << key << ": " << val << "\n";
         }
         return os;
     }
+
 };
 
 #endif // FORCE_FIELD_H

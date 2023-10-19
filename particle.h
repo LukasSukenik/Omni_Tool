@@ -88,7 +88,7 @@ public:
     			temp.move(com_pos);
 
     			int tries=0;
-                while( beads.is_overlap(temp, data.in.ff) )
+                while( beads.is_overlap(temp, data.in.ff) || data.all_beads.is_overlap(temp, data.in.ff) )
     			{
     				com_pos = data.in.sim_box.get_random_pos();
     				temp = copy;
@@ -102,7 +102,7 @@ public:
     				++tries;
     			}
 
-    			temp.set_mol_tag(i+1);
+    			temp.set_mol_tag(copy[0].mol_tag+i);
 
     			// rotate copied structure
     			Atoms::clusterRotate_random(temp, 180.0*degToRad);
@@ -213,7 +213,7 @@ public:
 
     void generate( Data& data )
     {
-    	beads.push_back(Atom(0,0,0,data.in.ff.lj[1].type,data.in.mol_tag));
+    	beads.push_back(Atom(0,0,0,data.in.type_of_beads,data.in.mol_tag));
     }
 
     string help()

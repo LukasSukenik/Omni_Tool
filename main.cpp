@@ -72,6 +72,7 @@ int main(int argc, char* argv[]) // // $num of beads per edge, box dimensions X(
     structure[SphereJanus::keyword] = new SphereJanus();
     structure[Cow::keyword] = new Cow();
     structure[Globular_Sphere::keyword] = new Globular_Sphere();
+    structure[Monomer::keyword] = new Monomer();
 
     //
     // Input safeguard

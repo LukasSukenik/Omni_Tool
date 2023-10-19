@@ -15,6 +15,7 @@
 
 #include <array>
 
+
 #include "atom.h"
 #include "force_field.h"
 
@@ -48,7 +49,8 @@ public:
     	return a;
     }
 
-    Atom usePBC(Atom& pos_orig, double scale) const {
+    Atom usePBC(Atom& pos_orig, double scale) const
+    {
         Atom pos = pos_orig;
 
         while (pos.x < 0.0) {
@@ -275,6 +277,7 @@ public:
 
         while( !fs.eof() ) // Lines in input
         {
+        	what.clear();
             ss.flush();
             ss.clear();
             getline(fs, line);
@@ -316,8 +319,8 @@ public:
             //
             // Define the force-field - persistent
             //
-            if( what.compare("ff_lj:") == 0 ) { LJ lj; ss >> lj; ff.lj.push_back(lj); }
-            if( what.compare("ff_cos2:") == 0 ) { CosSQ cos; ss >> cos; ff.cos.push_back(cos); }
+            if( what.compare("ff_lj:") == 0 ) { LJ lj; ss >> lj; ff.lj[lj.type]=lj; }
+            if( what.compare("ff_cos2:") == 0 ) { CosSQ cos; ss >> cos; ff.cos[cos.type]=cos; }
 
             //
             // Define the output type
@@ -346,6 +349,7 @@ public:
         ss << "Particle_type: " << gen_structure << endl;
         ss << "Output_type: " << out << endl;
         ss << "Number of beads: " << num_of_beads << endl;
+        ss << "Type_of_beads:" << type_of_beads << endl;
         ss << "Number of ligands: " << num_lig << endl;
         ss << "Subdiv of beads: " << subdiv_beads << endl;
         ss << "Subdiv of ligands: " << subdiv_lig << endl;

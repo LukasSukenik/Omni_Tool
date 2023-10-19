@@ -281,7 +281,7 @@ public:
         // - nanoparticle generated from poles = tips in prolate form, same as in oblate form
         // -- 1/4 beads from each end identify the poles (tips)
         //
-        int count = temp_beads.count_Mol_tag(mtag);             // number of mtag (nanoparticle beads)
+        int count = temp_beads.count_atoms_of_Mol_tag(mtag);             // number of mtag beads(nanoparticle beads)
         Atom nano1 = temp_beads.center_of_mass(mtag, 0, count/4);         // first 1/4 COM of mtag beads
         Atom nano2 = temp_beads.center_of_mass(mtag, 1+3*count/4, count); // last 1/4 COM of mtag beads
         Atom nano_axis = nano1-nano2;                          // Axis of mtag beads
@@ -391,13 +391,13 @@ public:
         ss << types.size() << " atom types:" << endl;
         for(int atom_type : types)
         {
-            ss << "Atom type " << atom_type << " of " << all_beads.count_Atom_Type(atom_type) << endl;
+            ss << "Atom type " << atom_type << " of " << all_beads.count_Atoms_of_Type(atom_type) << endl;
         }
 
         ss << moltags.size() << " molTypes:" << endl;
         for(int mol_tag : moltags)
         {
-            ss << "Molecule " << mol_tag << " of " << all_beads.count_Mol_tag(mol_tag) << endl;
+            ss << "Molecule " << mol_tag << " with " << all_beads.count_atoms_of_Mol_tag(mol_tag) << " atoms" << endl;
         }
 
         return ss.str();
@@ -405,24 +405,7 @@ public:
 
     vector<int> getMolTypes()
     {
-        vector<int> moltags;
-        bool exist = false;
-        for(Atom& item : all_beads)
-        {
-            exist = false;
-            for(auto mtype : moltags)
-            {
-                if( item.mol_tag == mtype )
-                {
-                    exist = true;
-                }
-            }
-            if(!exist)
-            {
-                moltags.push_back(item.mol_tag);
-            }
-        }
-        return moltags;
+    	return all_beads.get_Mol_Types();
     }
 
     void printAllSigma()

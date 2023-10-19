@@ -302,49 +302,12 @@ public:
     //
     //
 
-    /**
-     * @brief center_of_mass - function computes Center-Of-Mass (COM) of particles with a given mol_tag
-     * @param mtag - mol_tag of particles for COM calculation, -1 = all particles regardless of mol_tag
-     */
-    Atom center_of_mass(int mtag=-1, int start=-1, int stop=-1) const
-    {
-        int count=0;
-        int total=0;
-        Atom cm;
-        for(const Atom& item : (*this))
-        {
-            if( (item.mol_tag == mtag || mtag == -1) && total >= start && (total < stop || stop == -1) )
-            {
-                cm += item;
-                ++count;
-            }
-
-            if(item.mol_tag == mtag || mtag == -1)
-                ++total;
-        }
-        cm *= 1.0/count;
-        return cm;
-    }
-
-    int count_Atom_Type( int atype) const
+    int count_Atoms_of_Type( int atype) const
     {
         int count = 0;
         for(const Atom& item : (*this))
         {
             if( item.type == atype)
-            {
-                ++count;
-            }
-        }
-        return count;
-    }
-
-    int count_Mol_tag(int mTag) const
-    {
-        int count = 0;
-        for(const Atom& item : (*this))
-        {
-            if( item.mol_tag == mTag)
             {
                 ++count;
             }
@@ -372,6 +335,44 @@ public:
         return atom_types;
     }
 
+
+
+
+    int count_atoms_of_Mol_tag(int mTag) const
+    {
+        int count = 0;
+        for(const Atom& item : (*this))
+        {
+            if( item.mol_tag == mTag)
+            {
+                ++count;
+            }
+        }
+        return count;
+    }
+
+    vector<int> get_Mol_Types() const
+    {
+        vector<int> moltags;
+        bool exist = false;
+        for(auto& item : (*this))
+        {
+            exist = false;
+            for(auto mtype : moltags)
+            {
+                if( item.mol_tag == mtype )
+                {
+                    exist = true;
+                }
+            }
+            if(!exist)
+            {
+                moltags.push_back(item.mol_tag);
+            }
+        }
+        return moltags;
+    }
+
     int get_Max_Mol_Tag()
     {
         int max=0;
@@ -385,11 +386,39 @@ public:
         return max;
     }
 
+    Atoms get_molecule(int mol_tag) const
+    {
+    	Atoms temp;
+    	for(auto& a : (*this))
+    	{
+    		if(mol_tag == a.mol_tag)
+    		{
+    			temp.push_back(a);
+    		}
+    	}
+    	return temp;
+    }
+
+    double get_molecule_radius(int mol_tag) const
+    {
+    	Atoms molecule = get_molecule(mol_tag);
+    	Atom mol_com = center_of_mass(mol_tag);
+    	double mol_radius = 0.0;
+    	for(auto& m : molecule)
+    	{
+    		mol_radius += mol_com.dist(m);
+    	}
+    	return mol_radius / molecule.size();
+    }
+
+
+
+
     bool is_overlap(Atom& b, Force_Field& ff) const
     {
         for(const Atom& a : (*this))
         {
-            if( b.dist(a) > ff.get_cutoff(a.type, b.type)*ff.get_cutoff(a.type, b.type) )
+            if( b.dist(a) < ff.get_cutoff(a.type, b.type)*ff.get_cutoff(a.type, b.type) )
             {
                 return true;
             }
@@ -399,14 +428,66 @@ public:
 
     bool is_overlap(Atoms& other, Force_Field& ff) const
     {
+    	//
+    	// All-particle overlap
+    	//
     	for(Atom& o : other)
     	{
-    		if( is_overlap(o, ff) )
+    		if( is_overlap(o, ff) ) // overlap of atom o with this container
     		{
     			return true;
     		}
     	}
+
+    	//
+    	// Test if particle is within a hollow molecule
+    	//
+    	vector<int> molecules = get_Mol_Types();
+    	Atom mol_com;
+    	double mol_radius;
+
+    	for(auto mol_i : molecules)
+    	{
+    		mol_com = center_of_mass(mol_i);
+    		mol_radius = get_molecule_radius(mol_i);
+
+    		for(Atom& o : other)
+    		{
+    		 	if( o.dist(mol_com) < mol_radius ) // overlap of atom o with this container
+    		 	{
+    		    	return true;
+    		    }
+    		}
+    	}
+
     	return false;
+    }
+
+
+
+
+    /**
+     * @brief center_of_mass - function computes Center-Of-Mass (COM) of particles with a given mol_tag
+     * @param mtag - mol_tag of particles for COM calculation, -1 = all particles regardless of mol_tag
+     */
+    Atom center_of_mass(int mtag=-1, int start=-1, int stop=-1) const
+    {
+        int count=0;
+        int total=0;
+        Atom cm;
+        for(const Atom& item : (*this))
+        {
+            if( (item.mol_tag == mtag || mtag == -1) && total >= start && (total < stop || stop == -1) )
+            {
+                cm += item;
+                ++count;
+            }
+
+            if(item.mol_tag == mtag || mtag == -1)
+                ++total;
+        }
+        cm *= 1.0/count;
+        return cm;
     }
 
     //
@@ -415,19 +496,14 @@ public:
     //
     //
 
-    static Atom clusterCM(vector<Atom>& cluster) {
-
+    static Atom clusterCM(vector<Atom>& cluster)
+    {
         Atom cluscm(0.0, 0.0, 0.0);
-
-        for(unsigned int i=0; i<cluster.size(); i++) {
-            cluscm.x += cluster[i].x;
-            cluscm.y += cluster[i].y;
-            cluscm.z += cluster[i].z;
+        for(auto& a : cluster)
+        {
+            cluscm += a;
         }
-
-        cluscm.x /= cluster.size();
-        cluscm.y /= cluster.size();
-        cluscm.z /= cluster.size();
+        cluscm *= 1.0/cluster.size();
 
         return cluscm;
     }
