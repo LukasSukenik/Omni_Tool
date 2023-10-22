@@ -1,0 +1,8 @@
+Particle_type: sphere
+Output_type: xyz
+Num_of_beads: 500
+Scale: 5.0
+Number_of_ligands: 50
+Mol_tag: 1
+Sim_box: 0 50 0 50 0 50
+Populate: 80 random

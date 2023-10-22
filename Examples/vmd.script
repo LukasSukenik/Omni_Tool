@@ -1,0 +1,63 @@
+proc setlook {} {
+rotate stop
+color Display Background white
+display projection orthographic
+mol material AOChalky
+mol selection "name 1"
+mol representation VDW 2 30.000000
+mol color ColorID 1
+mol addrep 0
+mol material AOChalky
+mol selection "name 2"
+mol representation VDW 1 30.000000
+mol color ColorID 2
+mol addrep 0
+mol material AOChalky
+mol selection "name 3"
+mol representation VDW 1 30.000000
+mol color ColorID 3
+mol addrep 0
+mol material AOChalky
+mol selection "name 4"
+mol representation VDW 1 30.000000
+mol color ColorID 4
+mol addrep 0
+mol material AOChalky
+mol selection "name 5"
+mol representation VDW 1 30.000000
+mol color ColorID 5
+mol addrep 0
+axes location off
+}
+
+topo readlammpsdata data.test
+#mol addfile test.xyz
+
+set sel [atomselect top "name 1 2 3 4 5 6 7 8 9 10 11 12 13"]
+$sel set radius 1.0
+
+display rendermode GLSL
+color change rgb 0 0.700000 0.700000 0.700000
+display depthcue off
+
+material change ambient AOChalky 0.000000
+material change diffuse AOChalky 1.000000
+material change specular AOChalky 0.000000
+material change shininess AOChalky 0.000000
+
+display ambientocclusion on
+light 1 off
+	 
+mol addfile file.xtc waitfor all
+#mol addfile res.0002.xtc waitfor all 
+	
+#pbc box
+#pbc wrap
+
+setlook
+
+#play state.vmd
+#for {set i 0} {$i < 300} {incr i} {
+#    animate goto $i
+#    render Tachyon $i.dat
+#}

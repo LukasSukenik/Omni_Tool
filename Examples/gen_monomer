@@ -1,0 +1,20 @@
+#
+# Define the particle
+#
+Particle_type: monomer
+Type_of_beads: 4
+Mol_tag: 41
+
+#
+# Define the population of the particle
+#
+Populate: 200 random
+
+#
+# Define the force-field - persistent
+#
+ff_lj: 4 1 0.5 2.0 # type epsilon, sigma, cutoff
+
+
+
+
