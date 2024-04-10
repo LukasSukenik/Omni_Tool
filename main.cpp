@@ -32,6 +32,38 @@ using namespace std;
 class Structure_Container : public map<string, Particles*>
 {
 public:
+    Structure_Container()
+    {
+        //
+        // Add structures
+        //
+        (*this)[Empty_Particle::keyword] = new Empty_Particle();
+        (*this)[Icosahedron<Surface>::keyword] = new Icosahedron<Surface>();
+        (*this)[Sphere::keyword] = new Sphere();
+        (*this)[TennisBall::keyword] = new TennisBall();
+        (*this)[OblateSpheroid::keyword] = new OblateSpheroid();
+
+        (*this)[SpherePatch::keyword] = new SpherePatch();
+        (*this)[Pentamer<PentaSurface>::keyword] = new Pentamer<PentaSurface>();
+        (*this)[Dodecahedron::keyword] = new Dodecahedron();
+        (*this)[Chain::keyword] = new Chain();
+        (*this)[Slab::keyword] = new Slab();
+
+        (*this)[NettedSlab::keyword] = new NettedSlab();
+        (*this)[SphereJanus::keyword] = new SphereJanus();
+        (*this)[Cow::keyword] = new Cow();
+        (*this)[Globular_Sphere::keyword] = new Globular_Sphere();
+        (*this)[Monomer::keyword] = new Monomer();
+    }
+
+    ~Structure_Container()
+    {
+        for (auto const& [key, val] : (*this))
+        {
+             delete val;
+        }
+    }
+
 	void helpMessage()
 	{
 		cout << "Specify input files, run $ ./ico filename_1 filename_2 ...\n\n" << endl;
@@ -52,27 +84,6 @@ int main(int argc, char* argv[]) // // $num of beads per edge, box dimensions X(
     Data data;
 
     Structure_Container structure;
-
-    //
-    // Adding a structure generating class
-    //
-    structure[Empty_Particle::keyword] = new Empty_Particle();
-    structure[Icosahedron<Surface>::keyword] = new Icosahedron<Surface>();
-    structure[Sphere::keyword] = new Sphere();
-    structure[TennisBall::keyword] = new TennisBall();
-    structure[OblateSpheroid::keyword] = new OblateSpheroid();
-
-    structure[SpherePatch::keyword] = new SpherePatch();
-    structure[Pentamer<PentaSurface>::keyword] = new Pentamer<PentaSurface>();
-    structure[Dodecahedron::keyword] = new Dodecahedron();
-    structure[Chain::keyword] = new Chain();
-    structure[Slab::keyword] = new Slab();
-
-    structure[NettedSlab::keyword] = new NettedSlab();
-    structure[SphereJanus::keyword] = new SphereJanus();
-    structure[Cow::keyword] = new Cow();
-    structure[Globular_Sphere::keyword] = new Globular_Sphere();
-    structure[Monomer::keyword] = new Monomer();
 
     //
     // Input safeguard
@@ -150,14 +161,6 @@ int main(int argc, char* argv[]) // // $num of beads per edge, box dimensions X(
     //data.removeDuplicateBond();
 
     data.print();
-
-    //
-    // free memory
-    //
-    for (auto const& [key, val] : structure)
-    {
-         delete val;
-    }
 
     //
     // Report on the Final structure
