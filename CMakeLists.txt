@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(ico)
+project(Omni_Tool)
 
 # ------------------
 #   Compiler Flags
@@ -10,7 +10,7 @@ set (CMAKE_CXX_FLAGS " -O2 -march=native -std=c++17 -Wno-unused-parameter -Wno-s
 #add_subdirectory(xdrfile-1.1.4)
 
 
-add_executable (ico main.cpp 
+add_executable (Omni_Tool main.cpp 
 xdrfile-1.1.4/include/xdrfile.h 
 xdrfile-1.1.4/include/xdrfile_trr.h 
 xdrfile-1.1.4/include/xdrfile_xtc.h 
@@ -54,5 +54,5 @@ welford.h
 force_field.h
 )
 
-target_include_directories(ico PUBLIC "xdrfile-1.1.4/include/")
+target_include_directories(Omni_Tool PUBLIC "xdrfile-1.1.4/include/")
 
