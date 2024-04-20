@@ -29,7 +29,7 @@ using namespace std;
  * @brief Structure_Container
  * map classes, each generating a different structure
  */
-class Structure_Container : public map<string, Particles*>
+class Structure_Container : public map<string, Particles*> // @suppress("Invalid template argument")
 {
 public:
     Structure_Container()
@@ -58,7 +58,7 @@ public:
 
     ~Structure_Container()
     {
-        for (auto const& [key, val] : (*this))
+        for (auto const& [key, val] : (*this)) // @suppress("Symbol is not resolved")
         {
              delete val;
         }
@@ -69,13 +69,12 @@ public:
 		cout << "Specify input files, run $ ./ico filename_1 filename_2 ...\n\n" << endl;
 		cout << "Example input files:\n" << endl;
 
-		for (auto& [key, val] : *this)
+		for (auto& [key, val] : *this) // @suppress("Symbol is not resolved")
 		{
-		    std::cout << (*val).help() << std::endl;
+		    std::cout << (*val).help() << std::endl; // @suppress("Method cannot be resolved") // @suppress("Invalid overload")
 		}
 	}
 };
-
 
 
 
@@ -138,14 +137,14 @@ int main(int argc, char* argv[]) // // $num of beads per edge, box dimensions X(
         //
         if( ! data.isDefined() )
         {
-            if(structure.count(data.in.gen_structure) > 0)
+            if(structure.count(data.in.gen_structure) > 0) // @suppress("Method cannot be resolved")
             {
-                cerr << "Generating: " << structure[ data.in.gen_structure ]->name << endl;
-				structure[ data.in.gen_structure ]->generate( data );
-                structure[ data.in.gen_structure ]->scale( data.in.scale );
-                structure[ data.in.gen_structure ]->move( data.in.com_pos );
-                structure[ data.in.gen_structure ]->populate( data );
-                structure[ data.in.gen_structure ]->add(data); // particle data
+                cerr << "Generating: " << structure[ data.in.gen_structure ]->name << endl; // @suppress("Field cannot be resolved") // @suppress("Invalid overload")
+				structure[ data.in.gen_structure ]->generate( data ); // @suppress("Method cannot be resolved")
+                structure[ data.in.gen_structure ]->scale( data.in.scale ); // @suppress("Method cannot be resolved")
+                structure[ data.in.gen_structure ]->move( data.in.com_pos ); // @suppress("Method cannot be resolved")
+                structure[ data.in.gen_structure ]->populate( data ); // @suppress("Method cannot be resolved")
+                structure[ data.in.gen_structure ]->add(data); // particle data // @suppress("Method cannot be resolved")
             }
             else
             {

@@ -219,7 +219,7 @@ private:
                                 Atom center2 = (edge[a] + edge[b] + edge[d]) * (1.0/3.0);
                                 Atom cc = (center + center2) * 0.5;
 
-                                myFloat dist = cc.dot(edge[a]) / edge[a].size();
+                                myFloat dist = ( cc.dot(edge[a]) ) / edge[a].size();
                                 Atom edge_A_scaled = edge[a] * ( dist / cc.size() );
 
                                 ss = edge_A_scaled.size();
@@ -262,7 +262,7 @@ private:
     Atom getPosition( Atom va, Atom vb, Atom vc, int size, int i, int j, myFloat factor)
     {
         Atom push;
-        push = getSubPoint(va, vb, vc, size, i, j);
+        push.pos = getSubPoint(va.pos, vb.pos, vc.pos, size, i, j);
         push *= factor;
         push *= scale;
         push += com_pos;
@@ -314,7 +314,7 @@ private:
 
             if( isFirstPatch(j) )
             {
-                push = getSubPoint(va, vb, vc, size, i, j) + getSubPoint(va, vb, vc, size, i, j-1);
+                push.pos = getSubPoint(va.pos, vb.pos, vc.pos, size, i, j) + getSubPoint(va.pos, vb.pos, vc.pos, size, i, j-1);
                 push *= 0.5;
 
                 Atom cc = (vb + vc) * 0.5;
@@ -389,7 +389,7 @@ private:
 
             if(j >= 1 && j < size/2)
             {
-                push = getSubPoint(va, vb, vc, size, i, j) + getSubPoint(va, vb, vc, size, i, j-1);
+                push.pos = getSubPoint(va.pos, vb.pos, vc.pos, size, i, j) + getSubPoint(va.pos, vb.pos, vc.pos, size, i, j-1);
                 push *= 0.5;
 
                 Atom cc = (vb + vc) * 0.5;
@@ -701,7 +701,7 @@ private:
             Atoms::clusterRotate_random(temp, 180);
 
             for(int i=0; i< temp.size(); ++i) {
-                temp[i] = box.usePBC( temp[i], scale );
+                temp[i] = box.usePBC( temp[i].pos, scale );
             }
 
             clash = false;
@@ -729,18 +729,18 @@ private:
         //
         // a,b,c,d vertices of triangle
         //
-        Atom center = (edge[a] + edge[b] + edge[c]) * (iscale/3.0);
-        Atom center2 = (edge[a] + edge[b] + edge[d]) * (iscale/3.0);
-        Atom cc = (center + center2) * 0.5;
+        Tensor_xyz center = (edge[a].pos + edge[b].pos + edge[c].pos) * (iscale/3.0);
+        Tensor_xyz center2 = (edge[a].pos + edge[b].pos + edge[d].pos) * (iscale/3.0);
+        Tensor_xyz cc = (center + center2) * 0.5;
 
-        myFloat dist = cc.dot(edge[a]) / edge[a].size();
-        Atom edge_A_scaled = edge[a] * ( dist / cc.size() );
+        myFloat dist = cc.dot(edge[a].pos) / edge[a].size();
+        Tensor_xyz edge_A_scaled = edge[a].pos * ( dist / cc.size() );
 
         Atom vec = cc - edge_A_scaled;
-        vec *= 1.0/(vec.size());
+        vec *= 1.0/(vec.pos.size());
 
-        push = getSubPoint(edge_A_scaled, center, center2, size, 1, 1) - getSubPoint(edge_A_scaled, center, center2, size, 1, 0);
-        separation_same = push.size();
+        push.pos = getSubPoint(edge_A_scaled, center, center2, size, 1, 1) - getSubPoint(edge_A_scaled, center, center2, size, 1, 0);
+        separation_same = push.pos.size();
 
         pentaFrame(veca, 0, iscale, type::INTERFACE_SHIFT, 0 );
         pentaFrame(vecb, 2, iscale, type::INTERFACE_SHIFT, 0 );
@@ -761,22 +761,22 @@ private:
         separation_other = min;
     }
 
-    myFloat dist_from_plane(Atom point, Atom plane_normal, Atom point_of_plane)
+    myFloat dist_from_plane(Tensor_xyz point, Tensor_xyz plane_normal, Tensor_xyz point_of_plane)
     {
         myFloat d = -1.0 * ( plane_normal.x*point_of_plane.x + plane_normal.y*point_of_plane.y + plane_normal.z*point_of_plane.z );
         return  (plane_normal.x*point.x + plane_normal.y*point.y + plane_normal.z*point.z + d) / plane_normal.size();
     }
 
-    Atom getSubPoint(Atom& a, Atom& b, Atom& c, int size, int i, int j)
+    Tensor_xyz getSubPoint(Tensor_xyz& a, Tensor_xyz& b, Tensor_xyz& c, int size, int i, int j)
     {
-        Atom vecAB( b.x - a.x, b.y - a.y, b.z - a.z); // vector from a to b
-        Atom vecBC( c.x - b.x, c.y - b.y, c.z - b.z); // vector from b to c
+    	Tensor_xyz vecAB( b.x - a.x, b.y - a.y, b.z - a.z); // vector from a to b
+    	Tensor_xyz vecBC( c.x - b.x, c.y - b.y, c.z - b.z); // vector from b to c
         size-=1;
 
         vecAB *= (1.0/size);
         vecBC *= (1.0/size);
 
-        return Atom(a.x + i*vecAB.x + j*vecBC.x, a.y + i*vecAB.y + j*vecBC.y, a.z + i*vecAB.z + j*vecBC.z);
+        return Tensor_xyz(a.x + i*vecAB.x + j*vecBC.x, a.y + i*vecAB.y + j*vecBC.y, a.z + i*vecAB.z + j*vecBC.z);
     }
 
 

@@ -7,19 +7,7 @@
 #include "force_field.h"
 
 
-double ran() {
-    return unif(rng);
-}
 
-
-
-
-class Quat{
-public:
-    myFloat w,x,y,z;
-
-    Quat(myFloat w,myFloat x, myFloat y, myFloat z): w(w), x(x), y(y), z(z) {}
-};
 
 
 
@@ -29,8 +17,12 @@ public:
     //
     // Lammps define Atom/Particle
     //
-    myFloat x=0,y=0,z=0;
-    myFloat vx=-1.001,vy=-1.001,vz=-1.001; // velocities
+    //myFloat x=0,y=0,z=0;
+    //myFloat vx=-1.001,vy=-1.001,vz=-1.001; // velocities
+
+    Tensor_xyz pos = Tensor_xyz(0.0, 0.0, 0.0);
+    Tensor_xyz vel = Tensor_xyz(1.001, 1.001, 1.001);
+
     double q=0;
     int nx=0,ny=0,nz=0;
 
@@ -54,185 +46,104 @@ public:
     // Constructors
     //
     Atom() : to_type(-1) {}
-    Atom(myFloat x, myFloat y, myFloat z, int type=0): x(x), y(y), z(z), type(type), to_type(-1) {}
-    Atom(myFloat x, myFloat y, myFloat z, myFloat vx, myFloat vy, myFloat vz, int type=0): x(x), y(y), z(z), vx(vx), vy(vy), vz(vz), type(type), to_type(-1) {}
-    Atom(myFloat x, myFloat y, myFloat z, int type, int mol_tag): x(x), y(y), z(z), type(type), mol_tag(mol_tag), to_type(-1) {}
+    Atom(Tensor_xyz pos, int type=0): pos(pos), type(type), to_type(-1) {}
+    Atom(myFloat x, myFloat y, myFloat z, int type=0): pos(x,y,z), type(type), to_type(-1) {}
 
-    bool operator==(const Atom& o) const {
-        if(x != o.x) return false;
-        if(y != o.y) return false;
-        if(z != o.z) return false;
-        /*const double aprox = 0.0000000000001;
-        if(x < o.x+aprox && x > o.x - aprox)
-            return false;
-        if(y < o.y+aprox && y > o.y - aprox)
-            return false;
-        if(z < o.z+aprox && z > o.z - aprox)
-            return false;*/
+    Atom(myFloat x, myFloat y, myFloat z, myFloat vx, myFloat vy, myFloat vz, int type=0): pos(x,y,z), vel(vx,vy,vz), type(type), to_type(-1) {}
 
-        return true;
+    Atom(myFloat x, myFloat y, myFloat z, int type, int mol_tag): pos(x,y,z), type(type), mol_tag(mol_tag), to_type(-1) {}
+    Atom(Tensor_xyz pos, int type, int mol_tag): pos(pos), type(type), mol_tag(mol_tag), to_type(-1) {}
+
+    bool operator==(const Atom& o) const
+    {
+    	return (this->pos == o.pos);
     }
 
     bool operator!=(const Atom& o) const {
         return !(*this == o);
     }
 
-    /**
-     * @brief normalise Normalise a vector to have unit length.  For speed during heavy use, it is
-       not checked that the supplied vector has non-zero length.
-     */
-    inline void normalise() {
-        myFloat tot = size();
-        if (tot !=0.0) {
-            tot = 1.0 / tot;
-            x *= tot;
-            y *= tot;
-            z *= tot;
-        }
+    void operator*=(myFloat a)
+    {
+    	pos *= a;
     }
 
-    inline void randomUnitSphere() {
-        myFloat a, b, xi1, xi2;
-
-        do {
-            xi1 = 1.0 - 2.0 * ( ran() );
-            xi2 = 1.0 - 2.0 * ( ran() );
-
-            a = xi1*xi1 + xi2*xi2;
-        } while (a > 1.0);
-
-        b = 2.0 * sqrt(1.0 - a);
-
-        x = xi1 * b;
-        y = xi2 * b;
-        z = 1.0 - 2.0*a;
+    void operator/=(myFloat a)
+    {
+    	pos /= a;
     }
 
-    bool isAproxSame(const Atom& o, myFloat approx = 0.000001) const {
-
-        if(!(x < o.x+approx && x > o.x - approx))
-            return false;
-        if(!(y < o.y+approx && y > o.y - approx))
-            return false;
-        if(!(z < o.z+approx && z > o.z - approx))
-            return false;
-
-        return true;
-    }
-
-    double size() const {
-        return sqrt(x*x + y*y + z*z);
+    void operator+=(const Atom& o)
+    {
+    	pos += o.pos;
     }
 
     Atom operator*(const myFloat a) const {
-        return Atom(x*a,y*a,z*a, type, mol_tag);
+        return Atom(pos*a, type, mol_tag);
     }
 
     Atom operator/(const myFloat a) const {
-        return Atom(x/a,y/a,z/a, type, mol_tag);
-    }
-
-    void operator*=(myFloat a) {
-        x*=a;
-        y*=a;
-        z*=a;
-    }
-
-    double dot(const Atom& o) const {
-        return this->x*o.x + this->y*o.y + this->z*o.z;
+        return Atom(pos/a, type, mol_tag);
     }
 
     Atom operator+(const Atom& o) const {
-        return Atom(x+o.x, y+o.y, z+o.z, type, mol_tag);
-    }
-
-    void operator+=(const Atom& o) {
-        x += o.x;
-        y += o.y;
-        z += o.z;
+        return Atom(pos+o.pos, type, mol_tag);
     }
 
     Atom operator-(const Atom& o) const {
-        return Atom(x-o.x, y-o.y, z-o.z, type);
+        return Atom(pos-o.pos, type);
     }
 
-    double dist(const Atom& o) const {
-        return sqrt( (this->x-o.x)*(this->x-o.x) + (this->y-o.y)*(this->y-o.y) + (this->z-o.z)*(this->z-o.z) );
+    double dot(const Atom& o) const
+    {
+    	return pos.dot(o.pos);
     }
 
-    inline double distSQ(const Atom& o) const {
-        return (this->x-o.x)*(this->x-o.x) + (this->y-o.y)*(this->y-o.y) + (this->z-o.z)*(this->z-o.z);
+    inline Atom cross(const Atom& B) const
+    {
+        return Atom(pos.cross(B.pos));
     }
 
-    inline bool checkBox(myFloat size) {
-        return x<size && x>-size && y<size && y>-size && z<size && z>-size;
+    void rotate(Quat& q)
+    {
+    	pos.rotate(q);
     }
 
-    inline Atom cross(const Atom& B) const {
-        return Atom(this->y*B.z - this->z*B.y, -this->x*B.z + this->z*B.x, this->x*B.y - this->y*B.x);
+    inline void rotate(Atom& axis, myFloat angle)
+    {
+    	pos.rotate(axis.pos, angle);
+    }
+
+    void normalise()
+    {
+        pos.normalise();
+    }
+
+    double size() const
+    {
+    	return pos.size();
+    }
+
+    double dist(const Atom& o) const
+    {
+    	return pos.dist(o.pos);
+    }
+
+    double distSQ(const Atom& o) const
+    {
+    	return pos.distSQ(o.pos);
     }
 
     bool isNeighbor(const Atom& o, myFloat len = 1.0, myFloat margin = 0.00000001) const
     {
-        Atom vec(o.x - x, o.y - y, o.z - z);
-        double dist = vec.x*vec.x + vec.y*vec.y + vec.z*vec.z;
+        Atom vec(o.pos.x - pos.x, o.pos.y - pos.y, o.pos.z - pos.z);
+        double dist = vec.pos.x*vec.pos.x + vec.pos.y*vec.pos.y + vec.pos.z*vec.pos.z;
         return ( dist < len+margin && dist > len-margin );
     }
 
-    inline void rotate(Atom& axis, myFloat angle) {
-        angle*=0.5;
-        double cosAngle = cos(angle);
-        double sinAngle = sin(angle);
-        double t2,t3,t4,t5,t6,t7,t8,t9,t10,newx,newy,newz;
-        double qw = cosAngle, qx = (axis.x * sinAngle), qy = (axis.y * sinAngle), qz = (axis.z * sinAngle);
-
-        /*    t1 = quat.w * quat.w; */
-        t2 =  qw * qx;
-        t3 =  qw * qy;
-        t4 =  qw * qz;
-        t5 = -qx * qx;
-        t6 =  qx * qy;
-        t7 =  qx * qz;
-        t8 = -qy * qy;
-        t9 =  qy * qz;
-        t10 = -qz * qz;
-
-        newx = 2.0 * ( (t8+t10) * x + (t6-t4)  * y + (t3+t7) * z ) + x;
-        newy = 2.0 * ( (t4+t6)  * x + (t5+t10) * y + (t9-t2) * z ) + y;
-        newz = 2.0 * ( (t7-t3)  * x + (t2+t9)  * y + (t5+t8) * z ) + z;
-
-        x = newx;
-        y = newy;
-        z = newz;
-    }
-
-    inline void rotate(Quat& q) {
-        double t2,t3,t4,t5,t6,t7,t8,t9,t10,newx,newy,newz;
-
-        /*    t1 = quat.w * quat.w; */
-        t2 =  q.w * q.x;
-        t3 =  q.w * q.y;
-        t4 =  q.w * q.z;
-        t5 = -q.x * q.x;
-        t6 =  q.x * q.y;
-        t7 =  q.x * q.z;
-        t8 = -q.y * q.y;
-        t9 =  q.y * q.z;
-        t10 = -q.z * q.z;
-
-        newx = 2.0 * ( (t8+t10) * x + (t6-t4)  * y + (t3+t7) * z ) + x;
-        newy = 2.0 * ( (t4+t6)  * x + (t5+t10) * y + (t9-t2) * z ) + y;
-        newz = 2.0 * ( (t7-t3)  * x + (t2+t9)  * y + (t5+t8) * z ) + z;
-
-        x = newx;
-        y = newy;
-        z = newz;
-    }
-
-
-    friend std::ostream& operator<<(std::ostream& os, const Atom& vec) {
-      os << vec.x << " " << vec.y << " " << vec.z;
-      return os;
+    bool isAproxSame(const Atom& o, myFloat approx = 0.000001) const
+    {
+    	return pos.isAproxSame(o.pos, approx);
     }
 };
 
@@ -246,7 +157,7 @@ bool isAproxSame(const myFloat& a, const myFloat& b, myFloat approx = 0.000001) 
 
 
 
-bool myfunction (Atom i,Atom j) { return (i.size()<j.size()); }
+bool myfunction (Atom i,Atom j) { return (i.pos.size()<j.pos.size()); }
 
 
 
@@ -284,7 +195,7 @@ public:
 
     	for(Atom& a : (*this))
     	{
-    		a *= 1.0/a.dist(zero);
+    		a *= 1.0/a.pos.dist(zero.pos);
     	}
     }
 
@@ -508,10 +419,10 @@ public:
         return cluscm;
     }
 
-    static void clusterRotate(vector<Atom>& cluster, double angle, Atom axis) {
+    static void clusterRotate(vector<Atom>& cluster, double angle, Tensor_xyz axis) {
         double vc,vs;
 
-        Atom cluscm = clusterCM(cluster);
+        Tensor_xyz cluscm = clusterCM(cluster).pos;
 
         axis.normalise();
 
@@ -525,23 +436,23 @@ public:
         //shift position to geometrical center
         for(unsigned int i=0; i<cluster.size(); ++i) {
             //shift position to geometrical center
-            cluster[i].x -= cluscm.x;
-            cluster[i].y -= cluscm.y;
-            cluster[i].z -= cluscm.z;
+            cluster[i].pos.x -= cluscm.x;
+            cluster[i].pos.y -= cluscm.y;
+            cluster[i].pos.z -= cluscm.z;
             //do rotation
-            cluster[i].rotate(newquat);
+            cluster[i].pos.rotate(newquat);
             //shift positions back
-            cluster[i].x += cluscm.x;
-            cluster[i].y += cluscm.y;
-            cluster[i].z += cluscm.z;
+            cluster[i].pos.x += cluscm.x;
+            cluster[i].pos.y += cluscm.y;
+            cluster[i].pos.z += cluscm.z;
         }
     }
 
     static void clusterRotate_random(vector<Atom>& cluster, double max_angle) {
         double vc,vs;
-        Atom newaxis;
+        Tensor_xyz newaxis;
 
-        Atom cluscm = clusterCM(cluster);
+        Tensor_xyz cluscm = clusterCM(cluster).pos;
 
         // create rotation quaternion
         newaxis.randomUnitSphere(); // random axes for rotation
@@ -556,15 +467,15 @@ public:
         //shift position to geometrical center
         for(unsigned int i=0; i<cluster.size(); ++i) {
             //shift position to geometrical center
-            cluster[i].x -= cluscm.x;
-            cluster[i].y -= cluscm.y;
-            cluster[i].z -= cluscm.z;
+            cluster[i].pos.x -= cluscm.x;
+            cluster[i].pos.y -= cluscm.y;
+            cluster[i].pos.z -= cluscm.z;
             //do rotation
-            cluster[i].rotate(newquat);
+            cluster[i].pos.rotate(newquat);
             //shift positions back
-            cluster[i].x += cluscm.x;
-            cluster[i].y += cluscm.y;
-            cluster[i].z += cluscm.z;
+            cluster[i].pos.x += cluscm.x;
+            cluster[i].pos.y += cluscm.y;
+            cluster[i].pos.z += cluscm.z;
         }
     }
 };

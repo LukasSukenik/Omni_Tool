@@ -114,13 +114,13 @@ protected:
                                     //                          ....
                                     // i - number of lines, j = number of columns
 
-                                    push = getSubPoint(edge[a], edge[b], edge[c], size, i, j);
+                                    push.pos = getSubPoint(edge[a].pos, edge[b].pos, edge[c].pos, size, i, j);
 
                                     if( isVertice(i,j,size) )
                                     {
                                         // Push the point inside into the nanoparticle
                                         // Particle centered at (0.0, 0.0, 0.0) -> simply scale appropriately by given radiuses of vertice and next sphere in line
-                                        push *= ( getSubPoint(edge[a], edge[b], edge[c], size, 1, 0).size() ) / push.size();
+                                        push *= ( getSubPoint(edge[a].pos, edge[b].pos, edge[c].pos, size, 1, 0).size() ) / push.size();
                                     }
 
                                     push *= scale;
@@ -184,15 +184,16 @@ protected:
         return false;
     }
 
-    Atom getSubPoint(Atom& a, Atom& b, Atom& c, int size, int i, int j) {
-        Atom vecAB( b.x - a.x, b.y - a.y, b.z - a.z); // vector from a to b
-        Atom vecBC( c.x - b.x, c.y - b.y, c.z - b.z); // vector from b to c
+    Tensor_xyz getSubPoint(Tensor_xyz& a, Tensor_xyz& b, Tensor_xyz& c, int size, int i, int j)
+    {
+    	Tensor_xyz vecAB( b.x - a.x, b.y - a.y, b.z - a.z); // vector from a to b
+    	Tensor_xyz vecBC( c.x - b.x, c.y - b.y, c.z - b.z); // vector from b to c
         size-=1;
 
         vecAB *= (1.0/size);
         vecBC *= (1.0/size);
 
-        return Atom(a.x + i*vecAB.x + j*vecBC.x, a.y + i*vecAB.y + j*vecBC.y, a.z + i*vecAB.z + j*vecBC.z);
+        return Tensor_xyz(a.x + i*vecAB.x + j*vecBC.x, a.y + i*vecAB.y + j*vecBC.y, a.z + i*vecAB.z + j*vecBC.z);
     }
 };
 

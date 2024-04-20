@@ -55,7 +55,7 @@ protected:
         // erase beads on poles based on param c
         //
         for(int i=beads.size(); i>beg; --i) {
-            if( fabs( beads[i].z ) > (2.0-c)*0.5 ) {
+            if( fabs( beads[i].pos.z ) > (2.0-c)*0.5 ) {
                 beads.erase(beads.begin()+i);
             }
         }
@@ -63,13 +63,14 @@ protected:
         return beads.size() - beg;
     }
 
-    bool isWedge(int i, int angle) {
-        Atom x(1,0,0);
-        Atom o = beads[i];
+    bool isWedge(int i, int angle)
+    {
+    	Tensor_xyz a_x(1,0,0);
+        Tensor_xyz o = beads[i].pos;
         o.z = 0;
         o.normalise();
 
-        if( ( o.cross(x) ).size() < sin(angle*degToRad) && o.dot(x) > 0.0)
+        if( ( o.cross(a_x) ).size() < sin(angle*degToRad) && o.dot(a_x) > 0.0)
             return true;
         return false;
     }
@@ -117,30 +118,30 @@ private:
         double b0 = 1.0/sqrt(2.0);
 
         //A (x0, y0, 0)
-        if( (beads[i].x > x0-tolerance && beads[i].x < x0+tolerance) )
-            if( (beads[i].y > y0-tolerance && beads[i].y < y0+tolerance) || (beads[i].y > -y0-tolerance && beads[i].y < -y0+tolerance) )
-                if(beads[i].z > 0.0-tolerance && beads[i].z < 0.0+tolerance)
+        if( (beads[i].pos.x > x0-tolerance && beads[i].pos.x < x0+tolerance) )
+            if( (beads[i].pos.y > y0-tolerance && beads[i].pos.y < y0+tolerance) || (beads[i].pos.y > -y0-tolerance && beads[i].pos.y < -y0+tolerance) )
+                if(beads[i].pos.z > 0.0-tolerance && beads[i].pos.z < 0.0+tolerance)
                     return true;
 
         //B
-        if(beads[i].x > 0.0-tolerance && beads[i].x < 0.0+tolerance)
-            if( (beads[i].y > b0-tolerance && beads[i].y < b0+tolerance) || (beads[i].y > -b0-tolerance && beads[i].y < -b0+tolerance))
-                if( (beads[i].z > b0-tolerance && beads[i].z < b0+tolerance) || (beads[i].z > -b0-tolerance && beads[i].z < -b0+tolerance))
+        if(beads[i].pos.x > 0.0-tolerance && beads[i].pos.x < 0.0+tolerance)
+            if( (beads[i].pos.y > b0-tolerance && beads[i].pos.y < b0+tolerance) || (beads[i].pos.y > -b0-tolerance && beads[i].pos.y < -b0+tolerance))
+                if( (beads[i].pos.z > b0-tolerance && beads[i].pos.z < b0+tolerance) || (beads[i].pos.z > -b0-tolerance && beads[i].pos.z < -b0+tolerance))
                     return true;
 
         //C
-        if( (beads[i].x > -x0-tolerance && beads[i].x < -x0+tolerance) )
-            if(beads[i].y > 0.0-tolerance && beads[i].y < 0.0+tolerance)
-                if( (beads[i].z > y0-tolerance && beads[i].z < y0+tolerance) || (beads[i].z > -y0-tolerance && beads[i].z < -y0+tolerance) )
+        if( (beads[i].pos.x > -x0-tolerance && beads[i].pos.x < -x0+tolerance) )
+            if(beads[i].pos.y > 0.0-tolerance && beads[i].pos.y < 0.0+tolerance)
+                if( (beads[i].pos.z > y0-tolerance && beads[i].pos.z < y0+tolerance) || (beads[i].pos.z > -y0-tolerance && beads[i].pos.z < -y0+tolerance) )
                     return true;
 
         // function g = connects C to B -> area defined by this curve
-        if(beads[i].y < g(beads[i].x, x0, y0, b0) && beads[i].y > -g(beads[i].x, x0, y0, b0)) // Y
+        if(beads[i].pos.y < g(beads[i].pos.x, x0, y0, b0) && beads[i].pos.y > -g(beads[i].pos.x, x0, y0, b0)) // Y
             return true;
 
         // function h = connect B to A -> area not defined by this curve
-        if(beads[i].x > 0)
-            if(beads[i].y < h(beads[i].x, x0, y0, b0) && beads[i].y > -h(beads[i].x, x0, y0, b0)) // Y
+        if(beads[i].pos.x > 0)
+            if(beads[i].pos.y < h(beads[i].pos.x, x0, y0, b0) && beads[i].pos.y > -h(beads[i].pos.x, x0, y0, b0)) // Y
                 return true;
 
         return false;

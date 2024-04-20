@@ -18,6 +18,7 @@
 
 #include "atom.h"
 #include "force_field.h"
+#include "rng.h"
 
 using namespace std;
 
@@ -40,18 +41,18 @@ public:
         return (xhi-xlo)*(yhi-ylo)*(zhi-zlo);
     }
 
-    Atom get_random_pos()
+    Tensor_xyz get_random_pos()
     {
-    	Atom a;
+    	Tensor_xyz a;
     	a.x = ran() * (xhi-xlo) + xlo;
     	a.y = ran() * (yhi-ylo) + ylo;
     	a.z = ran() * (zhi-zlo) + zlo;
     	return a;
     }
 
-    Atom usePBC(Atom& pos_orig, double scale) const
+    Atom usePBC(Tensor_xyz& pos_orig, double scale) const
     {
-        Atom pos = pos_orig;
+    	Tensor_xyz pos = pos_orig;
 
         while (pos.x < 0.0) {
             pos.x += xhi/scale;
@@ -114,7 +115,7 @@ class Output{
 public:
     Output() {}
 
-    Output_Type type;
+    Output_Type type = Output_Type::none;
 
     void clear()
     {
@@ -250,8 +251,8 @@ public:
     // Yet unsorted
     //
     bool center=false;
-    Atom com_pos = Atom(0.0, 0.0, 0.0);
-    myFloat c;
+    Tensor_xyz com_pos = Tensor_xyz(0.0, 0.0, 0.0);
+    myFloat c=0.0;
     Atom patch_1 = Atom(0,0,0,0);
     Atom patch_2 = Atom(0,0,0,0);
 
@@ -260,7 +261,7 @@ public:
     int mtag_1=-1;
     int mtag_2=-1;
     int seed=0;
-    Atom ivx = Atom(0.0, 0.0, 0.0);
+    Tensor_xyz ivx = Tensor_xyz(0.0, 0.0, 0.0);
     bool fit = false;
     int offset = 1;
 
@@ -301,8 +302,8 @@ public:
             if( what.compare("Patch:") == 0 )
             {
             	patches.push_back(Atom());
-            	ss >> patches.back().x >> patches.back().y >> patches.back().z;
-            	ss >> patches.back().vx >> patches.back().vy >> patches.back().vz;
+            	ss >> patches.back().pos.x >> patches.back().pos.y >> patches.back().pos.z;
+            	ss >> patches.back().vel.x >> patches.back().vel.y >> patches.back().vel.z;
             	ss >> patches.back().type;
             }
 
@@ -336,6 +337,7 @@ public:
             if( what.compare("Impact_vector:") == 0 )   { ss >> ivx.x >> ivx.y >> ivx.z; }
             if( what.compare("Seed:") == 0 )            { ss >> seed; rng.seed(seed); }
             if( what.compare("Lammps_offset:") == 0 )   { ss >> offset; }
+
         }
         fs.close();
 
@@ -358,8 +360,8 @@ public:
         ss << "c: " << c << endl;
         ss << "Box: ( " << sim_box << " )" << endl;
         ss << "Position: (" << com_pos.x << ", " << com_pos.y << ", " << com_pos.z << ")" << endl;
-        ss << "Patch_1: (" << patch_1.x << "-" << patch_1.vx << ", " << patch_1.y << "-" << patch_1.vy << ", " << patch_1.z << "-" << patch_1.vz << ", " << patch_1.type << ")" << endl;
-        ss << "Patch_1: (" << patch_2.x << ", " << patch_2.y << ", " << patch_2.z << ", " << patch_2.type << ")" << endl;
+        ss << "Patch_1: (" << patch_1.pos.x << "-" << patch_1.vel.x << ", " << patch_1.pos.y << "-" << patch_1.vel.y << ", " << patch_1.pos.z << "-" << patch_1.vel.z << ", " << patch_1.type << ")" << endl;
+        ss << "Patch_1: (" << patch_2.pos.x << ", " << patch_2.pos.y << ", " << patch_2.pos.z << ", " << patch_2.type << ")" << endl;
         ss << "Populate: " << population << endl;
 
         ss << "Force-Field: " << ff << endl;
@@ -401,14 +403,14 @@ public:
         mtag_1=-1;
         mtag_2=-1;
 
-        com_pos=Atom(0.0, 0.0, 0.0);
+        com_pos=Tensor_xyz(0.0, 0.0, 0.0);
 
         patches.clear();
 
         patch_1=Atom(0,0,0,0);
         patch_2=Atom(0,0,0,0);
 
-        ivx=Atom(0.0, 0.0, 0.0);
+        ivx=Tensor_xyz(0.0, 0.0, 0.0);
 
         population.clear();
         infile.clear();

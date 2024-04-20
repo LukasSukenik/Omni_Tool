@@ -118,7 +118,7 @@ public:
     void move(Atom move)
     {
     	beads.move(move);
-    	cerr << "move " << move.x << " " << move.y << " " << move.z << endl;
+    	cerr << "move " << move.pos.x << " " << move.pos.y << " " << move.pos.z << endl;
     }
 
     void scale(double scale)

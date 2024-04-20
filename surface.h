@@ -43,7 +43,7 @@ public:
         bool same = false;
         double margin = -0.0001;
 
-        Atom center(edge[a].x + edge[b].x + edge[c].x, edge[a].y + edge[b].y + edge[c].y, edge[a].z + edge[b].z + edge[c].z);
+        Atom center(edge[a].pos.x + edge[b].pos.x + edge[c].pos.x, edge[a].pos.y + edge[b].pos.y + edge[c].pos.y, edge[a].pos.z + edge[b].pos.z + edge[c].pos.z);
         Atom ab = edge[a] + edge[b];
         Atom ac = edge[a] + edge[c];
         Atom bc = edge[b] + edge[c];
@@ -80,11 +80,11 @@ public:
         //
         // SET TYPES FOR PENTAMERS
         //
-        if( ( (edge[a]-push).size() - margin < (edge[b]-push).size() ) && ( (edge[a]-push).size() - margin < (edge[c]-push).size() ) )
+        if( ( (edge[a]-push).pos.size() - margin < (edge[b]-push).pos.size() ) && ( (edge[a]-push).pos.size() - margin < (edge[c]-push).pos.size() ) )
             push.type = a;
-        if( ( (edge[b]-push).size() - margin < (edge[a]-push).size() ) && ( (edge[b]-push).size() - margin < (edge[c]-push).size() ) )
+        if( ( (edge[b]-push).pos.size() - margin < (edge[a]-push).pos.size() ) && ( (edge[b]-push).pos.size() - margin < (edge[c]-push).pos.size() ) )
             push.type = b;
-        if( ( (edge[c]-push).size() - margin < (edge[a]-push).size() ) && ( (edge[c]-push).size() - margin < (edge[b]-push).size() ) )
+        if( ( (edge[c]-push).pos.size() - margin < (edge[a]-push).pos.size() ) && ( (edge[c]-push).pos.size() - margin < (edge[b]-push).pos.size() ) )
             push.type = c;
 
 

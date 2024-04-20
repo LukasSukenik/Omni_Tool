@@ -46,7 +46,7 @@ public:
     	{
     		for(auto& patch : data.in.patches)
     	    {
-    			if( (patch.x*(atom.x - patch.vx)) + (patch.y*(atom.y - patch.vy)) + (patch.z*(atom.z - patch.vz)) > 0 + (data.in.ff.lj[1].sigma - data.in.ff.lj[2].sigma) / data.in.scale )
+    			if( (patch.pos.x*(atom.pos.x - patch.vel.x)) + (patch.pos.y*(atom.pos.y - patch.vel.y)) + (patch.pos.z*(atom.pos.z - patch.vel.z)) > 0 + (data.in.ff.lj[1].sigma - data.in.ff.lj[2].sigma) / data.in.scale )
     	        {
     				atom.type=patch.type;
     	        	full_sphere.push_back(atom);
@@ -60,7 +60,7 @@ public:
     		add = true;
     		for(auto& patch : data.in.patches)
     		{
-    	     	if( (patch.x*(atom.x - patch.vx)) + (patch.y*(atom.y - patch.vy)) + (patch.z*(atom.z - patch.vz)) > 0 )
+    	     	if( (patch.pos.x*(atom.pos.x - patch.vel.x)) + (patch.pos.y*(atom.pos.y - patch.vel.y)) + (patch.pos.z*(atom.pos.z - patch.vel.z)) > 0 )
     	       	{
     	        	add = false;
     	     	}

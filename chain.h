@@ -74,7 +74,7 @@ public:
                 }
 
                 // Generate new chain bead
-                next.randomUnitSphere();
+                next.pos.randomUnitSphere();
                 next = next*bond_size + beads.back(); // move atom to last generated atom (+ convert * random unit dist)
 
                 clashExist = ( clash(next, beads) || clash(next, data.all_beads) );

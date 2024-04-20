@@ -89,9 +89,9 @@ protected:
     {
         for(auto& lig : ligand)
         {
-            if(lig.x < patch.x && lig.x > patch.vx &&
-               lig.y < patch.y*data.in.c && lig.y > patch.vy*data.in.c &&
-               lig.z < patch.z && lig.z > patch.vz)
+            if(lig.pos.x < patch.pos.x && lig.pos.x > patch.vel.x &&
+               lig.pos.y < patch.pos.y*data.in.c && lig.pos.y > patch.vel.y*data.in.c &&
+               lig.pos.z < patch.pos.z && lig.pos.z > patch.vel.z)
             {
                 Atom* select = &beads[0]; // Stupid C++, for some reason reference dont work
                 for(auto& item : beads)
@@ -112,7 +112,7 @@ protected:
         for(auto& lig : ligand)
         {
             // plane equation a*x-x_coord + ... > 0
-            if( (patch.x*(lig.x - patch.vx)) + (patch.y*(lig.y - patch.vy)) + (patch.z*(lig.z - patch.vz)) > 0 )
+            if( (patch.pos.x*(lig.pos.x - patch.vel.x)) + (patch.pos.y*(lig.pos.y - patch.vel.y)) + (patch.pos.z*(lig.pos.z - patch.vel.z)) > 0 )
             {
                 Atom* select = &beads[0];
                 for(auto& item : beads)
@@ -163,8 +163,8 @@ protected:
         int hist[size] = {0};
         for(int i=0; i<beads.size(); ++i) {
             if(beads[i].type == typeLig) {
-                cout << beads[i].z << endl;
-                ++hist[ (int)(beads[i].z*20) ];
+                cout << beads[i].pos.z << endl;
+                ++hist[ (int)(beads[i].pos.z*20) ];
             }
         }
         for(int i=0; i< size; ++i) {
@@ -200,7 +200,7 @@ public:
 
         // change type nano to type lig based on placement
         for(int i=nano_start; i<nano_end; ++i) {
-            if(beads[i].x > 0.0) {
+            if(beads[i].pos.x > 0.0) {
                 beads[i].type = typeLig;
             }
         }

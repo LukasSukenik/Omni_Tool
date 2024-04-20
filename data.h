@@ -115,7 +115,7 @@ public:
     void move(Atom move)
     {
     	temp_beads.move(move);
-    	cerr << "move " << move.x << " " << move.y << " " << move.z << " done" << endl;
+    	cerr << "move " << move.pos.x << " " << move.pos.y << " " << move.pos.z << " done" << endl;
     }
 
     /**
@@ -152,11 +152,11 @@ public:
      * @brief impact - Deprecated, don't use
      * @param ivx
      */
-    void impact(Atom ivx)
+    void impact(Tensor_xyz ivx)
     {
         if(ivx.size() > 0.1)
         {
-            Atom impact = Atom(0.0, 0.0, 0.0);
+
 
             // move the liposome to COM
             Atom com = temp_beads.center_of_mass();
@@ -175,24 +175,24 @@ public:
 
             for(Atom& item : temp_beads)
             {
-                if(z_min_lipo3 > item.z)
-                    z_min_lipo3 = item.z;
-                if(y_min_lipo3 > item.y)
-                    y_min_lipo3 = item.y;
-                if(y_max_lipo3 < item.y)
-                    y_max_lipo3 = item.y;
+                if(z_min_lipo3 > item.pos.z)
+                    z_min_lipo3 = item.pos.z;
+                if(y_min_lipo3 > item.pos.y)
+                    y_min_lipo3 = item.pos.y;
+                if(y_max_lipo3 < item.pos.y)
+                    y_max_lipo3 = item.pos.y;
             }
 
             for(Atom& item : all_beads)
             {
-                if(y_min_lipo1 > item.y && item.mol_tag == 1)
-                    y_min_lipo1 = item.y;
-                if(y_max_lipo1 < item.y && item.mol_tag == 1)
-                    y_max_lipo1 = item.y;
-                if(z_max_lipo1 < item.z && item.mol_tag == 1)
-                    z_max_lipo1 = item.z;
-                if(z_max_nano < item.z && item.mol_tag == 2)
-                    z_max_nano = item.z;
+                if(y_min_lipo1 > item.pos.y && item.mol_tag == 1)
+                    y_min_lipo1 = item.pos.y;
+                if(y_max_lipo1 < item.pos.y && item.mol_tag == 1)
+                    y_max_lipo1 = item.pos.y;
+                if(z_max_lipo1 < item.pos.z && item.mol_tag == 1)
+                    z_max_lipo1 = item.pos.z;
+                if(z_max_nano < item.pos.z && item.mol_tag == 2)
+                    z_max_nano = item.pos.z;
             }
 
             // z impact
@@ -203,11 +203,13 @@ public:
             //y_impact.z = z_max_lipo1 - z_min_lipo3 + 0.5;
 
             ivx.normalise();
-            impact.y = (- y_max_lipo3 - z_max_nano -1) * ivx.y;
-            impact.z = (z_max_lipo1 - z_min_lipo3 + 0.5)*(1-ivx.z) + ivx.z*(z_max_nano - z_min_lipo3 + 3);
+
+            Atom impact = Atom(0.0, 0.0, 0.0);
+            impact.pos.y = (- y_max_lipo3 - z_max_nano -1) * ivx.y;
+            impact.pos.z = (z_max_lipo1 - z_min_lipo3 + 0.5)*(1-ivx.z) + ivx.z*(z_max_nano - z_min_lipo3 + 3);
             move(impact);
 
-            cerr << "Liposome moved by " << impact.x << " " << impact.y << " " << impact.z << endl;
+            cerr << "Liposome moved by " << impact.pos.x << " " << impact.pos.y << " " << impact.pos.z << endl;
         }
     }
 
@@ -303,10 +305,10 @@ public:
         // - to keep it aligned with x axis, we rotate only around x axis
         //
         Atom com_mtag2 = temp_beads.center_of_mass(mtag2);
-        com_mtag2.x = 0.0;
+        com_mtag2.pos.x = 0.0;
         com_mtag2.normalise();
         double angle = acos( com_mtag2.dot(z_axis) );
-        double clockwise = (com_mtag2.cross(z_axis)).x ;
+        double clockwise = (com_mtag2.cross(z_axis)).pos.x ;
 
         if(clockwise > 0.0)
         {
@@ -413,7 +415,7 @@ public:
         cerr << "printAllSigma:" << endl;
         for(unsigned int i=0; i<all_sigma_size; ++i)
         {
-            cerr << "[" << i+1 << "][" << i+1 << "] = "  << all_sigma[i][i] << endl;
+            cerr << "[" << i+1 << "][" << i+1 << "] = "  << all_sigma[i][i] << "\n";
         }
     }
 
@@ -607,7 +609,7 @@ public:
         //
         cout <<"\nAtoms # full\n" << endl;
         for(auto& a : all_beads) {
-            cout << a.N << " " << a.mol_tag << " " << a.type << " " << 0 << " " << a << " 0 0 0" << "\n";
+            cout << a.N << " " << a.mol_tag << " " << a.type << " " << 0 << " " << a.pos << " 0 0 0" << "\n";
         }
 
         //
@@ -640,7 +642,7 @@ public:
         cout << all_beads.size() << "\nparticle\n";
         for (const Atom& atom : all_beads)
         {
-        	cout << "C" << atom.type <<  " " << atom << "\n";
+        	cout << "C" << atom.type <<  " " << atom.pos << "\n";
         }
     }
 
@@ -664,9 +666,9 @@ public:
     	         << std::setw(1) << atom.mol_tag // 22: chain identifier
 				 << std::setw(4) << atom.type // 23-26: Residue sequence number
 				 << " " << "   " // 27:code for insertion of residues, 28-30:empty
-				 << std::setw(8) << std::fixed << std::setprecision(3) << atom.x // 31-38
-				 << std::setw(8) << std::fixed << std::setprecision(3) << atom.y // 39-46
-				 << std::setw(8) << std::fixed << std::setprecision(3) << atom.z // 47-54
+				 << std::setw(8) << std::fixed << std::setprecision(3) << atom.pos.x // 31-38
+				 << std::setw(8) << std::fixed << std::setprecision(3) << atom.pos.y // 39-46
+				 << std::setw(8) << std::fixed << std::setprecision(3) << atom.pos.z // 47-54
 				 << "   1.0" // 55-60: Occupancy
 				 << "   1.0" // 61-66: Temperature factor
 				 << "      " // 67-72: Empty
@@ -813,7 +815,7 @@ void Data::loadFileHeadAndPart(string filename)
             part.nz = 0;
             in.getline(str, 256);
             ss.str( str );
-            ss >> part.N >> part.mol_tag >> part.type >> part.q >> part.x >> part.y >> part.z >> part.nx >> part.ny >> part.nz;
+            ss >> part.N >> part.mol_tag >> part.type >> part.q >> part.pos.x >> part.pos.y >> part.pos.z >> part.nx >> part.ny >> part.nz;
             ss.flush();
             ss.clear();
 

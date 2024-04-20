@@ -97,7 +97,7 @@ private:
                                     //
                                     // a,b,c vertices of triangle
                                     //
-                                    Atom center(edge[a].x + edge[b].x + edge[c].x, edge[a].y + edge[b].y + edge[c].y, edge[a].z + edge[b].z + edge[c].z);
+                                    Atom center(edge[a].pos.x + edge[b].pos.x + edge[c].pos.x, edge[a].pos.y + edge[b].pos.y + edge[c].pos.y, edge[a].pos.z + edge[b].pos.z + edge[c].pos.z);
                                     Atom ab = edge[a] + edge[b];
                                     Atom ac = edge[a] + edge[c];
                                     Atom bc = edge[b] + edge[c];
@@ -108,7 +108,7 @@ private:
 
                                     if(( (  (edge[a] - center).cross( (edge[b] - center) )  ) + center ).size() < 1.0) {
 
-                                        double lenCenAB = (center-ab).size();
+                                        double lenCenAB = (center-ab).pos.size();
 
                                         if( (beads[i] - center).size() < lenCenAB && (beads[i] - ab).size() < lenCenAB )
                                             beads[i].type = type1;

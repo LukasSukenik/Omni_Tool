@@ -51,19 +51,19 @@ public:
     }
 
     bool isPatchX(int i, double c) {
-        if( fabs(beads[i].x) > c*0.5 )
+        if( fabs(beads[i].pos.x) > c*0.5 )
             return false;
         return true;
     }
 
     bool isPatchY(int i, double c) {
-        if( fabs(beads[i].y) > c*0.5 )
+        if( fabs(beads[i].pos.y) > c*0.5 )
             return false;
         return true;
     }
 
     bool isPatchZ(int i, double c) {
-        if( fabs(beads[i].z) > c*0.5 )
+        if( fabs(beads[i].pos.z) > c*0.5 )
             return false;
         return true;
     }
