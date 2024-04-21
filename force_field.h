@@ -115,63 +115,6 @@ public:
     }
 };
 
-
-/**
- * @brief The BeadParam class
- * Bead LJ parameters
- */
-class LJ {
-public:
-	LJ(){}
-	LJ(int type, double epsilon, double sigma, double cutoff) : type(type), epsilon(epsilon), sigma(sigma), cutoff(cutoff) {}
-
-    int type=-1;
-    double epsilon=1.0;
-    double sigma=1.0;
-    double cutoff=25.0;
-
-    friend std::ostream& operator<<(std::ostream& os, const LJ& lj)
-    {
-        os << lj.type << " " << lj.epsilon << " " << lj.sigma << " " << lj.cutoff;
-        return os;
-    }
-
-    friend std::istream& operator>>(std::istream& is, LJ& lj)
-    {
-        is >> lj.type >> lj.epsilon >> lj.sigma >> lj.cutoff;
-        return is;
-    }
-};
-
-class CosSQ {
-public:
-	CosSQ(){}
-    CosSQ(int type, double epsilon, double start_dis, double range) : type(type), epsilon(epsilon), start_dis(start_dis), range(range) {}
-	CosSQ(int type1, int type2, double epsilon, double start_dis, double range) : type1(type1), type2(type2), epsilon(epsilon), start_dis(start_dis), range(range){}
-
-    int type=-1;
-    int type1=-1;
-    int type2=-1;
-    double epsilon=1.0;
-    double start_dis=1.0;
-    double range=1.0;
-
-    friend std::ostream& operator<<(std::ostream& os, const CosSQ& cos)
-    {
-        os << cos.type << " " << cos.epsilon << " " << cos.start_dis << " " << cos.range;
-        return os;
-    }
-
-    friend std::istream& operator>>(std::istream& is, CosSQ& cos)
-    {
-        is >> cos.type >> cos.epsilon >> cos.start_dis >> cos.range;
-        return is;
-    }
-};
-
-
-
-
 double ran() {
     return unif(rng);
 }
@@ -381,6 +324,113 @@ public:
 
 
 
+/**
+ * @brief The BeadParam class
+ * Bead LJ parameters
+ */
+class LJ {
+public:
+	LJ(){}
+	LJ(int type, double epsilon, double sigma, double cutoff) : type(type), epsilon(epsilon), sigma(sigma), cutoff(cutoff) {}
+	LJ(int type1, int type2, double epsilon, double sigma, double cutoff) : type1(type1), type2(type2), epsilon(epsilon), sigma(sigma), cutoff(cutoff) {}
+
+    int type=-1;
+    int type1=-1;
+    int type2=-1;
+    double epsilon=1.0;
+    double sigma=1.0;
+    double cutoff=25.0;
+
+    double energy(double r)
+    {
+    	if(r > cutoff)
+    		return 0.0;
+    	return 4*epsilon * ( pow(sigma/r, 12) - pow(sigma/r, 6) );
+    }
+
+    double force(double r)
+    {
+    	if(r > cutoff)
+    		return 0.0;
+    	return 24*epsilon * ( 2*pow(sigma/r, 13) - pow(sigma/r, 7) );
+    }
+
+    friend std::ostream& operator<<(std::ostream& os, const LJ& lj)
+    {
+        os << lj.type << " " << lj.epsilon << " " << lj.sigma << " " << lj.cutoff;
+        return os;
+    }
+
+    friend std::istream& operator>>(std::istream& is, LJ& lj)
+    {
+        is >> lj.type >> lj.epsilon >> lj.sigma >> lj.cutoff;
+        return is;
+    }
+};
+
+
+
+class CosSQ {
+public:
+	CosSQ(){}
+    CosSQ(int type, double epsilon, double start_dis, double range) : type(type), epsilon(epsilon), start_dis(start_dis), range(range) {}
+	CosSQ(int type1, int type2, double epsilon, double start_dis, double range) : type1(type1), type2(type2), epsilon(epsilon), start_dis(start_dis), range(range){}
+
+    int type=-1;
+    int type1=-1;
+    int type2=-1;
+    double epsilon=1.0;
+    double start_dis=1.0;
+    double range=1.0;
+    double pi = 3.141592653589793238462643383279502884197;
+
+    //
+    // Energy: epsilon * cos^2 ( pi/2 * ( r - start_dis) / range )
+    //
+    // Force: - epsilon*pi/range * sin(arg)*cos(arg)
+    // arg = 0.5*pi * (r - start_dis) / range
+    //
+
+    double energy(double r)
+    {
+    	if(r < start_dis || r > start_dis + range)
+    	{
+    	  	return 0.0;
+    	}
+
+    	return - epsilon * pow( cos(0.5*pi * (r - start_dis) / range), 2);
+    }
+
+    double force(double r)
+    {
+    	if(r < start_dis || r > start_dis + range)
+    	{
+    	  	return 0.0;
+    	}
+
+    	double argument = 0.5*pi*(r-start_dis)/range;
+    	double sinn, coss;
+    	sincos(argument, &sinn, &coss);
+
+    	return ( epsilon*pi/range ) * coss*sinn;
+    }
+
+    friend std::ostream& operator<<(std::ostream& os, const CosSQ& cos)
+    {
+        os << cos.type << " " << cos.epsilon << " " << cos.start_dis << " " << cos.range;
+        return os;
+    }
+
+    friend std::istream& operator>>(std::istream& is, CosSQ& cos)
+    {
+        is >> cos.type >> cos.epsilon >> cos.start_dis >> cos.range;
+        return is;
+    }
+};
+
+
+
+
 class Force_Field
 {
 public:
@@ -390,14 +440,16 @@ public:
     map<int, LJ> lj;
     map<int,CosSQ> cos;
 
-    double get_Energy()
+    double energy(double r, int type1, int type2)
     {
-    	return 0.0;
+    	//return cos[type1].energy(r);
+    	return lj[type1].energy(r) + cos[type1].energy(r);
     }
 
-    Tensor_xyz get_force()
+    double force(double r, int type1, int type2)
     {
-    	return Tensor_xyz();
+    	//return cos[type1].force(r);
+    	return lj[type1].force(r) + cos[type1].force(r);
     }
 
     double get_cutoff(int type1, int type2)
