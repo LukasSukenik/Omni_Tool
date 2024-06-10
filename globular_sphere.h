@@ -11,32 +11,63 @@ public:
 
     Globular_Sphere() : Sphere("Globular_Sphere") {}
 
+    bool test_icosphere_input( Data& data )
+    {
+        if(data.in.subdiv_beads > 0 && data.in.subdiv_lig > 0 && data.in.ff.lj.count(1) == 1 && data.in.ff.lj[1].type > 0 && data.in.mol_tag > 0)
+        {
+            return true;
+        }
+        return false;
+    }
+
+    bool test_fibonacci_input( Data& data )
+    {
+        if(data.in.num_of_beads > 0 && data.in.num_lig > 0 && data.in.ff.lj.count(1) == 1 && data.in.ff.lj[1].type > 0 && data.in.mol_tag > 0)
+        {
+            return true;
+        }
+        return false;
+    }
+
+    void test_inputs( Data& data )
+    {
+        // test particle generation methods
+        if( !test_icosphere_input(data) && !test_fibonacci_input(data) )  // and wrong input for fibonacci_sphere
+        {
+            cerr << "Globular_Sphere::generate() -> Invalid input" << endl;
+            cerr << "data.in.subdiv_beads " << data.in.subdiv_beads << endl;
+            cerr << "data.in.subdiv_lig " << data.in.subdiv_lig << endl;
+            cerr << "data.in.num_of_beads " << data.in.num_of_beads << endl;
+            cerr << "data.in.num_lig " << data.in.num_lig << endl;
+            exit(-1);
+        }
+    }
+
     void generate( Data& data )
     {
         Atoms base_sphere;
         Atoms patch_sphere;
         Atoms full_sphere;
 
+        test_inputs(data);
+
+        //
     	// generate low count pseudoatom sphere, for repuls only interation
-        if(data.in.subdiv_beads != -1 && data.in.subdiv_lig != -1)
+        // generate sphere for patches
+        //
+        if( test_icosphere_input(data) )
         {
         	base_sphere = icosphere(data.in.subdiv_beads, data.in.ff.lj[1].type, data.in.mol_tag);
+            patch_sphere = icosphere(data.in.subdiv_lig, 0, data.in.mol_tag);
       	}
-       	if(data.in.num_of_beads != -1 && data.in.num_lig != -1)
-       	{
-       		fibonacci_sphere( base_sphere, data.in.num_of_beads, data.in.ff.lj[1].type, data.in.mol_tag);
-       	}
-
-
-    	// generate sphere for patches
-    	if(data.in.subdiv_beads != -1 && data.in.subdiv_lig != -1)
-    	{
-    		patch_sphere = icosphere(data.in.subdiv_lig, 0, data.in.mol_tag);
-    	}
-    	if(data.in.num_of_beads != -1 && data.in.num_lig != -1)
-    	{
-    		fibonacci_sphere( patch_sphere, data.in.num_lig, -1, data.in.mol_tag);
-    	}
+        else
+        {
+            if( test_fibonacci_input(data) )
+            {
+                fibonacci_sphere( base_sphere, data.in.num_of_beads, data.in.ff.lj[1].type, data.in.mol_tag);
+                fibonacci_sphere( patch_sphere, data.in.num_lig, -1, data.in.mol_tag);
+            }
+        }
 
     	// scale patch_sphere by 1.0 + 1st sphere pseudoatom sigma - patch pseudoatom sigma
     	patch_sphere.scale(1.0 + (data.in.ff.lj[1].sigma - data.in.ff.lj[2].sigma) / data.in.scale);
@@ -83,6 +114,11 @@ public:
         }
 
         // insert the final structure to beads
+        if(full_sphere.empty())
+        {
+            cerr << "Globular_Sphere::generate() -> No particle generated!!!" << endl;
+            exit(-1);
+        }
         beads.insert(beads.end(), full_sphere.begin(), full_sphere.end());
     }
 

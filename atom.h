@@ -340,7 +340,7 @@ public:
     bool is_overlap(Atoms& other, Force_Field& ff) const
     {
     	//
-    	// All-particle overlap
+        // One-All particle overlap
     	//
     	for(Atom& o : other)
     	{

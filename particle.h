@@ -79,7 +79,17 @@ public:
             Atoms copy(beads);
             beads.clear();
             Atoms temp;
-            Atom com_pos;
+            Tensor_xyz com_pos;
+
+            if(copy.empty())
+            {
+                cerr << "No particle created, can't populate system" << endl;
+                exit(-1);
+            }
+            else
+            {
+                cerr << "Copying particle of " << copy.size() << " atoms " << data.in.population.count << " times" << endl;
+            }
 
     		for(int i=0; i < data.in.population.count; ++i)
     		{
@@ -92,12 +102,16 @@ public:
     			{
     				com_pos = data.in.sim_box.get_random_pos();
     				temp = copy;
-    				temp.move(com_pos);
 
-    				if(tries > 1000)
+                    for(Atom& item : temp)
+                    {
+                        item.pos = com_pos;
+                    }
+
+                    if(tries > 1000)
     				{
-    					cerr << "Can't generate any more particles, simulation box is full, tries " << tries << endl;
-    					exit(3);
+                        cerr << "Particles::populate -> Can't generate any more particles, simulation box is full, tries" << tries << endl;
+                        exit(1);
     				}
     				++tries;
     			}
