@@ -27,7 +27,7 @@ Particle_type: globular_sphere
 
 Output_type: lammps_full # other keywords: xyz pdb lammps_full
 
-Num_of_beads: 50
+Number_of_beads: 50
 
 Scale: 5
 
