@@ -103,10 +103,7 @@ public:
     				com_pos = data.in.sim_box.get_random_pos();
     				temp = copy;
 
-                    for(Atom& item : temp)
-                    {
-                        item.pos = com_pos;
-                    }
+                    temp.move(com_pos);
 
                     if(tries > 1000)
     				{
