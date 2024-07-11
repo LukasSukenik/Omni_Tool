@@ -14,13 +14,13 @@ bool sort_by_dist(Atom& i, Atom& j)
  * INPUT FILE:
  * Num_of_beads
  */
-class Chain : public Particles
+class Chain : public Particle
 {
 public:
     inline static const string keyword = "chain";
     const string name = "chain";
 
-    Chain() : Particles("chain") {}
+    Chain() : Particle("chain") {}
 
     const bool angle_pot = false;
     int chain_size= 3705;

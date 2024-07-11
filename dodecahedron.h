@@ -6,13 +6,13 @@
 
 
 
-class Dodecahedron : public Particles
+class Dodecahedron : public Particle
 {
 public:
     inline static const string keyword = "dodecahedron";
     const string name = "dodecahedron";
 
-    Dodecahedron() : Particles("dodecahedron") {}
+    Dodecahedron() : Particle("dodecahedron") {}
 
     IcoVertice edge;
 

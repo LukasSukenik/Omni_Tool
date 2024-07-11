@@ -27,12 +27,12 @@ using namespace std;
 /**
  * @brief The Particle class - Abstract class of Particle - a assembly made from several beads
  */
-class Particles{
+class Particle{
 public:
     inline static const string keyword = "Abstract class of Particle";
     const string name = "Abstract class of Particle";
 
-    Simluation_Box box;
+    Simulation_Box box;
 
     const double degToRad = 0.0174532925;
 
@@ -58,9 +58,9 @@ public:
     //
     // Class stuff
     //
-    Particles() {}
-    Particles(string name) : name(name) {}
-    virtual ~Particles() {}
+    Particle() {}
+    Particle(string name) : name(name) {}
+    virtual ~Particle() {}
 
 
     /**
@@ -196,12 +196,12 @@ public:
 };
 
 
-class Empty_Particle : public Particles
+class Empty_Particle : public Particle
 {
 public:
     inline static const string keyword = "empty";
     const string name = "empty";
-    Empty_Particle() : Particles("empty") {}
+    Empty_Particle() : Particle("empty") {}
     void generate( Data& data ) {}
 
     string help()
@@ -215,12 +215,12 @@ public:
     }
 };
 
-class Monomer : public Particles
+class Monomer : public Particle
 {
 public:
     inline static const string keyword = "monomer";
     const string name = "monomer";
-    Monomer() : Particles("monomer") {}
+    Monomer() : Particle("monomer") {}
 
     void generate( Data& data )
     {

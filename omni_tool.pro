@@ -23,15 +23,18 @@ HEADERS += \
     globular_sphere.h \
     icosahedron.h \
     input.h \
+    io_lammps.h \
     oblatespheroid.h \
     particle.h \
     pentamer.h \
     rng.h \
+    sim_box.h \
     slab.h \
     sphere.h \
     spherepatch.h \
     surface.h \
     tennisball.h \
+    types.h \
     xtcanalysis.h \
     welford.h \
     xdrfile-1.1.4/include/xdrfile.h \

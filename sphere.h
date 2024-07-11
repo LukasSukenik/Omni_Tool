@@ -5,14 +5,14 @@
 
 using namespace std;
 
-class Sphere: public Particles {
+class Sphere: public Particle {
 public:
     inline static const string keyword = "sphere";
 
     const string name = "sphere";
 
-    Sphere() : Particles("sphere") {}
-    Sphere(string str) : Particles(str) {}
+    Sphere() : Particle("sphere") {}
+    Sphere(string str) : Particle(str) {}
 
     void generate( Data& data )
     {

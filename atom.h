@@ -150,6 +150,13 @@ public:
 
 
 
+bool sortN(const Atom& i, const Atom& j) {
+    return i.N < j.N;
+}
+
+
+
+
 bool isAproxSame(const myFloat& a, const myFloat& b, myFloat approx = 0.000001) {
     return (a < b+approx && a > b - approx);
 }

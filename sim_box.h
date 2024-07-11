@@ -1,0 +1,72 @@
+#ifndef SIM_BOX_H
+#define SIM_BOX_H
+
+#include "types.h"
+#include "atom.h"
+
+
+
+class Simulation_Box
+{
+public:
+    Simulation_Box() {}
+
+    myFloat xlo = 0.0;
+    myFloat xhi = 0.0;
+    myFloat ylo = 0.0;
+    myFloat yhi = 0.0;
+    myFloat zlo = 0.0;
+    myFloat zhi = 0.0;
+
+    inline double volume() {
+        return (xhi-xlo)*(yhi-ylo)*(zhi-zlo);
+    }
+
+    Tensor_xyz get_random_pos()
+    {
+        Tensor_xyz a;
+        a.x = ran() * (xhi-xlo) + xlo;
+        a.y = ran() * (yhi-ylo) + ylo;
+        a.z = ran() * (zhi-zlo) + zlo;
+        return a;
+    }
+
+    Atom usePBC(Tensor_xyz& pos_orig, double scale) const
+    {
+        Tensor_xyz pos = pos_orig;
+
+        while (pos.x < 0.0) {
+            pos.x += xhi/scale;
+        }
+        while (pos.x > xhi/scale) {
+            pos.x -= xhi/scale;
+        }
+        while (pos.y < 0.0) {
+            pos.y += yhi/scale;
+        }
+        while (pos.y > yhi/scale) {
+            pos.y -= yhi/scale;
+        }
+        while (pos.z < 0.0) {
+            pos.z += zhi/scale;
+        }
+        while (pos.z > zhi/scale) {
+            pos.z -= zhi/scale;
+        }
+        return pos;
+    }
+
+    friend std::istream& operator>>(std::istream& is, Simulation_Box& sim_box)
+    {
+        is >> sim_box.xlo >> sim_box.xhi >> sim_box.ylo >> sim_box.yhi >> sim_box.zlo >> sim_box.zhi;
+        return is;
+    }
+
+    friend std::ostream& operator<<(std::ostream& os, const Simulation_Box& box)
+    {
+        os << box.xlo << ", " << box.xhi << ", " << box.ylo << ", " << box.yhi << ", " << box.zlo << ", " << box.zhi;
+        return os;
+    }
+};
+
+#endif // SIM_BOX_H

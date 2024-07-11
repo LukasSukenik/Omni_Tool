@@ -9,6 +9,7 @@
 #include <cmath>
 
 #include "rng.h"
+#include "types.h"
 
 using namespace std;
 

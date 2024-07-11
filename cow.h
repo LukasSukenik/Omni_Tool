@@ -6,13 +6,13 @@
 #include "atom.h"
 #include "particle.h"
 
-class Cow : public Particles
+class Cow : public Particle
 {
 public:
     inline static const string keyword = "cow";
     const string name = "cow";
 
-    Cow() : Particles("cow")  {}
+    Cow() : Particle("cow")  {}
 
     void generate( Data& data  )
     {

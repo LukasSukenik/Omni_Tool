@@ -5,12 +5,12 @@
 #include "particle.h"
 #include "cow.h"
 
-class Slab1D : public Particles
+class Slab1D : public Particle
 {
 public:
     inline static const string keyword = "slab1D";
 
-    Slab1D() : Particles() {}
+    Slab1D() : Particle() {}
 
     void generate( Data& data )
     {
@@ -34,13 +34,13 @@ public:
     }
 };
 
-class Slab : public Particles
+class Slab : public Particle
 {
 public:
     inline static const string keyword = "slab";
     const string name = "slab";
 
-    Slab() : Particles("slab") {}
+    Slab() : Particle("slab") {}
 
     void generate( Data& data )
     {
@@ -98,14 +98,14 @@ private:
 };
 
 
-class NettedSlab : public Particles
+class NettedSlab : public Particle
 {
 public:
     inline static const string keyword = "netted_slab";
     const string name = "netted_slab";
 
 
-    NettedSlab() : Particles("netted_slab") {}
+    NettedSlab() : Particle("netted_slab") {}
 
     void generate( Data& data )
     {

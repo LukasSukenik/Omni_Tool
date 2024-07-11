@@ -34,14 +34,14 @@ public:
 };
 
 template<class Surface>
-class Icosahedron : public Particles {
+class Icosahedron : public Particle {
     Surface surface;
 public:
     inline static const string keyword = "icosahedron";
     const string name = "icosahedron";
 
-    Icosahedron() : Particles("icosahedron"), surface(edge, beads) {}
-    Icosahedron(string str) : Particles(str), surface(edge, beads) {}
+    Icosahedron() : Particle("icosahedron"), surface(edge, beads) {}
+    Icosahedron(string str) : Particle(str), surface(edge, beads) {}
 
 
 

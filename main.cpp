@@ -25,14 +25,16 @@ using namespace std;
 
 
 
+
+
 /**
  * @brief Structure_Container
  * map classes, each generating a different structure
  */
-class Structure_Container : public map<string, Particles*> // @suppress("Invalid template argument")
+class Particle_Container : public map<string, Particle*> // @suppress("Invalid template argument")
 {
 public:
-    Structure_Container()
+    Particle_Container()
     {
         //
         // Add structures
@@ -56,7 +58,7 @@ public:
         (*this)[Monomer::keyword] = new Monomer();
     }
 
-    ~Structure_Container()
+    ~Particle_Container()
     {
         for (auto const& [key, val] : (*this)) // @suppress("Symbol is not resolved")
         {
@@ -147,7 +149,7 @@ void do_analysis()
 int main(int argc, char* argv[]) // // $num of beads per edge, box dimensions X(same as Y) $beg $end, $position in Z, $offset
 {
     Data data;
-    Structure_Container structure;
+    Particle_Container structure;
 
     //
     // Input safeguard
@@ -163,7 +165,7 @@ int main(int argc, char* argv[]) // // $num of beads per edge, box dimensions X(
     //
     for(int i=1; i<argc; ++i)
     {
-        data.loadInput(argv[i]); // Load the input files specified as command line arguments
+        data.load_input(argv[i]); // Load the input files specified as command line arguments
         cerr << data.in.toString() << endl; // Report what was loaded
 
         //
@@ -171,24 +173,9 @@ int main(int argc, char* argv[]) // // $num of beads per edge, box dimensions X(
         //
         if( data.isDefined() )
         {
-            data.load(data.in.infile);    // Load Data from infile
-            data.scale(data.in.scale);    // Rescale atom positions
-            data.move(data.in.com_pos);   // Move entire system by vector
-
-            if(data.in.is_mol_tag())
-            	data.set_mol_tag(data.in.mol_tag); // Change mol_tag of all particles to one set by input
-            if(data.in.is_mtag_12())
-                data.align(data.in.mtag_1, data.in.mtag_2); // align mol_tag particles in z axis and XY plane
-
-            // if generating into an existing structure that you did not load, give the number of particles as offset
-            data.offset(data.all_beads.size());
-
-            if( data.in.fit )
-                data.fit();
-            if( data.in.center )
-                data.center();
-
-            data.add(); // temp_data to all_data
+            data.load_data(data.in.infile); // Load Data from infile
+            data.modify();                  // Modify the loaded Data
+            data.add();                     // Move loaded data to persistent data
         }
 
         //
@@ -196,18 +183,18 @@ int main(int argc, char* argv[]) // // $num of beads per edge, box dimensions X(
         //
         if( ! data.isDefined() )
         {
-            if(structure.count(data.in.gen_structure) > 0) // @suppress("Method cannot be resolved")
+            if(structure.count(data.in.gen_structure) > 0)
             {
-                cerr << "Generating: " << structure[ data.in.gen_structure ]->name << endl; // @suppress("Field cannot be resolved") // @suppress("Invalid overload")
-				structure[ data.in.gen_structure ]->generate( data ); // @suppress("Method cannot be resolved")
-                structure[ data.in.gen_structure ]->scale( data.in.scale ); // @suppress("Method cannot be resolved")
-                structure[ data.in.gen_structure ]->move( data.in.com_pos ); // @suppress("Method cannot be resolved")
-                structure[ data.in.gen_structure ]->populate( data ); // @suppress("Method cannot be resolved")
-                structure[ data.in.gen_structure ]->add(data); // particle data // @suppress("Method cannot be resolved")
+                cerr << "Generating: " << structure[ data.in.gen_structure ]->name << endl;
+                structure[ data.in.gen_structure ]->generate( data );
+                structure[ data.in.gen_structure ]->scale( data.in.scale );
+                structure[ data.in.gen_structure ]->move( data.in.com_pos );
+                structure[ data.in.gen_structure ]->populate( data );
+                structure[ data.in.gen_structure ]->add(data); // particle data
             }
             else
             {
-            	cerr << "not found keyword " << data.in.gen_structure << endl;
+                cerr << ":keyword: not found " << data.in.gen_structure << endl;
             	exit(2);
             }
         }

@@ -18,23 +18,13 @@
 #include "force_field.h"
 #include "atom.h"
 #include "input.h"
+#include "io_lammps.h"
 
 using namespace std;
 
 
 
 
-class My_string{
-public:
-    My_string(char str[256] ) {
-        strcpy(this->str,str);
-    }
-    char str[256];
-};
-
-bool sortN(const Atom& i, const Atom& j) {
-    return i.N < j.N;
-}
 
 
 
@@ -52,15 +42,7 @@ public:
 
 
 
-/**
- * @brief The Lammps class
- * Class for IO of files in lammps data formats
- */
-class Lammps
-{
-public:
-    Lammps() {}
-};
+
 
 
 
@@ -92,14 +74,18 @@ public:
     int all_sigma_size = 0;
     array< array<bool, 100>, 100> all_sigma_cosatt;
 
-    //
-    /// For lammps file IO
-    //
-    vector<My_string > file_head;
 
-    bool first_file=true;
 
+
+
+    //
+    // Class for loading input file
+    //
     Input in;
+    IO_Lammps lammps;
+
+
+
 
     Data()
     {
@@ -111,16 +97,99 @@ public:
                 all_sigma[i][j] = 0.0;
     }
 
+    ///
+    /// Input methods
+    ///
     bool isDefined()
     {
         return !in.infile.empty();
     }
 
-    bool loadInput(string input)
+    bool load_input(string input)
     {
         in.clear();
         in.loadInput(input);
         return true;
+    }
+
+    void load_data(string in_file)
+    {
+        lammps.load(in_file);
+    }
+
+    ///
+    /// Output methods
+    ///
+
+    void printAllSigma()
+    {
+        cerr << "printAllSigma:" << endl;
+        for(unsigned int i=0; i<all_sigma_size; ++i)
+        {
+            cerr << "[" << i+1 << "][" << i+1 << "] = "  << all_sigma[i][i] << "\n";
+        }
+    }
+
+
+
+
+    void printForceField(vector<double>& dist, vector<string> &dist_coeff, double scale ) const
+    {
+        fstream force_field("force_field", fstream::out);
+
+        force_field << "variable coeff_1 string 1.0" << endl;
+        force_field << "variable coeff_2 string 1.0" << endl;
+        force_field << "variable coeff_3 string 1.0" << endl;
+        force_field << "variable coeff_bond string 50" << endl;
+        force_field << endl;
+
+        for(int i=0; i<all_sigma_size; ++i) {
+            for(int j=i; j<all_sigma_size; ++j) {
+                force_field << "pair_coeff " << i+1 << " " << j+1 << " lj/cut 1.0 " << 0.5 * (all_sigma[i][j]+all_sigma[i][j]) / 1.122462048 << " " << 0.5 * (all_sigma[i][j]+all_sigma[i][j]) << endl;
+            }
+            force_field << endl;
+        }
+
+        force_field << endl;
+        int count = 1;
+        for(int i=0; i<all_sigma_size; ++i) {
+            for(int j=i; j<all_sigma_size; ++j) {
+                if(all_sigma_cosatt[i][j]) {
+                    force_field << "pair_coeff " << i+1 << " " << j+1 << " cosatt ${coeff_" << count << "} " << 0.5 * (all_sigma[i][j]+all_sigma[i][j]) << " 1.0"<< endl; // 2 3
+                    ++count;
+                }
+            }
+        }
+
+        force_field << "\n" << endl;
+
+        for(int j=0; j<dist.size(); ++j) {
+            force_field << "bond_coeff " << j+1 << " harmonic ${" << dist_coeff[j] << "} " << dist[j] << endl;
+        }
+
+        force_field.close();
+    }
+
+    ///
+    /// Data methods
+    ///
+    void modify()
+    {
+        scale(in.scale);    // Rescale atom positions
+        move(in.com_pos);   // Move entire system by vector
+
+        if(in.is_mol_tag())
+            set_mol_tag(in.mol_tag); // Change mol_tag of all particles to one set by input
+        if(in.is_mtag_12())
+            align(in.mtag_1, in.mtag_2); // align mol_tag particles in z axis and XY plane
+
+        // if generating into an existing structure that you did not load, give the number of particles as offset
+        offset(all_beads.size());
+
+        if( in.fit )
+            fit();
+        if( in.center )
+            center();
     }
 
     void offset(int offs)
@@ -432,85 +501,7 @@ public:
     	return all_beads.get_Mol_Types();
     }
 
-    void printAllSigma()
-    {
-        cerr << "printAllSigma:" << endl;
-        for(unsigned int i=0; i<all_sigma_size; ++i)
-        {
-            cerr << "[" << i+1 << "][" << i+1 << "] = "  << all_sigma[i][i] << "\n";
-        }
-    }
 
-
-    /// Loading Lammps file - taylored to membrane ///
-    void load(string in_file);
-    void loadFileHeadAndPart(string filename);
-    void loadBox();
-    void loadBonds(string filename);
-    void loadAngles(string filename)
-    {
-        char str[256];
-        Angle angle;
-        std::fstream in;
-
-        in.open(filename, std::fstream::in);
-        if(in.good())
-        {
-            while(in.good())
-            {
-                in.getline(str, 256);
-                if(strstr(str, "Angles") != NULL)
-                    break;
-            }
-
-            while(in.good())
-            {
-                in >> angle.N >> angle.type >> angle.at1 >> angle.at2 >> angle.at3;
-                if( temp_angles.empty() || angle.N != temp_angles.back().N)
-                {
-                    temp_angles.push_back(angle);
-                }
-            }
-        }
-        in.close();
-    }
-
-    void printForceField(vector<double>& dist, vector<string> &dist_coeff, double scale ) const
-    {
-        fstream force_field("force_field", fstream::out);
-
-        force_field << "variable coeff_1 string 1.0" << endl;
-        force_field << "variable coeff_2 string 1.0" << endl;
-        force_field << "variable coeff_3 string 1.0" << endl;
-        force_field << "variable coeff_bond string 50" << endl;
-        force_field << endl;
-
-        for(int i=0; i<all_sigma_size; ++i) {
-            for(int j=i; j<all_sigma_size; ++j) {
-                force_field << "pair_coeff " << i+1 << " " << j+1 << " lj/cut 1.0 " << 0.5 * (all_sigma[i][j]+all_sigma[i][j]) / 1.122462048 << " " << 0.5 * (all_sigma[i][j]+all_sigma[i][j]) << endl;
-            }
-            force_field << endl;
-        }
-
-        force_field << endl;
-        int count = 1;
-        for(int i=0; i<all_sigma_size; ++i) {
-            for(int j=i; j<all_sigma_size; ++j) {
-                if(all_sigma_cosatt[i][j]) {
-                    force_field << "pair_coeff " << i+1 << " " << j+1 << " cosatt ${coeff_" << count << "} " << 0.5 * (all_sigma[i][j]+all_sigma[i][j]) << " 1.0"<< endl; // 2 3
-                    ++count;
-                }
-            }
-        }
-
-        force_field << "\n" << endl;
-
-        for(int j=0; j<dist.size(); ++j) {
-            force_field << "bond_coeff " << j+1 << " harmonic ${" << dist_coeff[j] << "} " << dist[j] << endl;
-        }
-
-        force_field.close();
-    }
 
     void roundBondDist(vector<double>& dist, double precision=1000.0)
     {
@@ -703,159 +694,6 @@ public:
 };
 
 
-/**
- * Load Lammps full data format file, ignores velocities
- * - in_file - Lammps file name
- */
-void Data::load(string in_file)
-{
-    if(in_file.empty()) {
-        return;
-    }
 
-    cerr << "Loading file " << in_file << endl;
-    loadFileHeadAndPart(in_file);
-    cerr << "Loading box parameters" << endl;
-    loadBox();
-
-    // THROW AWAY VELOCITIES
-
-    cerr << "Parsing bonds parameters" << endl;
-    loadBonds(in_file);
-
-    // TEST FOR CONSECCUTIVE INDEXES
-    cerr << "Sorting lipids by index" << endl;
-    std::sort(temp_beads.begin(), temp_beads.end(), sortN);
-    cerr << "Testing index duplicity" << endl;
-    for(int i=0; i<temp_beads.size(); i++) {
-        if(i%1000 == 0)
-        {
-            cerr << i << " : " << temp_beads.size() << endl;
-        }
-        if(i+1 != temp_beads[i].N) {
-            cerr << "ERROR, missing index, " << i << " != " << temp_beads[i].N << endl;
-        }
-    }
-    cerr << "Load done" << endl;
-
-    loadAngles(in_file);
-}
-
-void Data::loadBox()
-{
-    stringstream str;
-    stringstream str2;
-    stringstream str3;
-
-    for(unsigned int i=0; i<file_head.size(); i++) {
-        //cout << file_head[i].str << endl;
-        if(strstr(file_head[i].str, "xlo xhi") != nullptr) {
-            str << file_head[i].str;
-            str >> in.sim_box.xlo >> in.sim_box.xhi;
-            continue;
-        }
-
-        if(strstr(file_head[i].str, "ylo yhi") != nullptr) {
-            str2 << file_head[i].str;
-            str2 >> in.sim_box.ylo >> in.sim_box.yhi;
-            continue;
-        }
-
-        if(strstr(file_head[i].str, "zlo zhi") != nullptr) {
-            str3 << file_head[i].str;
-            str3 >> in.sim_box.zlo >> in.sim_box.zhi;
-            continue;
-        }
-    }
-}
-
-void Data::loadBonds(string filename)
-{
-    char str[256];
-    Bond bond;
-    bond.typelock = true;
-    std::fstream in;
-
-    in.open(filename, std::fstream::in);
-    if(in.good())
-    {
-        while(!in.eof())
-        {
-            in.getline(str, 256);
-            if(strstr(str, "Bonds") != NULL)
-                break;
-        }
-
-        while(!in.eof())
-        {
-            bond = Bond();
-            in >> bond.N >> bond.type >> bond.at1 >> bond.at2;
-            if(bond.N >= 0)
-                temp_bonds.push_back(bond);
-        }
-    }
-    in.close();
-
-    std::sort(temp_bonds.begin(), temp_bonds.end(), Bond::sort_Bond_by_type);
-
-    for(int i=0; i<temp_bonds.size(); i++)
-    {
-        temp_bonds[i].N = i+1;
-        //cerr << temp_bonds[i].N << " " << temp_bonds[i].type << " " << temp_bonds[i].at1 << " " << temp_bonds[i].at2 << endl;
-    }
-}
-
-void Data::loadFileHeadAndPart(string filename)
-{
-    char str[256];
-    Atom part;
-    std::fstream in;
-    std::stringstream ss;
-    int size=temp_beads.size();
-
-    in.open(filename, std::fstream::in);
-
-    if(in.is_open())
-    {
-        // Load until "Atoms" occurs
-        while(in.good() && strstr(str, "Atoms") == NULL)
-        {
-            in.getline(str, 256);
-            if(first_file)
-            {
-                file_head.push_back(My_string(str));
-            }
-        }
-        in.getline(str, 256); // 1 empty line after atoms
-
-        // Load: N molecule-tag atom-type q x y z nx ny nz
-        while(in.good())
-        {
-            part.N = -1;
-            part.nx = 0;
-            part.ny = 0;
-            part.nz = 0;
-            in.getline(str, 256);
-            ss.str( str );
-            ss >> part.N >> part.mol_tag >> part.type >> part.q >> part.pos.x >> part.pos.y >> part.pos.z >> part.nx >> part.ny >> part.nz;
-            ss.flush();
-            ss.clear();
-
-            if( part.N == -1 ) {
-                if(temp_beads.empty())
-                    continue;
-                else
-                    break;
-            }
-            temp_beads.push_back(part);
-        }
-        cerr << "  Added " << temp_beads.size() - size << " beads" << endl;
-    } else {
-        cerr << "File " << filename << " file not opened" << endl;
-    }
-
-    first_file = false;
-    in.close();
-}
 
 #endif // DATA_H
