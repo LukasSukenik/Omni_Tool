@@ -71,11 +71,165 @@ public:
         loadAngles(in_file);
     }
 
+    void print()
+    {
+        if(beads.empty()) {
+            cerr << "No beads generated" << endl;
+            return;
+        }
+
+        //
+        // print force-field
+        //
+        /*vector<double> dist;
+        vector<string> dist_coeff;
+        dist = createBondGroups(dist_coeff);
+        printForceField(dist, dist_coeff, in.scale);*/
+
+        int bond_types = bonds.calc_Bond_Types();
+        int num_a_types = beads.get_Atom_Types().size();
+
+        //
+        // Print Head
+        //
+        cout << "LAMMPS data file via Omni_Tool\n" << endl;
+        cout << beads.size() << " atoms\n";
+        cout << num_a_types << " atom types\n";
+
+        //
+        // Print Bond types
+        //
+        if(!bonds.empty()) {
+            cout << bonds.size() << " bonds\n";
+            cout << bond_types << " bond types\n";
+        }
+        //
+        // Print Angle types
+        //
+        if(!angles.empty()) {
+            cout << angles.size() << " angles\n";
+            cout << "1 angle types\n";
+        }
+
+        //
+        // Print Box
+        //
+        cout << "\n";
+        cout << sim_box.xlo << " " << sim_box.xhi << " xlo xhi\n";
+        cout << sim_box.ylo << " " << sim_box.yhi << " ylo yhi\n";
+        cout << sim_box.zlo << " " << sim_box.zhi << " zlo zhi\n";
+
+        //
+        // Print Masses
+        //
+        cout << "\nMasses\n\n";
+        for(int i=0; i<num_a_types; ++i )
+            cout << i+1 << " mass_" << i+1 << "\n";
+
+        //
+        // Print Atoms
+        //
+        cout <<"\nAtoms # full\n" << endl;
+        for(auto& a : beads) {
+            cout << a.N << " " << a.mol_tag << " " << a.type << " " << 0 << " " << a.pos << " 0 0 0" << "\n";
+        }
+
+        //
+        // Print Bonds
+        //
+        if(!bonds.empty())
+        {
+            cout << "\nBonds\n\n";
+
+            for(auto& bond : bonds)
+            {
+                cout << bond.N << " " << bond.type << " " << bond.at1 << " " << bond.at2 << "\n";
+            }
+        }
+
+        //
+        // Print Angles
+        //
+        if(!angles.empty()) {
+            cout << "\nAngles\n\n";
+
+            for(auto & a : angles) {
+                cout << a.N << " " << a.type << " " << a.at1 << " " << a.at2 << " " << a.at3 << "\n";
+            }
+        }
+    }
+
 private:
     void loadFileHeadAndPart(string filename);
     void loadBox();
     void loadBonds(string filename);
     void loadAngles(string filename);
+
+    /*void printForceField(vector<double>& dist, vector<string> &dist_coeff, double scale ) const
+    {
+        fstream force_field("force_field", fstream::out);
+
+        force_field << "variable coeff_1 string 1.0" << endl;
+        force_field << "variable coeff_2 string 1.0" << endl;
+        force_field << "variable coeff_3 string 1.0" << endl;
+        force_field << "variable coeff_bond string 50" << endl;
+        force_field << endl;
+
+        for(int i=0; i<all_sigma_size; ++i) {
+            for(int j=i; j<all_sigma_size; ++j) {
+                force_field << "pair_coeff " << i+1 << " " << j+1 << " lj/cut 1.0 " << 0.5 * (all_sigma[i][j]+all_sigma[i][j]) / 1.122462048 << " " << 0.5 * (all_sigma[i][j]+all_sigma[i][j]) << endl;
+            }
+            force_field << endl;
+        }
+
+        force_field << endl;
+        int count = 1;
+        for(int i=0; i<all_sigma_size; ++i) {
+            for(int j=i; j<all_sigma_size; ++j) {
+                if(all_sigma_cosatt[i][j]) {
+                    force_field << "pair_coeff " << i+1 << " " << j+1 << " cosatt ${coeff_" << count << "} " << 0.5 * (all_sigma[i][j]+all_sigma[i][j]) << " 1.0"<< endl; // 2 3
+                    ++count;
+                }
+            }
+        }
+
+        force_field << "\n" << endl;
+
+        for(int j=0; j<dist.size(); ++j) {
+            force_field << "bond_coeff " << j+1 << " harmonic ${" << dist_coeff[j] << "} " << dist[j] << endl;
+        }
+
+        force_field.close();
+    }*/
+
+    /*vector<double> createBondGroups(vector<string> &bond_coeff, double precision=1000.0) const
+    {
+        vector<double> dist;
+        if(!all_bonds.empty())
+        {
+            bool exist;
+            for(auto& bond : all_bonds)
+            {
+                if( !bond.typelock )
+                {
+                    exist = false;
+                    for(int j=0; j<dist.size(); ++j)
+                    {
+                        if( isAproxSame( bond.r0, dist[j], 1.0/precision) )
+                        {
+                            exist=true;
+                        }
+                    }
+                    if(!exist)
+                    {
+                        dist.push_back( round(precision * bond.r0) / precision );
+                        bond_coeff.push_back( bond.coeff_name );
+                    }
+                }
+            }
+        }
+        return dist;
+    }*/
 };
 
 

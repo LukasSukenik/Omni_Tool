@@ -206,24 +206,8 @@ int main(int argc, char* argv[]) // // $num of beads per edge, box dimensions X(
     if(false)
     	do_analysis();
 
-    vector<string> coeff;
-    vector<double> dist = data.createBondGroups(coeff);
-    //data.roundBondDist(dist);
-    //data.removeDuplicateBond();
-
     data.print();
-
-    //
-    // Report on the Final structure
-    //
-    if(data.all_beads.empty())
-    {
-        cerr << "!!! Nothing generated !!!" << endl;
-    }
-    else
-    {
-        cerr << data.toString() << endl;
-    }
+    data.report();
 
     return 0;
 }

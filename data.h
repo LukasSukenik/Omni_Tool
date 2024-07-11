@@ -39,23 +39,18 @@ public:
     Bonds all_bonds;
     Angles all_angles;
 
-    vector<LJ> all_bparam;
-    vector<CosSQ> all_cparam;
-
     Atoms temp_beads;
     Bonds temp_bonds;
     Angles temp_angles;
 
     //
-    /// force field stuff
+    /// force field stuff - deprecated
     //
     array<array<double, 100>, 100> all_sigma;
     int all_sigma_size = 0;
     array< array<bool, 100>, 100> all_sigma_cosatt;
-
-
-
-
+    vector<LJ> all_bparam;
+    vector<CosSQ> all_cparam;
 
     //
     // Class for loading input file
@@ -63,6 +58,7 @@ public:
     Input in;
     IO_Lammps lammps;
     IO_PDB pdb;
+    IO_XYZ xyz;
 
 
 
@@ -103,186 +99,37 @@ public:
     ///
     /// Output methods
     ///
-
-    void printForceField(vector<double>& dist, vector<string> &dist_coeff, double scale ) const
-    {
-        fstream force_field("force_field", fstream::out);
-
-        force_field << "variable coeff_1 string 1.0" << endl;
-        force_field << "variable coeff_2 string 1.0" << endl;
-        force_field << "variable coeff_3 string 1.0" << endl;
-        force_field << "variable coeff_bond string 50" << endl;
-        force_field << endl;
-
-        for(int i=0; i<all_sigma_size; ++i) {
-            for(int j=i; j<all_sigma_size; ++j) {
-                force_field << "pair_coeff " << i+1 << " " << j+1 << " lj/cut 1.0 " << 0.5 * (all_sigma[i][j]+all_sigma[i][j]) / 1.122462048 << " " << 0.5 * (all_sigma[i][j]+all_sigma[i][j]) << endl;
-            }
-            force_field << endl;
-        }
-
-        force_field << endl;
-        int count = 1;
-        for(int i=0; i<all_sigma_size; ++i) {
-            for(int j=i; j<all_sigma_size; ++j) {
-                if(all_sigma_cosatt[i][j]) {
-                    force_field << "pair_coeff " << i+1 << " " << j+1 << " cosatt ${coeff_" << count << "} " << 0.5 * (all_sigma[i][j]+all_sigma[i][j]) << " 1.0"<< endl; // 2 3
-                    ++count;
-                }
-            }
-        }
-
-        force_field << "\n" << endl;
-
-        for(int j=0; j<dist.size(); ++j) {
-            force_field << "bond_coeff " << j+1 << " harmonic ${" << dist_coeff[j] << "} " << dist[j] << endl;
-        }
-
-        force_field.close();
-    }
-
-    void print() const
+    void print()
     {
         if( in.out.type == Output_Type::lammps_full)
         {
-            printLammps();
+            lammps.sim_box = in.sim_box;
+            lammps.beads = all_beads;
+            lammps.bonds = all_bonds;
+            lammps.angles = all_angles;
+
+            lammps.print();
         }
         if( in.out.type == Output_Type::xyz)
         {
-            printXYZ();
+            xyz.print(all_beads);
         }
         if( in.out.type == Output_Type::pdb)
         {
-            printPDB();
+            pdb.print(all_beads);
         }
     }
 
-    void printLammps() const
+    void report()
     {
-        if(all_beads.empty()) {
-            cerr << "No beads generated" << endl;
-            return;
-        }
-
-        vector<double> dist;
-        vector<string> dist_coeff;
-
-        dist = createBondGroups(dist_coeff);
-        printForceField(dist, dist_coeff, in.scale);
-
-        int bond_types = all_bonds.calc_Bond_Types();
-        int num_a_types = all_beads.get_Atom_Types().size();
-
-        //
-        // Print Head
-        //
-        cout << "LAMMPS data file via Omni_Tool\n" << endl;
-        cout << all_beads.size() << " atoms\n";
-        cout << num_a_types << " atom types\n";
-
-        //
-        // Print Bond types
-        //
-        if(!all_bonds.empty()) {
-            cout << all_bonds.size() << " bonds\n";
-            cout << bond_types << " bond types\n";
-        }
-        //
-        // Print Angle types
-        //
-        if(!all_angles.empty()) {
-            cout << all_angles.size() << " angles\n";
-            cout << "1 angle types\n";
-        }
-
-        //
-        // Print Box
-        //
-        cout << "\n";
-        cout << in.sim_box.xlo << " " << in.sim_box.xhi << " xlo xhi\n";
-        cout << in.sim_box.ylo << " " << in.sim_box.yhi << " ylo yhi\n";
-        cout << in.sim_box.zlo << " " << in.sim_box.zhi << " zlo zhi\n";
-
-        //
-        // Print Masses
-        //
-        cout << "\nMasses\n\n";
-        for(int i=0; i<num_a_types; ++i )
-            cout << i+1 << " mass_" << i+1 << "\n";
-
-        //
-        // Print Atoms
-        //
-        cout <<"\nAtoms # full\n" << endl;
-        for(auto& a : all_beads) {
-            cout << a.N << " " << a.mol_tag << " " << a.type << " " << 0 << " " << a.pos << " 0 0 0" << "\n";
-        }
-
-        //
-        // Print Bonds
-        //
-        if(!all_bonds.empty())
+        if(all_beads.empty())
         {
-            cout << "\nBonds\n\n";
-
-            for(auto& bond : all_bonds)
-            {
-                cout << bond.N << " " << bond.type << " " << bond.at1 << " " << bond.at2 << "\n";
-            }
+            cerr << "!!! Nothing generated !!!" << endl;
         }
-
-        //
-        // Print Angles
-        //
-        if(!all_angles.empty()) {
-            cout << "\nAngles\n\n";
-
-            for(auto & a : all_angles) {
-                cout << a.N << " " << a.type << " " << a.at1 << " " << a.at2 << " " << a.at3 << "\n";
-            }
-        }
-    }
-
-    void printXYZ() const
-    {
-        cout << all_beads.size() << "\nparticle\n";
-        for (const Atom& atom : all_beads)
+        else
         {
-            cout << "C" << atom.type <<  " " << atom.pos << "\n";
+            cerr << toString() << endl;
         }
-    }
-
-    void printPDB() const
-    {
-        vector<string> type_to_atom_name;
-        type_to_atom_name.push_back("H");
-        type_to_atom_name.push_back("B");
-        type_to_atom_name.push_back("C");
-        type_to_atom_name.push_back("N");
-        type_to_atom_name.push_back("O");
-        type_to_atom_name.push_back("F");
-        type_to_atom_name.push_back("P");
-        type_to_atom_name.push_back("K");
-
-        for (const Atom& atom : all_beads) {
-            cout << "ATOM" << "  " // 1-4, 5-6:empty
-                 << std::setw(5) << atom.N << " " // 7-11: atom serial number, 12:empty
-                 << std::setw(4) << std::left << type_to_atom_name[atom.type] << " " // 13-16:atom name, 17:empty
-                 << std::setw(3) << std::right << atom.type << " " // 18-20: Residue name, 21:empty
-                 << std::setw(1) << atom.mol_tag // 22: chain identifier
-                 << std::setw(4) << atom.type // 23-26: Residue sequence number
-                 << " " << "   " // 27:code for insertion of residues, 28-30:empty
-                 << std::setw(8) << std::fixed << std::setprecision(3) << atom.pos.x // 31-38
-                 << std::setw(8) << std::fixed << std::setprecision(3) << atom.pos.y // 39-46
-                 << std::setw(8) << std::fixed << std::setprecision(3) << atom.pos.z // 47-54
-                 << "   1.0" // 55-60: Occupancy
-                 << "   1.0" // 61-66: Temperature factor
-                 << "      " // 67-72: Empty
-                 << "    " // 73-76: Segment identifier (optional)
-                 << std::setw(2) << type_to_atom_name[atom.type] // 77-78 Element symbol
-                 << "  " << "\n"; // 79-80 Charge (optional)
-          }
-
     }
 
     ///
@@ -320,8 +167,50 @@ public:
 
 
 
+private:
 
-//private:
+    string toString()
+    {
+        stringstream ss;
+        vector<int> moltags = getMolTypes();
+        vector<int> types = all_beads.get_Atom_Types();
+
+        ss << "Beads: " << all_beads.size() << endl;
+        ss << types.size() << " atom types:" << endl;
+        for(int atom_type : types)
+        {
+            ss << "Atom type " << atom_type << " of " << all_beads.count_Atoms_of_Type(atom_type) << endl;
+        }
+
+        ss << moltags.size() << " molTypes:" << endl;
+        for(int mol_tag : moltags)
+        {
+            ss << "Molecule " << mol_tag << " with " << all_beads.count_atoms_of_Mol_tag(mol_tag) << " atoms" << endl;
+        }
+
+        return ss.str();
+    }
+
+
+
+
+
+    LJ getBeadParam(int type)
+    {
+        for(auto item : all_bparam)
+        {
+            if( type == item.type)
+            {
+                return item;
+            }
+        }
+        return LJ();
+    }
+
+    vector<int> getMolTypes()
+    {
+        return all_beads.get_Mol_Types();
+    }
 
     void offset(int offs)
     {
@@ -577,100 +466,6 @@ public:
 
         cerr << "Aligned to x axis and z axis" << endl;
     }
-
-
-
-    //
-    // all_beads functions
-    //
-
-    LJ getBeadParam(int type)
-    {
-        for(auto item : all_bparam)
-        {
-            if( type == item.type)
-            {
-                return item;
-            }
-        }
-        return LJ();
-    }
-
-    string toString()
-    {
-        stringstream ss;
-        vector<int> moltags = getMolTypes();
-        vector<int> types = all_beads.get_Atom_Types();
-
-        ss << "Beads: " << all_beads.size() << endl;
-        ss << types.size() << " atom types:" << endl;
-        for(int atom_type : types)
-        {
-            ss << "Atom type " << atom_type << " of " << all_beads.count_Atoms_of_Type(atom_type) << endl;
-        }
-
-        ss << moltags.size() << " molTypes:" << endl;
-        for(int mol_tag : moltags)
-        {
-            ss << "Molecule " << mol_tag << " with " << all_beads.count_atoms_of_Mol_tag(mol_tag) << " atoms" << endl;
-        }
-
-        return ss.str();
-    }
-
-    vector<int> getMolTypes()
-    {
-    	return all_beads.get_Mol_Types();
-    }
-
-
-
-    void roundBondDist(vector<double>& dist, double precision=1000.0)
-    {
-        for(int j=0; j<dist.size(); ++j) // each j+1 is bond type
-        {
-            for(auto& bond : all_bonds)
-            {
-                if( !bond.typelock && isAproxSame( bond.r0, dist[j], 1.0/precision) )
-                {
-                    bond.type = j+1;
-                }
-            }
-        }
-    }
-
-
-
-    vector<double> createBondGroups(vector<string> &bond_coeff, double precision=1000.0) const
-    {
-        vector<double> dist;
-        if(!all_bonds.empty())
-        {
-            bool exist;
-            for(auto& bond : all_bonds)
-            {
-                if( !bond.typelock )
-                {
-                    exist = false;
-                    for(int j=0; j<dist.size(); ++j)
-                    {
-                        if( isAproxSame( bond.r0, dist[j], 1.0/precision) )
-                        {
-                            exist=true;
-                        }
-                    }
-                    if(!exist)
-                    {
-                        dist.push_back( round(precision * bond.r0) / precision );
-                        bond_coeff.push_back( bond.coeff_name );
-                    }
-                }
-            }
-        }
-        return dist;
-    }
-
-
 };
 
 
