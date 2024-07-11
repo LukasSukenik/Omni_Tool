@@ -14,7 +14,9 @@ SOURCES += main.cpp \
     xdrfile-1.1.4/src/xdrfile_xtc.c
 
 HEADERS += \
+    angle.h \
     atom.h \
+    bond.h \
     chain.h \
     cow.h \
     data.h \

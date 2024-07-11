@@ -62,7 +62,7 @@ public:
     //
     Input in;
     IO_Lammps lammps;
-
+    IO_PDB pdb;
 
 
 
@@ -94,19 +94,15 @@ public:
     void load_data(string in_file)
     {
         lammps.load(in_file);
+        in.sim_box = lammps.sim_box;
+        temp_bonds = lammps.bonds;
+        temp_angles = lammps.angles;
+        temp_beads = lammps.beads;
     }
 
     ///
     /// Output methods
     ///
-    void printAllSigma()
-    {
-        cerr << "printAllSigma:" << endl;
-        for(unsigned int i=0; i<all_sigma_size; ++i)
-        {
-            cerr << "[" << i+1 << "][" << i+1 << "] = "  << all_sigma[i][i] << "\n";
-        }
-    }
 
     void printForceField(vector<double>& dist, vector<string> &dist_coeff, double scale ) const
     {
