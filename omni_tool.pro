@@ -22,8 +22,9 @@ HEADERS += \
     force_field.h \
     globular_sphere.h \
     icosahedron.h \
-    input.h \
+    io_input.h \
     io_lammps.h \
+    io_pdb.h \
     oblatespheroid.h \
     particle.h \
     pentamer.h \

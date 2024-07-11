@@ -1,5 +1,5 @@
-#ifndef INPUT_H
-#define INPUT_H
+#ifndef IO_INPUT_H
+#define IO_INPUT_H
 
 #include <iostream>
 #include <fstream>
@@ -391,4 +391,4 @@ public:
 };
 
 
-#endif // INPUT_H
+#endif // IO_INPUT_H

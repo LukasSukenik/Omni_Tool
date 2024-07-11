@@ -1,9 +1,16 @@
 #ifndef IO_LAMMPS_H
 #define IO_LAMMPS_H
 
+#include <algorithm>
+#include <fstream>
+#include <string.h>
+#include <array>
+
 #include "types.h"
 #include "sim_box.h"
-#include "data.h"
+
+
+
 
 /**
  * @brief The IO_Lammps class
@@ -64,40 +71,44 @@ public:
         loadAngles(in_file);
     }
 
-
-
-
+private:
     void loadFileHeadAndPart(string filename);
     void loadBox();
     void loadBonds(string filename);
-    void loadAngles(string filename)
+    void loadAngles(string filename);
+};
+
+
+
+
+void IO_Lammps::loadAngles(string filename)
+{
+    char str[256];
+    Angle angle;
+    std::fstream in;
+
+    in.open(filename, std::fstream::in);
+    if(in.good())
     {
-        char str[256];
-        Angle angle;
-        std::fstream in;
-
-        in.open(filename, std::fstream::in);
-        if(in.good())
+        while(in.good())
         {
-            while(in.good())
-            {
-                in.getline(str, 256);
-                if(strstr(str, "Angles") != NULL)
-                    break;
-            }
+            in.getline(str, 256);
+            if(strstr(str, "Angles") != NULL)
+                break;
+        }
 
-            while(in.good())
+        while(in.good())
+        {
+            in >> angle.N >> angle.type >> angle.at1 >> angle.at2 >> angle.at3;
+            if( angles.empty() || angle.N != angles.back().N)
             {
-                in >> angle.N >> angle.type >> angle.at1 >> angle.at2 >> angle.at3;
-                if( angles.empty() || angle.N != angles.back().N)
-                {
-                    angles.push_back(angle);
-                }
+                angles.push_back(angle);
             }
         }
-        in.close();
     }
-};
+    in.close();
+}
+
 
 
 

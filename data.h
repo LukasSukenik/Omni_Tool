@@ -17,32 +17,11 @@
 
 #include "force_field.h"
 #include "atom.h"
-#include "input.h"
+#include "io_input.h"
 #include "io_lammps.h"
+#include "io_pdb.h"
 
 using namespace std;
-
-
-
-
-
-
-
-
-/**
- * @brief The PDB class
- * Class for IO of files in PDB data format
- */
-class PDB
-{
-public:
-    PDB(){}
-};
-
-
-
-
-
 
 
 
@@ -120,7 +99,6 @@ public:
     ///
     /// Output methods
     ///
-
     void printAllSigma()
     {
         cerr << "printAllSigma:" << endl;
@@ -129,9 +107,6 @@ public:
             cerr << "[" << i+1 << "][" << i+1 << "] = "  << all_sigma[i][i] << "\n";
         }
     }
-
-
-
 
     void printForceField(vector<double>& dist, vector<string> &dist_coeff, double scale ) const
     {
@@ -170,6 +145,150 @@ public:
         force_field.close();
     }
 
+    void print() const
+    {
+        if( in.out.type == Output_Type::lammps_full)
+        {
+            printLammps();
+        }
+        if( in.out.type == Output_Type::xyz)
+        {
+            printXYZ();
+        }
+        if( in.out.type == Output_Type::pdb)
+        {
+            printPDB();
+        }
+    }
+
+    void printLammps() const
+    {
+        if(all_beads.empty()) {
+            cerr << "No beads generated" << endl;
+            return;
+        }
+
+        vector<double> dist;
+        vector<string> dist_coeff;
+
+        dist = createBondGroups(dist_coeff);
+        printForceField(dist, dist_coeff, in.scale);
+
+        int bond_types = all_bonds.calc_Bond_Types();
+        int num_a_types = all_beads.get_Atom_Types().size();
+
+        //
+        // Print Head
+        //
+        cout << "LAMMPS data file via Omni_Tool\n" << endl;
+        cout << all_beads.size() << " atoms\n";
+        cout << num_a_types << " atom types\n";
+
+        //
+        // Print Bond types
+        //
+        if(!all_bonds.empty()) {
+            cout << all_bonds.size() << " bonds\n";
+            cout << bond_types << " bond types\n";
+        }
+        //
+        // Print Angle types
+        //
+        if(!all_angles.empty()) {
+            cout << all_angles.size() << " angles\n";
+            cout << "1 angle types\n";
+        }
+
+        //
+        // Print Box
+        //
+        cout << "\n";
+        cout << in.sim_box.xlo << " " << in.sim_box.xhi << " xlo xhi\n";
+        cout << in.sim_box.ylo << " " << in.sim_box.yhi << " ylo yhi\n";
+        cout << in.sim_box.zlo << " " << in.sim_box.zhi << " zlo zhi\n";
+
+        //
+        // Print Masses
+        //
+        cout << "\nMasses\n\n";
+        for(int i=0; i<num_a_types; ++i )
+            cout << i+1 << " mass_" << i+1 << "\n";
+
+        //
+        // Print Atoms
+        //
+        cout <<"\nAtoms # full\n" << endl;
+        for(auto& a : all_beads) {
+            cout << a.N << " " << a.mol_tag << " " << a.type << " " << 0 << " " << a.pos << " 0 0 0" << "\n";
+        }
+
+        //
+        // Print Bonds
+        //
+        if(!all_bonds.empty())
+        {
+            cout << "\nBonds\n\n";
+
+            for(auto& bond : all_bonds)
+            {
+                cout << bond.N << " " << bond.type << " " << bond.at1 << " " << bond.at2 << "\n";
+            }
+        }
+
+        //
+        // Print Angles
+        //
+        if(!all_angles.empty()) {
+            cout << "\nAngles\n\n";
+
+            for(auto & a : all_angles) {
+                cout << a.N << " " << a.type << " " << a.at1 << " " << a.at2 << " " << a.at3 << "\n";
+            }
+        }
+    }
+
+    void printXYZ() const
+    {
+        cout << all_beads.size() << "\nparticle\n";
+        for (const Atom& atom : all_beads)
+        {
+            cout << "C" << atom.type <<  " " << atom.pos << "\n";
+        }
+    }
+
+    void printPDB() const
+    {
+        vector<string> type_to_atom_name;
+        type_to_atom_name.push_back("H");
+        type_to_atom_name.push_back("B");
+        type_to_atom_name.push_back("C");
+        type_to_atom_name.push_back("N");
+        type_to_atom_name.push_back("O");
+        type_to_atom_name.push_back("F");
+        type_to_atom_name.push_back("P");
+        type_to_atom_name.push_back("K");
+
+        for (const Atom& atom : all_beads) {
+            cout << "ATOM" << "  " // 1-4, 5-6:empty
+                 << std::setw(5) << atom.N << " " // 7-11: atom serial number, 12:empty
+                 << std::setw(4) << std::left << type_to_atom_name[atom.type] << " " // 13-16:atom name, 17:empty
+                 << std::setw(3) << std::right << atom.type << " " // 18-20: Residue name, 21:empty
+                 << std::setw(1) << atom.mol_tag // 22: chain identifier
+                 << std::setw(4) << atom.type // 23-26: Residue sequence number
+                 << " " << "   " // 27:code for insertion of residues, 28-30:empty
+                 << std::setw(8) << std::fixed << std::setprecision(3) << atom.pos.x // 31-38
+                 << std::setw(8) << std::fixed << std::setprecision(3) << atom.pos.y // 39-46
+                 << std::setw(8) << std::fixed << std::setprecision(3) << atom.pos.z // 47-54
+                 << "   1.0" // 55-60: Occupancy
+                 << "   1.0" // 61-66: Temperature factor
+                 << "      " // 67-72: Empty
+                 << "    " // 73-76: Segment identifier (optional)
+                 << std::setw(2) << type_to_atom_name[atom.type] // 77-78 Element symbol
+                 << "  " << "\n"; // 79-80 Charge (optional)
+          }
+
+    }
+
     ///
     /// Data methods
     ///
@@ -191,6 +310,22 @@ public:
         if( in.center )
             center();
     }
+
+    void add()
+    {
+        all_beads.insert(all_beads.end(), temp_beads.begin(), temp_beads.end());
+        all_bonds.insert(all_bonds.end(), temp_bonds.begin(), temp_bonds.end());
+        all_angles.insert(all_angles.end(), temp_angles.begin(), temp_angles.end());
+
+        temp_beads.clear();
+        temp_bonds.clear();
+        temp_angles.clear();
+    }
+
+
+
+
+//private:
 
     void offset(int offs)
     {
@@ -447,16 +582,7 @@ public:
         cerr << "Aligned to x axis and z axis" << endl;
     }
 
-    void add()
-    {
-        all_beads.insert(all_beads.end(), temp_beads.begin(), temp_beads.end());
-        all_bonds.insert(all_bonds.end(), temp_bonds.begin(), temp_bonds.end());
-        all_angles.insert(all_angles.end(), temp_angles.begin(), temp_angles.end());
 
-        temp_beads.clear();
-        temp_bonds.clear();
-        temp_angles.clear();
-    }
 
     //
     // all_beads functions
@@ -548,149 +674,7 @@ public:
         return dist;
     }
 
-    void print() const
-    {
-        if( in.out.type == Output_Type::lammps_full)
-        {
-            printLammps();
-        }
-        if( in.out.type == Output_Type::xyz)
-        {
-            printXYZ();
-        }
-        if( in.out.type == Output_Type::pdb)
-        {
-            printPDB();
-        }
-    }
 
-    void printLammps() const
-    {
-        if(all_beads.empty()) {
-            cerr << "No beads generated" << endl;
-            return;
-        }
-
-        vector<double> dist;
-        vector<string> dist_coeff;
-
-        dist = createBondGroups(dist_coeff);
-        printForceField(dist, dist_coeff, in.scale);
-
-        int bond_types = all_bonds.calc_Bond_Types();
-        int num_a_types = all_beads.get_Atom_Types().size();
-
-        //
-        // Print Head
-        //
-        cout << "LAMMPS data file via Omni_Tool\n" << endl;
-        cout << all_beads.size() << " atoms\n";
-        cout << num_a_types << " atom types\n";
-
-        //
-        // Print Bond types
-        //
-        if(!all_bonds.empty()) {
-            cout << all_bonds.size() << " bonds\n";
-            cout << bond_types << " bond types\n";
-        }
-        //
-        // Print Angle types
-        //
-        if(!all_angles.empty()) {
-            cout << all_angles.size() << " angles\n";
-            cout << "1 angle types\n";
-        }
-
-        //
-        // Print Box
-        //
-        cout << "\n";
-        cout << in.sim_box.xlo << " " << in.sim_box.xhi << " xlo xhi\n";
-        cout << in.sim_box.ylo << " " << in.sim_box.yhi << " ylo yhi\n";
-        cout << in.sim_box.zlo << " " << in.sim_box.zhi << " zlo zhi\n";
-
-        //
-        // Print Masses
-        //
-        cout << "\nMasses\n\n";
-        for(int i=0; i<num_a_types; ++i )
-            cout << i+1 << " mass_" << i+1 << "\n";
-
-        //
-        // Print Atoms
-        //
-        cout <<"\nAtoms # full\n" << endl;
-        for(auto& a : all_beads) {
-            cout << a.N << " " << a.mol_tag << " " << a.type << " " << 0 << " " << a.pos << " 0 0 0" << "\n";
-        }
-
-        //
-        // Print Bonds
-        //
-        if(!all_bonds.empty())
-        {
-            cout << "\nBonds\n\n";
-
-            for(auto& bond : all_bonds)
-            {
-                cout << bond.N << " " << bond.type << " " << bond.at1 << " " << bond.at2 << "\n";
-            }
-        }
-
-        //
-        // Print Angles
-        //
-        if(!all_angles.empty()) {
-            cout << "\nAngles\n\n";
-
-            for(auto & a : all_angles) {
-                cout << a.N << " " << a.type << " " << a.at1 << " " << a.at2 << " " << a.at3 << "\n";
-            }
-        }
-    }
-
-    void printXYZ() const
-    {
-        cout << all_beads.size() << "\nparticle\n";
-        for (const Atom& atom : all_beads)
-        {
-        	cout << "C" << atom.type <<  " " << atom.pos << "\n";
-        }
-    }
-
-    void printPDB() const
-    {
-    	vector<string> type_to_atom_name;
-    	type_to_atom_name.push_back("H");
-    	type_to_atom_name.push_back("B");
-    	type_to_atom_name.push_back("C");
-    	type_to_atom_name.push_back("N");
-    	type_to_atom_name.push_back("O");
-    	type_to_atom_name.push_back("F");
-    	type_to_atom_name.push_back("P");
-    	type_to_atom_name.push_back("K");
-
-    	for (const Atom& atom : all_beads) {
-    	    cout << "ATOM" << "  " // 1-4, 5-6:empty
-    	    	 << std::setw(5) << atom.N << " " // 7-11: atom serial number, 12:empty
- 				 << std::setw(4) << std::left << type_to_atom_name[atom.type] << " " // 13-16:atom name, 17:empty
-				 << std::setw(3) << std::right << atom.type << " " // 18-20: Residue name, 21:empty
-    	         << std::setw(1) << atom.mol_tag // 22: chain identifier
-				 << std::setw(4) << atom.type // 23-26: Residue sequence number
-				 << " " << "   " // 27:code for insertion of residues, 28-30:empty
-				 << std::setw(8) << std::fixed << std::setprecision(3) << atom.pos.x // 31-38
-				 << std::setw(8) << std::fixed << std::setprecision(3) << atom.pos.y // 39-46
-				 << std::setw(8) << std::fixed << std::setprecision(3) << atom.pos.z // 47-54
-				 << "   1.0" // 55-60: Occupancy
-				 << "   1.0" // 61-66: Temperature factor
-				 << "      " // 67-72: Empty
-				 << "    " // 73-76: Segment identifier (optional)
-				 << std::setw(2) << type_to_atom_name[atom.type] // 77-78 Element symbol
-				 << "  " << "\n"; // 79-80 Charge (optional)
-    	  }
-
-    }
 };
 
 
