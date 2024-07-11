@@ -147,40 +147,33 @@ void do_analysis()
 int main(int argc, char* argv[]) // // $num of beads per edge, box dimensions X(same as Y) $beg $end, $position in Z, $offset
 {
     Data data;
-
     Structure_Container structure;
 
     //
     // Input safeguard
     //
-    if( argc == 1 || strcmp(argv[1], "-h") == 0 ) {
+    if( argc == 1 || strcmp(argv[1], "-h") == 0 )
+    {
         structure.helpMessage();
         exit(1);
     }
 
     //
-    // Loop over command line arguments
+    // Loop over command line arguments: input file names
     //
     for(int i=1; i<argc; ++i)
     {
-        //
-        // Load the input file [i]
-        //
-        data.loadInput(argv[i]);
-
-        //
-        // Report what was loaded
-        //
-        cerr << data.in.toString() << endl;
+        data.loadInput(argv[i]); // Load the input files specified as command line arguments
+        cerr << data.in.toString() << endl; // Report what was loaded
 
         //
         // Load a particle if specified
         //
         if( data.isDefined() )
         {
-            data.load(data.in.infile);      // Load Data from file "data.in.infile"
-            data.scale(data.in.scale);    // Rescale atom positions by data.in.scale
-            data.move(data.in.com_pos);     // Move by vector defined in input file
+            data.load(data.in.infile);    // Load Data from infile
+            data.scale(data.in.scale);    // Rescale atom positions
+            data.move(data.in.com_pos);   // Move entire system by vector
 
             if(data.in.is_mol_tag())
             	data.set_mol_tag(data.in.mol_tag); // Change mol_tag of all particles to one set by input

@@ -38,6 +38,33 @@ bool sortN(const Atom& i, const Atom& j) {
 
 
 
+
+/**
+ * @brief The PDB class
+ * Class for IO of files in PDB data format
+ */
+class PDB
+{
+public:
+    PDB(){}
+};
+
+
+
+
+/**
+ * @brief The Lammps class
+ * Class for IO of files in lammps data formats
+ */
+class Lammps
+{
+public:
+    Lammps() {}
+};
+
+
+
+
 /**
  * @brief The Data class - Generated data from class particle
  */
@@ -96,20 +123,11 @@ public:
         return true;
     }
 
-    //
-    // temp_beads methods
-    //
     void offset(int offs)
     {
     	temp_beads.offset(offs);
     	temp_bonds.offset(offs);
     	temp_angles.offset(offs);
-    }
-
-    void set_mol_tag(int mtag)
-    {
-    	temp_beads.set_mol_tag(mtag);
-        cerr << "All beads changed to mol_tag = " << mtag << endl;
     }
 
     void move(Atom move)
@@ -146,7 +164,11 @@ public:
     	cerr << "scale " << scale << " done" << endl;
     }
 
-
+    void set_mol_tag(int mtag)
+    {
+        temp_beads.set_mol_tag(mtag);
+        cerr << "All beads changed to mol_tag = " << mtag << endl;
+    }
 
     /**
      * @brief impact - Deprecated, don't use
