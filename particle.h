@@ -72,6 +72,71 @@ public:
      */
     virtual void generate( Data& data )=0;
 
+    void modify( Data& data )
+    {
+        scale( data.in.scale );
+        move( data.in.com_pos );
+        populate( data );
+    }
+
+    void add(Data& data)
+    {
+        if(data.all_beads.is_overlap(beads, data.in.ff))
+        {
+            cerr << "WARNING: overlap detected" << endl;
+        }
+
+        data.all_beads.insert(data.all_beads.end(), this->beads.begin(), this->beads.end());
+        data.all_bonds.insert(data.all_bonds.end(), this->bonds.begin(), this->bonds.end());
+        data.all_angles.insert(data.all_angles.end(), this->angles.begin(), this->angles.end());
+
+        data.all_sigma = this->sigma;
+        data.all_sigma_size = this->sigma_size;
+        data.all_sigma_cosatt = this->sigma_cosatt;
+    }
+
+    virtual string help()
+    {
+        stringstream ss;
+        ss << "Abstract class Particle\n";
+        ss << "Contains functions intended for inheritance\n";
+        ss << "Does not generate anything\n";
+        return ss.str();
+    }
+
+    void printSigma()
+    {
+        cerr << "printSigma:" << endl;
+        for(unsigned int i=0; i<sigma_size; ++i)
+        {
+            cerr << "[" << i+1 << "][" << i+1 << "] = "  << sigma[i][i] << endl;
+        }
+    }
+
+    void printSigma(int j)
+    {
+        cerr << "printSigma type " << j << ":" << endl;
+        for(unsigned int i=0; i<sigma_size; ++i)
+        {
+            cerr << "[" << j+1 << "][" << i+1 << "] = "  << sigma[j][i] << " == " << sigma[i][j] << endl;
+        }
+    }
+
+    bool isSame (vector<Atom>& container, Atom& push)
+    {
+        bool same = false;
+
+        for(unsigned int q=0; q< container.size(); q++) {
+            if(container[q].isAproxSame(push)) {
+                same = true;
+            }
+        }
+
+        return !same;
+    }
+
+private:
+
     void populate(Data& data)
     {
     	if( data.in.population.random )
@@ -136,62 +201,6 @@ public:
     {
     	beads.scale(scale);
     	cerr << "scale " << scale << endl;
-    }
-
-    bool isSame (vector<Atom>& container, Atom& push)
-    {
-        bool same = false;
-
-        for(unsigned int q=0; q< container.size(); q++) {
-            if(container[q].isAproxSame(push)) {
-                same = true;
-            }
-        }
-
-        return !same;
-    }
-
-    void add(Data& data)
-    {
-        if(data.all_beads.is_overlap(beads, data.in.ff))
-        {
-            cerr << "WARNING: overlap detected" << endl;
-        }
-
-        data.all_beads.insert(data.all_beads.end(), this->beads.begin(), this->beads.end());
-        data.all_bonds.insert(data.all_bonds.end(), this->bonds.begin(), this->bonds.end());
-        data.all_angles.insert(data.all_angles.end(), this->angles.begin(), this->angles.end());
-
-        data.all_sigma = this->sigma;
-        data.all_sigma_size = this->sigma_size;
-        data.all_sigma_cosatt = this->sigma_cosatt;
-    }
-
-    virtual string help()
-    {
-    	stringstream ss;
-    	ss << "Abstract class Particle\n";
-    	ss << "Contains functions intended for inheritance\n";
-    	ss << "Does not generate anything\n";
-    	return ss.str();
-    }
-
-    void printSigma()
-    {
-        cerr << "printSigma:" << endl;
-        for(unsigned int i=0; i<sigma_size; ++i)
-        {
-            cerr << "[" << i+1 << "][" << i+1 << "] = "  << sigma[i][i] << endl;
-        }
-    }
-
-    void printSigma(int j)
-    {
-        cerr << "printSigma type " << j << ":" << endl;
-        for(unsigned int i=0; i<sigma_size; ++i)
-        {
-            cerr << "[" << j+1 << "][" << i+1 << "] = "  << sigma[j][i] << " == " << sigma[i][j] << endl;
-        }
     }
 };
 

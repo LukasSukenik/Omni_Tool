@@ -21,6 +21,7 @@ HEADERS += \
     cow.h \
     data.h \
     dodecahedron.h \
+    ellipsoid.h \
     force_field.h \
     globular_sphere.h \
     icosahedron.h \

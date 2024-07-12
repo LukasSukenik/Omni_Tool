@@ -55,7 +55,7 @@ public:
     //
     // Class for loading input file
     //
-    Input in;
+    IO_Input in;
     IO_Lammps lammps;
     IO_PDB pdb;
     IO_XYZ xyz;
@@ -89,11 +89,19 @@ public:
 
     void load_data(string in_file)
     {
-        lammps.load(in_file);
-        in.sim_box = lammps.sim_box;
-        temp_bonds = lammps.bonds;
-        temp_angles = lammps.angles;
-        temp_beads = lammps.beads;
+        if(in.in.type == IO_Type::lammps_full)
+        {
+            lammps.load(in_file);
+            in.sim_box = lammps.sim_box;
+            temp_bonds = lammps.bonds;
+            temp_angles = lammps.angles;
+            temp_beads = lammps.beads;
+        }
+
+        if(in.in.type == IO_Type::pdb)
+        {
+            pdb.load(in_file);
+        }
     }
 
     ///
@@ -101,7 +109,7 @@ public:
     ///
     void print()
     {
-        if( in.out.type == Output_Type::lammps_full)
+        if( in.out.type == IO_Type::lammps_full)
         {
             lammps.sim_box = in.sim_box;
             lammps.beads = all_beads;
@@ -110,11 +118,11 @@ public:
 
             lammps.print();
         }
-        if( in.out.type == Output_Type::xyz)
+        if( in.out.type == IO_Type::xyz)
         {
             xyz.print(all_beads);
         }
-        if( in.out.type == Output_Type::pdb)
+        if( in.out.type == IO_Type::pdb)
         {
             pdb.print(all_beads);
         }

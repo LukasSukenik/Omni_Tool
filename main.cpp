@@ -9,6 +9,7 @@
 #include "chain.h"
 #include "slab.h"
 #include "globular_sphere.h"
+#include "ellipsoid.h"
 
 #include <iostream>
 #include <fstream>
@@ -56,6 +57,8 @@ public:
         (*this)[Cow::keyword] = new Cow();
         (*this)[Globular_Sphere::keyword] = new Globular_Sphere();
         (*this)[Monomer::keyword] = new Monomer();
+
+        (*this)[Ellipsoid::keyword] = new Ellipsoid();
     }
 
     ~Particle_Container()
@@ -75,6 +78,7 @@ public:
 		{
 		    std::cout << (*val).help() << std::endl; // @suppress("Method cannot be resolved") // @suppress("Invalid overload")
 		}
+        exit(1);
 	}
 };
 
@@ -146,7 +150,7 @@ void do_analysis()
 }
 
 
-int main(int argc, char* argv[]) // // $num of beads per edge, box dimensions X(same as Y) $beg $end, $position in Z, $offset
+int main(int argc, char* argv[])
 {
     Data data;
     Particle_Container structure;
@@ -157,7 +161,6 @@ int main(int argc, char* argv[]) // // $num of beads per edge, box dimensions X(
     if( argc == 1 || strcmp(argv[1], "-h") == 0 )
     {
         structure.helpMessage();
-        exit(1);
     }
 
     //
@@ -187,9 +190,7 @@ int main(int argc, char* argv[]) // // $num of beads per edge, box dimensions X(
             {
                 cerr << "Generating: " << structure[ data.in.gen_structure ]->name << endl;
                 structure[ data.in.gen_structure ]->generate( data );
-                structure[ data.in.gen_structure ]->scale( data.in.scale );
-                structure[ data.in.gen_structure ]->move( data.in.com_pos );
-                structure[ data.in.gen_structure ]->populate( data );
+                structure[ data.in.gen_structure ]->modify( data );
                 structure[ data.in.gen_structure ]->add(data); // particle data
             }
             else

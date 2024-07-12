@@ -12,32 +12,52 @@
 class Atom{
 public:
     //
-    // Lammps define Atom/Particle
+    // Lammps atom style full: N molecule-tag atom-type q x y z nx ny nz  (N = # of atoms)
     //
-    //myFloat x=0,y=0,z=0;
-    //myFloat vx=-1.001,vy=-1.001,vz=-1.001; // velocities
-
-    Tensor_xyz pos = Tensor_xyz(0.0, 0.0, 0.0);
-    Tensor_xyz vel = Tensor_xyz(1.001, 1.001, 1.001);
-
+    int N=1;
+    int mol_tag = 0;
+    int type=0;
     double q=0;
+    Tensor_xyz pos = Tensor_xyz(0.0, 0.0, 0.0);
     int nx=0,ny=0,nz=0;
+    Tensor_xyz vel = Tensor_xyz(1.001, 1.001, 1.001); // lammps velocities
 
-    /*
-     * From pdb: Atom name < Residue name < Chain identifier
-     */
-
-    int N=1; // PDB: Atom serial number
-    int type=0; // PBD: Atom name
-    std::string resname = "   "; // PDB: Residue name
-    int mol_tag = 0; // PDB: Chain identifier and Residue sequence number
-
+    //
+    // PDB
+    //
+    // 1-4 ATOM, HETATM, 5-6:empty
+    // 7-11: atom serial number
+    int atom_serial_N; // right
+    // 13-16:atom name
+    char atom_name[4]; // left
+    // 18-20: Residue name
+    char res_name[3];  // right
+    // 22: chain identifier
+    char chain_id;
+    // 23-26: Residue sequence number
+    int res_seq_N;     // right
+    // 27:code for insertion of residues
+    char code;
+    // 31-38:x , 39-46:y, 47-54:z :: pos // right
+    // 55-60: Occupancy
+    double occupancy; // right
+    // 61-66: Temperature factor
+    double temp_factor; // right
+    // 73-76: Segment identifier (optional)
+    char seg_id[4]; // left
+    // 77-78 Element symbol
+    char element[2]; // right
+    // 79-80 Charge (optional)
+    char charge[2];
 
     //
     // not used for output
     //
     int to_type=-1; // used in dodecahedron to change the type after bonds are generated - design mistake
     double temp_dist = -1.0;
+
+
+
 
     //
     // Constructors

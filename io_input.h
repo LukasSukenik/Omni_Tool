@@ -23,16 +23,16 @@
 using namespace std;
 
 
-enum class Output_Type { none, xyz, pdb, lammps_full };
+enum class IO_Type { none, xyz, pdb, lammps_full };
 
-std::ostream& operator<<(std::ostream& os, const Output_Type out)
+std::ostream& operator<<(std::ostream& os, const IO_Type out)
 {
     switch (out) {
-        case Output_Type::xyz:
+        case IO_Type::xyz:
           os << "xyz"; return os;
-        case Output_Type::pdb:
+        case IO_Type::pdb:
           os << "pdb"; return os;
-        case Output_Type::lammps_full:
+        case IO_Type::lammps_full:
           os << "lammps_full"; return os;
         default:
           os << "none"; return os;
@@ -43,44 +43,44 @@ std::ostream& operator<<(std::ostream& os, const Output_Type out)
 
 
 
-class Output{
+class IO{
 public:
-    Output() {}
+    IO() {}
 
-    Output_Type type = Output_Type::none;
+    IO_Type type = IO_Type::none;
 
     void clear()
     {
-        type = Output_Type::none;
+        type = IO_Type::none;
     }
 
-    friend std::istream& operator>>(std::istream& is, Output& out)
+    friend std::istream& operator>>(std::istream& is, IO& out)
     {
         string str;
         is >> str;
 
         transform(str.begin(), str.end(), str.begin(), ::tolower);
 
-        out.type = Output_Type::none;
+        out.type = IO_Type::none;
         if (str == "xyz")
         {
-            out.type = Output_Type::xyz;
+            out.type = IO_Type::xyz;
         }
         if (str =="pdb")
         {
-            out.type = Output_Type::pdb;
+            out.type = IO_Type::pdb;
         }
         if (str == "lammps_full")
         {
-            out.type = Output_Type::lammps_full;
+            out.type = IO_Type::lammps_full;
         }
 
         return is;
     }
 
-    friend std::ostream& operator<<(std::ostream& os, const Output& out)
+    friend std::ostream& operator<<(std::ostream& os, const IO& io)
     {
-        os << out.type;
+        os << io.type;
         return os;
     }
 };
@@ -140,66 +140,66 @@ public:
 /**
  * @brief The Input class - Parameters for particle generation
  */
-class Input{
+class IO_Input{
 public:
-    Input() {}
+    IO_Input() {}
 
     //
+    // IO
     //
-    // Data updated per input file
-    //
-    //
-
     string infile; /// name of the filename with lammps_full atoms
+    IO out; /// Output type - none, pdb, lammps_full, xyz
+    IO in;  /// Input type  - none, pdb, lammps_full
 
-    //
-    // particle data
-    //
+    // particle identifier
     string gen_structure; /// keyword identifying the structure class
+
+    // bead counts
     int num_of_beads=-1;
     int type_of_beads=-1;
     int num_lig=-1;
     int subdiv_beads=-1;
     int subdiv_lig=-1;
+
+    // atom types
+    int chain_type=-1;
+    int atom_type=1;
+
+    // molecule types
     int mol_tag=-1;
-    myFloat scale = 1.0;
+    int mtag_1=-1;
+    int mtag_2=-1;
+
+    // patches
     vector<Atom> patches;
-
-    /// Population data
-    Population population;
-
-    //
-    //
-    // Persistent data
-    //
-    //
-    Simulation_Box sim_box;
-    Force_Field ff;
-    Output out; /// Output type - none, pdb, lammps_full, xyz
-
-
-
-    //
-    // Yet unsorted
-    //
-    bool center=false;
-    Tensor_xyz com_pos = Tensor_xyz(0.0, 0.0, 0.0);
-    myFloat c=0.0;
     Atom patch_1 = Atom(0,0,0,0);
     Atom patch_2 = Atom(0,0,0,0);
 
-    ///  Types
-    int chain_type=-1;
-    int mtag_1=-1;
-    int mtag_2=-1;
+    // Ellipsoid, oblate spheroid
+    myFloat b=0.0;
+    myFloat c=0.0;
+
+    // System data
+    myFloat scale = 1.0;
+    bool center=false;
+    Tensor_xyz com_pos = Tensor_xyz(0.0, 0.0, 0.0);
     int seed=0;
     Tensor_xyz ivx = Tensor_xyz(0.0, 0.0, 0.0);
     bool fit = false;
     int offset = 1;
 
+    // Population data
+    Population population;
+
+    // simulation box
+    Simulation_Box sim_box;
+
     // Force-Field
     vector<LJ> bparam;
     vector<CosSQ> cparam;
+    Force_Field ff;
+
+
 
     bool loadInput(string input)
     {
@@ -218,58 +218,59 @@ public:
 
             ss >> what;
 
-            if( what.compare("Load_file:") == 0 )          { ss >> infile; }
+            if( what.compare("Load_file:") == 0 )         { ss >> infile; }
 
-            //
-            // Define the particle
-            //
-            if( what.compare("Particle_type:") == 0 )      { ss >> gen_structure; }
-            if( what.compare("Number_of_beads:") == 0 )    { ss >> num_of_beads; }
-            if( what.compare("Type_of_beads:") == 0 )      { ss >> type_of_beads; }
-            if( what.compare("Number_of_ligands:") == 0 )  { ss >> num_lig; }
-            if( what.compare("Subdiv_of_beads:") == 0 )    { ss >> subdiv_beads; }
-            if( what.compare("Subdiv_of_ligands:") == 0 )  { ss >> subdiv_lig; }
-            if( what.compare("Mol_tag:") == 0 ) 		   { ss >> mol_tag; }
-            if( what.compare("Scale:") == 0 )              { ss >> scale; }
+            // Define particle identifier
+            if( what.compare("Particle_type:") == 0 )     { ss >> gen_structure; }
+
+            // Define the io types
+            if( what.compare("Output_type:") == 0 )       { ss >> out; }
+            if( what.compare("Input_type:") == 0 )        { ss >> in; }
+
+            // Define particle atom counts
+            if( what.compare("Number_of_beads:") == 0 )   { ss >> num_of_beads; }
+            if( what.compare("Number_of_ligands:") == 0 ) { ss >> num_lig; }
+            if( what.compare("Subdiv_of_beads:") == 0 )   { ss >> subdiv_beads; }
+            if( what.compare("Subdiv_of_ligands:") == 0 ) { ss >> subdiv_lig; }
+
+            // Define particle properties: aspect ration, patches
+            if( what.compare("b:") == 0 )                 { ss >> b; }
+            if( what.compare("c:") == 0 )                 { ss >> c; }
             if( what.compare("Patch:") == 0 )
             {
-            	patches.push_back(Atom());
-            	ss >> patches.back().pos.x >> patches.back().pos.y >> patches.back().pos.z;
-            	ss >> patches.back().vel.x >> patches.back().vel.y >> patches.back().vel.z;
-            	ss >> patches.back().type;
+                patches.push_back(Atom());
+                ss >> patches.back().pos.x >> patches.back().pos.y >> patches.back().pos.z;
+                ss >> patches.back().vel.x >> patches.back().vel.y >> patches.back().vel.z;
+                ss >> patches.back().type;
             }
 
-            //
+            // Define atom and molecule types
+            if( what.compare("Atom_type:") == 0 )         { ss >> atom_type; }
+            if( what.compare("Type_of_beads:") == 0 )     { ss >> type_of_beads; }
+            if( what.compare("Mol_tag:") == 0 ) 		  { ss >> mol_tag; }
+            if( what.compare("Chain_type:") == 0 ) 		  { ss >> chain_type; }
+
+            // Define system
+            if( what.compare("Scale:") == 0 )             { ss >> scale; }
+            if( what.compare("Center") == 0 )             { center=true; }
+            if( what.compare("Position_shift:") == 0 )    { ss >> com_pos.x >> com_pos.y >> com_pos.z; }
+            if( what.compare("Seed:") == 0 )              { ss >> seed; rng.seed(seed); }
+            if( what.compare("Lammps_offset:") == 0 )     { ss >> offset; }
+
+            // Define the simulation box
+            if( what.compare("Sim_box:") == 0 )           { ss >> sim_box; }
+
             // Define the population of the particle
-            //
-            if( what.compare("Populate:") == 0 )  		{ ss >> population; }
+            if( what.compare("Populate:") == 0 )  		  { ss >> population; }
 
-            //
-            // Define the simulation box - persistent data
-            //
-            if( what.compare("Sim_box:") == 0 )             { ss >> sim_box; }
+            // Define the force-field
+            if( what.compare("ff_lj:") == 0 )             { LJ lj; ss >> lj; ff.lj[lj.type]=lj; }
+            if( what.compare("ff_cos2:") == 0 )           { CosSQ cos; ss >> cos; ff.cos[cos.type]=cos; }
 
-            //
-            // Define the force-field - persistent
-            //
-            if( what.compare("ff_lj:") == 0 ) { LJ lj; ss >> lj; ff.lj[lj.type]=lj; }
-            if( what.compare("ff_cos2:") == 0 ) { CosSQ cos; ss >> cos; ff.cos[cos.type]=cos; }
-
-            //
-            // Define the output type
-            //
-            if( what.compare("Output_type:") == 0 )     { ss >> out; }
-
-            if( what.compare("Center") == 0 )           { center=true; }
-            if( what.compare("Position_shift:") == 0 )  { ss >> com_pos.x >> com_pos.y >> com_pos.z; }
-            if( what.compare("c:") == 0 )               { ss >> c; }
-            if( what.compare("Chain_type:") == 0 ) 		{ ss >> chain_type; }
+            // Defines stuff for nanoparticle orientation and position
             if( what.compare("Align:") == 0 )  			{ ss >> mtag_1 >> mtag_2; }
             if( what.compare("Fit") == 0 )              { fit=true; }
             if( what.compare("Impact_vector:") == 0 )   { ss >> ivx.x >> ivx.y >> ivx.z; }
-            if( what.compare("Seed:") == 0 )            { ss >> seed; rng.seed(seed); }
-            if( what.compare("Lammps_offset:") == 0 )   { ss >> offset; }
-
         }
         fs.close();
 
@@ -315,7 +316,13 @@ public:
 
     void clear()
     {
+        // Persistent
+        // out;
+        // sim_box;
+        // ff;
+
         gen_structure.clear();
+        in.clear();
 
         type_of_beads=-1;
         num_of_beads=-1;
@@ -325,8 +332,10 @@ public:
 
         scale=1.0;
         offset=1;
+        b=0;
         c=0;
 
+        atom_type=1;
         chain_type=-1;
         mol_tag=-1;
 
