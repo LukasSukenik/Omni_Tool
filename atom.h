@@ -29,9 +29,9 @@ public:
     // 7-11: atom serial number
     int atom_serial_N; // right
     // 13-16:atom name
-    char atom_name[4]; // left
+    string atom_name; // left
     // 18-20: Residue name
-    char res_name[3];  // right
+    string res_name;  // right
     // 22: chain identifier
     char chain_id;
     // 23-26: Residue sequence number
@@ -44,11 +44,11 @@ public:
     // 61-66: Temperature factor
     double temp_factor; // right
     // 73-76: Segment identifier (optional)
-    char seg_id[4]; // left
+    string seg_id; // left
     // 77-78 Element symbol
-    char element[2]; // right
+    string element; // right
     // 79-80 Charge (optional)
-    char charge[2];
+    string charge;
 
     //
     // not used for output
@@ -63,13 +63,13 @@ public:
     // Constructors
     //
     Atom() : to_type(-1) {}
-    Atom(Tensor_xyz pos, int type=0): pos(pos), type(type), to_type(-1) {}
-    Atom(myFloat x, myFloat y, myFloat z, int type=0): pos(x,y,z), type(type), to_type(-1) {}
+    Atom(Tensor_xyz pos, int type=0): type(type), pos(pos), to_type(-1) {}
+    Atom(myFloat x, myFloat y, myFloat z, int type=0): type(type), pos(x,y,z), to_type(-1) {}
 
-    Atom(myFloat x, myFloat y, myFloat z, myFloat vx, myFloat vy, myFloat vz, int type=0): pos(x,y,z), vel(vx,vy,vz), type(type), to_type(-1) {}
+    Atom(myFloat x, myFloat y, myFloat z, myFloat vx, myFloat vy, myFloat vz, int type=0): type(type), pos(x,y,z), vel(vx,vy,vz), to_type(-1) {}
 
-    Atom(myFloat x, myFloat y, myFloat z, int type, int mol_tag): pos(x,y,z), type(type), mol_tag(mol_tag), to_type(-1) {}
-    Atom(Tensor_xyz pos, int type, int mol_tag): pos(pos), type(type), mol_tag(mol_tag), to_type(-1) {}
+    Atom(myFloat x, myFloat y, myFloat z, int type, int mol_tag): mol_tag(mol_tag), type(type), pos(x,y,z), to_type(-1) {}
+    Atom(Tensor_xyz pos, int type, int mol_tag): mol_tag(mol_tag), type(type), pos(pos), to_type(-1) {}
 
     bool operator==(const Atom& o) const
     {

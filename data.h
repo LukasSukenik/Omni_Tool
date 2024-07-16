@@ -101,6 +101,7 @@ public:
         if(in.in.type == IO_Type::pdb)
         {
             pdb.load(in_file);
+            temp_beads = pdb.beads;
         }
     }
 
@@ -155,6 +156,7 @@ public:
 
         // if generating into an existing structure that you did not load, give the number of particles as offset
         offset(all_beads.size());
+
 
         if( in.fit )
             fit();

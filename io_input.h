@@ -144,9 +144,7 @@ class IO_Input{
 public:
     IO_Input() {}
 
-    //
     // IO
-    //
     string infile; /// name of the filename with lammps_full atoms
     IO out; /// Output type - none, pdb, lammps_full, xyz
     IO in;  /// Input type  - none, pdb, lammps_full
@@ -156,7 +154,6 @@ public:
 
     // bead counts
     int num_of_beads=-1;
-    int type_of_beads=-1;
     int num_lig=-1;
     int subdiv_beads=-1;
     int subdiv_lig=-1;
@@ -218,22 +215,26 @@ public:
 
             ss >> what;
 
+            // Load io
             if( what.compare("Load_file:") == 0 )         { ss >> infile; }
-
-            // Define particle identifier
-            if( what.compare("Particle_type:") == 0 )     { ss >> gen_structure; }
-
-            // Define the io types
             if( what.compare("Output_type:") == 0 )       { ss >> out; }
             if( what.compare("Input_type:") == 0 )        { ss >> in; }
 
-            // Define particle atom counts
+            // Load particle identifier
+            if( what.compare("Particle_type:") == 0 )     { ss >> gen_structure; }
+
+            // Load particle atom counts
             if( what.compare("Number_of_beads:") == 0 )   { ss >> num_of_beads; }
             if( what.compare("Number_of_ligands:") == 0 ) { ss >> num_lig; }
             if( what.compare("Subdiv_of_beads:") == 0 )   { ss >> subdiv_beads; }
             if( what.compare("Subdiv_of_ligands:") == 0 ) { ss >> subdiv_lig; }
 
-            // Define particle properties: aspect ration, patches
+            // Load atom and molecule types
+            if( what.compare("Atom_type:") == 0 )         { ss >> atom_type; }
+            if( what.compare("Mol_tag:") == 0 ) 		  { ss >> mol_tag; }
+            if( what.compare("Chain_type:") == 0 ) 		  { ss >> chain_type; }
+
+            // Load particle properties: aspect ration, patches
             if( what.compare("b:") == 0 )                 { ss >> b; }
             if( what.compare("c:") == 0 )                 { ss >> c; }
             if( what.compare("Patch:") == 0 )
@@ -244,30 +245,24 @@ public:
                 ss >> patches.back().type;
             }
 
-            // Define atom and molecule types
-            if( what.compare("Atom_type:") == 0 )         { ss >> atom_type; }
-            if( what.compare("Type_of_beads:") == 0 )     { ss >> type_of_beads; }
-            if( what.compare("Mol_tag:") == 0 ) 		  { ss >> mol_tag; }
-            if( what.compare("Chain_type:") == 0 ) 		  { ss >> chain_type; }
-
-            // Define system
+            // Load system
             if( what.compare("Scale:") == 0 )             { ss >> scale; }
             if( what.compare("Center") == 0 )             { center=true; }
             if( what.compare("Position_shift:") == 0 )    { ss >> com_pos.x >> com_pos.y >> com_pos.z; }
             if( what.compare("Seed:") == 0 )              { ss >> seed; rng.seed(seed); }
             if( what.compare("Lammps_offset:") == 0 )     { ss >> offset; }
 
-            // Define the simulation box
+            // Load the simulation box
             if( what.compare("Sim_box:") == 0 )           { ss >> sim_box; }
 
-            // Define the population of the particle
+            // Load the population of the particle
             if( what.compare("Populate:") == 0 )  		  { ss >> population; }
 
-            // Define the force-field
+            // Load the force-field
             if( what.compare("ff_lj:") == 0 )             { LJ lj; ss >> lj; ff.lj[lj.type]=lj; }
             if( what.compare("ff_cos2:") == 0 )           { CosSQ cos; ss >> cos; ff.cos[cos.type]=cos; }
 
-            // Defines stuff for nanoparticle orientation and position
+            // Load stuff for nanoparticle orientation and position
             if( what.compare("Align:") == 0 )  			{ ss >> mtag_1 >> mtag_2; }
             if( what.compare("Fit") == 0 )              { fit=true; }
             if( what.compare("Impact_vector:") == 0 )   { ss >> ivx.x >> ivx.y >> ivx.z; }
@@ -281,10 +276,15 @@ public:
     {
         stringstream ss;
 
-        ss << "Particle_type: " << gen_structure << endl;
+        if( !infile.empty() )
+        {
+            ss << "Load_file: " << infile << endl;
+            ss << "Input_type:" << in << endl;
+        }
+        if( !gen_structure.empty() )
+            ss << "Particle_type: " << gen_structure << endl;
         ss << "Output_type: " << out << endl;
         ss << "Number of beads: " << num_of_beads << endl;
-        ss << "Type_of_beads:" << type_of_beads << endl;
         ss << "Number of ligands: " << num_lig << endl;
         ss << "Subdiv of beads: " << subdiv_beads << endl;
         ss << "Subdiv of ligands: " << subdiv_lig << endl;
@@ -304,7 +304,7 @@ public:
 
     bool is_mtag_12()
     {
-        if( mtag_1 != -1 && mtag_2 != -1 )
+        if( mtag_1 == -1 || mtag_2 == -1 )
             return false;
         return true;
     }
@@ -324,7 +324,6 @@ public:
         gen_structure.clear();
         in.clear();
 
-        type_of_beads=-1;
         num_of_beads=-1;
         num_lig=-1;
         subdiv_beads=-1;

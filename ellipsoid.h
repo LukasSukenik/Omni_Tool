@@ -329,6 +329,9 @@ class Ellipsoid: public Sphere {
 public:   
     Ellipsoid() : Sphere("Ellipsoid") {}
 
+    inline static const string
+    keyword = "Ellipsoid";
+
     const double PI = 3.141592653589793;
 
     /**
@@ -399,27 +402,22 @@ protected:
         Ellipsoid_Surf ellipsoid(1.0,b,c,samples);
         double angle_increment = PI * ( 3.0 - sqrt(5.0));
 
-        //vector<double> cumul_fce = elipsoid_cumulative_function(1.0, b, c);
-
         double x,y,z,phi;
 
         for(int i=0; i<samples; ++i)
         {
-            //z = linear_Z(i, samples, c);
             z = ellipsoid.const_surf_Z_distrib[i];
             phi = i * angle_increment;
 
             x = 1.0 * sqrt( 1 - ((z*z) / (c*c)) ) * cos ( ellipsoid.azimuth_conversion(phi) );
             y = b * sqrt( 1 - ((z*z) / (c*c)) ) * sin ( ellipsoid.azimuth_conversion(phi) );
 
-            //if( ( ((x*x)+(y*y)) + ((z*z)/(c*c)) ) > (1 - tolerance) && ( ((x*x)+(y*y)) + ((z*z)/(c*c)) ) < (1 + tolerance)) {
-                if(orientX == orientation)
-                    container.push_back(Atom(z,x,y,type));
-                if(orientY == orientation)
-                    container.push_back(Atom(x,z,y,type));
-                if(orientZ == orientation)
-                    container.push_back(Atom(x,y,z,type));
-            //}
+            if(orientX == orientation)
+                container.push_back(Atom(z,x,y,type));
+            if(orientY == orientation)
+                container.push_back(Atom(x,z,y,type));
+            if(orientZ == orientation)
+                container.push_back(Atom(x,y,z,type));
         }
     }
 

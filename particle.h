@@ -233,7 +233,7 @@ public:
 
     void generate( Data& data )
     {
-    	beads.push_back(Atom(0,0,0,data.in.type_of_beads,data.in.mol_tag));
+        beads.push_back(Atom(0,0,0,data.in.atom_type,data.in.mol_tag));
     }
 
     string help()
