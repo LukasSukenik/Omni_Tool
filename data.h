@@ -215,8 +215,8 @@ private:
         {
             identify_symmetry();
 
-            /*beads[0].clear();
-            beads[1].clear();*/
+            beads[0].clear();
+            beads[1].clear();
             //cout << "exit in Data::align_2fold_on_x" << endl;
             //exit(1);
         }
@@ -226,11 +226,73 @@ private:
     {
         int proto_size = beads[0].size();
         Atoms com;
+        Atoms sel;
         Atom cm;
 
-        cm = beads[0].center_of_mass();
+        for(int i=0; i<60; ++i)
+        {
+            cm = beads[1].center_of_mass( i*proto_size, (i+1)*proto_size );
+            com.push_back(cm);
+        }
+
+        beads.push_back(com);
+
+        //
+        // Find pentamers
+        //
+        sel = find_pentamer(com);
+
+
+        exit(1);
+
 
         return com;
+    }
+
+    Atoms find_pentamer(Atoms& container)
+    {
+        Atoms sel;
+        double dist = min_dist(container);
+
+        for(double i : {1.5, 1.6, 1.7, 1.8, 1.9})
+        {
+            sel = within(container[0], container, i*dist);
+            if(sel.size() > 5)
+                break;
+        }
+
+        return sel;
+    }
+
+    double min_dist(Atoms& container)
+    {
+        double dist = 999.9;
+
+        Atom b = container[0];
+        for(auto& a : container)
+        {
+            if(a != b && b.dist(a) < dist)
+            {
+                dist = b.dist(a);
+            }
+        }
+
+        return dist;
+    }
+
+    Atoms within(Atom& start, Atoms& container, double radius)
+    {
+        Atoms ret;
+
+        for(auto& a : container)
+        {
+            if( start.dist(a) < radius )
+            {
+                ret.push_back(a);
+            }
+        }
+
+        return ret;
     }
 
     string toString()

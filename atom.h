@@ -27,28 +27,28 @@ public:
     //
     // 1-4 ATOM, HETATM, 5-6:empty
     // 7-11: atom serial number
-    string atom_serial_N; // right
+    string atom_serial_N = "    1"; // right, 7 8 9 10 11
     // 13-16:atom name
-    string atom_name; // left
+    string atom_name = " C  "; // left, 13 14 15 16
     // 18-20: Residue name
-    string res_name;  // right
+    string res_name = "THR";  // right
     // 22: chain identifier
-    char chain_id;
+    char chain_id = '1';
     // 23-26: Residue sequence number
-    int res_seq_N;     // right
+    int res_seq_N = 1;     // right
     // 27:code for insertion of residues
-    char code;
+    char code = ' ';
     // 31-38:x , 39-46:y, 47-54:z :: pos // right
     // 55-60: Occupancy
-    double occupancy; // right
+    double occupancy = 0.0; // right
     // 61-66: Temperature factor
-    double temp_factor; // right
+    double temp_factor = 0.0; // right
     // 73-76: Segment identifier (optional)
-    string seg_id; // left
+    string seg_id = "    "; // left
     // 77-78 Element symbol
-    string element; // right
+    string element = " C"; // right
     // 79-80 Charge (optional)
-    string charge;
+    string charge = "  ";
 
     //
     // not used for output
