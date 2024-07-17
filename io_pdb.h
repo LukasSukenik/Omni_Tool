@@ -47,7 +47,7 @@ public:
                 // string indexed from 0
                 if( string("ATOM  ").compare( line.substr(0, 6) ) == 0 ||  string("HETATM ").compare( line.substr(0, 6) ) == 0 )
                 {
-                    part.atom_serial_N = std::stoi( line.substr(6, 5) ); // int   : 7-11: atom serial number
+                    part.atom_serial_N = line.substr(6, 5);              // char  : 7-11: atom serial number (not decadic, contains letters)
                     part.atom_name = line.substr(12, 4);                 // char  : 13-16: atom name
                     part.res_name = line.substr(17, 3);                  // char  : 18-20: Residue name
                     part.chain_id = line[21];                            // char  : 22: chain identifier

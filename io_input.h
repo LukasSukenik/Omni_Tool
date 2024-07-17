@@ -309,11 +309,6 @@ public:
         return true;
     }
 
-    bool is_mol_tag()
-    {
-    	return (mol_tag != -1);
-    }
-
     void clear()
     {
         // Persistent

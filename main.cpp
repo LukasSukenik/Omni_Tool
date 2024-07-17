@@ -207,6 +207,7 @@ int main(int argc, char* argv[])
     if(false)
     	do_analysis();
 
+    data.merge();
     data.print();
     data.report();
 

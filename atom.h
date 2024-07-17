@@ -15,7 +15,7 @@ public:
     // Lammps atom style full: N molecule-tag atom-type q x y z nx ny nz  (N = # of atoms)
     //
     int N=1;
-    int mol_tag = 0;
+    int mol_tag = -1;
     int type=0;
     double q=0;
     Tensor_xyz pos = Tensor_xyz(0.0, 0.0, 0.0);
@@ -27,7 +27,7 @@ public:
     //
     // 1-4 ATOM, HETATM, 5-6:empty
     // 7-11: atom serial number
-    int atom_serial_N; // right
+    string atom_serial_N; // right
     // 13-16:atom name
     string atom_name; // left
     // 18-20: Residue name
@@ -62,14 +62,14 @@ public:
     //
     // Constructors
     //
-    Atom() : to_type(-1) {}
-    Atom(Tensor_xyz pos, int type=0): type(type), pos(pos), to_type(-1) {}
-    Atom(myFloat x, myFloat y, myFloat z, int type=0): type(type), pos(x,y,z), to_type(-1) {}
+    Atom() {}
+    Atom(Tensor_xyz pos, int type=0): type(type), pos(pos) {}
+    Atom(myFloat x, myFloat y, myFloat z, int type=0): type(type), pos(x,y,z) {}
 
-    Atom(myFloat x, myFloat y, myFloat z, myFloat vx, myFloat vy, myFloat vz, int type=0): type(type), pos(x,y,z), vel(vx,vy,vz), to_type(-1) {}
+    Atom(myFloat x, myFloat y, myFloat z, myFloat vx, myFloat vy, myFloat vz, int type=0): type(type), pos(x,y,z), vel(vx,vy,vz) {}
 
-    Atom(myFloat x, myFloat y, myFloat z, int type, int mol_tag): mol_tag(mol_tag), type(type), pos(x,y,z), to_type(-1) {}
-    Atom(Tensor_xyz pos, int type, int mol_tag): mol_tag(mol_tag), type(type), pos(pos), to_type(-1) {}
+    Atom(myFloat x, myFloat y, myFloat z, int type, int mol_tag): mol_tag(mol_tag), type(type), pos(x,y,z) {}
+    Atom(Tensor_xyz pos, int type, int mol_tag): mol_tag(mol_tag), type(type), pos(pos) {}
 
     bool operator==(const Atom& o) const
     {
@@ -401,19 +401,35 @@ public:
 
 
 
+    Atom center_of_mass() const
+    {
+        return this->center_of_mass(-1,-1,-1);
+    }
+
+    Atom center_of_mass(int mtag) const
+    {
+        return this->center_of_mass(mtag, -1,-1);
+    }
+
+    Atom center_of_mass(int start, int stop) const
+    {
+        return this->center_of_mass(-1, start, stop);
+    }
+
     /**
      * @brief center_of_mass - function computes Center-Of-Mass (COM) of particles with a given mol_tag
      * @param mtag - mol_tag of particles for COM calculation, -1 = all particles regardless of mol_tag
      */
-    Atom center_of_mass(int mtag=-1, int start=-1, int stop=-1) const
+    Atom center_of_mass(int mtag, int start, int stop) const
     {
         int count=0;
         int total=0;
         Atom cm;
         for(const Atom& item : (*this))
-        {
+        { 
             if( (item.mol_tag == mtag || mtag == -1) && total >= start && (total < stop || stop == -1) )
             {
+
                 cm += item;
                 ++count;
             }
@@ -424,6 +440,9 @@ public:
         cm *= 1.0/count;
         return cm;
     }
+
+
+
 
     //
     //

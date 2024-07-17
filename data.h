@@ -35,6 +35,10 @@ public:
 	//
     /// lammps data stuff
 	//
+    vector<Atoms> beads;
+    vector<Bonds> bonds;
+    vector<Angles> angles;
+
 	Atoms all_beads;
     Bonds all_bonds;
     Angles all_angles;
@@ -96,12 +100,17 @@ public:
             temp_bonds = lammps.bonds;
             temp_angles = lammps.angles;
             temp_beads = lammps.beads;
+
+            lammps.bonds.clear();
+            lammps.angles.clear();
+            lammps.beads.clear();
         }
 
         if(in.in.type == IO_Type::pdb)
         {
             pdb.load(in_file);
-            temp_beads = pdb.beads;
+            beads.push_back(pdb.beads);
+            pdb.beads.clear();
         }
     }
 
@@ -149,7 +158,7 @@ public:
         scale(in.scale);    // Rescale atom positions
         move(in.com_pos);   // Move entire system by vector
 
-        if(in.is_mol_tag())
+        if(in.mol_tag > -1)
             set_mol_tag(in.mol_tag); // Change mol_tag of all particles to one set by input
         if(in.is_mtag_12())
             align(in.mtag_1, in.mtag_2); // align mol_tag particles in z axis and XY plane
@@ -157,6 +166,8 @@ public:
         // if generating into an existing structure that you did not load, give the number of particles as offset
         offset(all_beads.size());
 
+
+        align_2fold_on_x();
 
         if( in.fit )
             fit();
@@ -175,9 +186,52 @@ public:
         temp_angles.clear();
     }
 
+    void merge()
+    {
+        for(auto& item : beads)
+        {
+            all_beads.insert(all_beads.end(), item.begin(), item.end());
+        }
+        for(auto& item : bonds)
+        {
+            all_bonds.insert(all_bonds.end(), item.begin(), item.end());
+        }
+        for(auto& item : angles)
+        {
+            all_angles.insert(all_angles.end(), item.begin(), item.end());
+        }
+
+        beads.clear();
+        bonds.clear();
+        angles.clear();
+    }
+
 
 
 private:
+    void align_2fold_on_x()
+    {
+        if(beads.size() == 2)
+        {
+            identify_symmetry();
+
+            /*beads[0].clear();
+            beads[1].clear();*/
+            //cout << "exit in Data::align_2fold_on_x" << endl;
+            //exit(1);
+        }
+    }
+
+    Atoms identify_symmetry()
+    {
+        int proto_size = beads[0].size();
+        Atoms com;
+        Atom cm;
+
+        cm = beads[0].center_of_mass();
+
+        return com;
+    }
 
     string toString()
     {
