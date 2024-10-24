@@ -3,7 +3,7 @@ CONFIG += console c++17
 CONFIG -= app_bundle
 CONFIG -= qt
 
-INCLUDEPATH += xdrfile-1.1.4/include/ particles/
+INCLUDEPATH += xdrfile-1.1.4/include/ particles/ IO/
 
 QMAKE_CXXFLAGS += -O2 -march=native -std=c++17 -Wno-unused-parameter -Wno-sign-compare
 
