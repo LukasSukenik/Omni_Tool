@@ -3,7 +3,7 @@ CONFIG += console c++17
 CONFIG -= app_bundle
 CONFIG -= qt
 
-INCLUDEPATH += xdrfile-1.1.4/include/
+INCLUDEPATH += xdrfile-1.1.4/include/ particles/
 
 QMAKE_CXXFLAGS += -O2 -march=native -std=c++17 -Wno-unused-parameter -Wno-sign-compare
 
@@ -17,33 +17,33 @@ HEADERS += \
     angle.h \
     atom.h \
     bond.h \
-    chain.h \
-    cow.h \
     data.h \
-    dodecahedron.h \
-    ellipsoid.h \
     force_field.h \
-    globular_sphere.h \
-    icosahedron.h \
-    io_input.h \
-    io_lammps.h \
-    io_pdb.h \
-    oblatespheroid.h \
     particle.h \
-    pentamer.h \
     rng.h \
     sim_box.h \
     slab.h \
-    sphere.h \
-    spherepatch.h \
-    surface.h \
-    tennisball.h \
     types.h \
     xtcanalysis.h \
     welford.h \
+    IO/io_input.h \
+    IO/io_lammps.h \
+    IO/io_pdb.h \
     xdrfile-1.1.4/include/xdrfile.h \
     xdrfile-1.1.4/include/xdrfile_trr.h \
-    xdrfile-1.1.4/include/xdrfile_xtc.h
+    xdrfile-1.1.4/include/xdrfile_xtc.h \
+    particles/chain.h \
+    particles/cow.h \
+    particles/dodecahedron.h \
+    particles/ellipsoid.h \
+    particles/globular_sphere.h \
+    particles/icosahedron.h \
+    particles/oblatespheroid.h \
+    particles/pentamer.h \
+    particles/sphere.h \
+    particles/spherepatch.h \
+    particles/surface.h \
+    particles/tennisball.h
 
 
 
