@@ -167,7 +167,16 @@ public:
         offset(all_beads.size());
 
 
-        align_2fold_on_x();
+        if(beads.size() == 2)
+        {
+            Atoms sym_axis_2;
+            Atoms sym_axis_3;
+            Atoms sym_axis_5;
+
+            identify_symmetry(sym_axis_2, sym_axis_3, sym_axis_5);
+
+            align_2fold_on_x();
+        }
 
         if( in.fit )
             fit();
@@ -208,77 +217,193 @@ public:
 
 
 
+
+
 private:
     void align_2fold_on_x()
     {
         if(beads.size() == 2)
         {
-            identify_symmetry();
-
-            beads[0].clear();
-            beads[1].clear();
+            ;
             //cout << "exit in Data::align_2fold_on_x" << endl;
             //exit(1);
         }
     }
 
-    Atoms identify_symmetry()
+
+    void identify_symmetry(Atoms& sym_axis_2, Atoms& sym_axis_3, Atoms& sym_axis_5)
+    {
+        Atoms com = get_protomer_coms();
+        sym_axis_5 = get_5_axis(com);
+        sym_axis_2 = get_2_axis(sym_axis_5);
+        sym_axis_3 = get_3_axis(sym_axis_5);
+
+        beads.push_back(sym_axis_2);
+        beads.push_back(sym_axis_3);
+        beads.push_back(sym_axis_5);
+
+        beads[0].clear();
+        //beads[1].clear();
+    }
+
+
+    Atoms get_protomer_coms()
     {
         int proto_size = beads[0].size();
         Atoms com;
-        Atoms sel;
         Atom cm;
 
+        // Generate protomers COMs
         for(int i=0; i<60; ++i)
         {
             cm = beads[1].center_of_mass( i*proto_size, (i+1)*proto_size );
             com.push_back(cm);
         }
 
-        beads.push_back(com);
-
-        //
-        // Find pentamers
-        //
-        sel = find_pentamer(com);
-
-
-        exit(1);
-
-
         return com;
     }
 
-    Atoms find_pentamer(Atoms& container)
+    Atoms get_2_axis(Atoms& sym_axis_5)
+    {
+        bool exists = false;
+        double min_d = sym_axis_5.min_dist();
+        Atoms sym_axis_2;
+
+        for(auto& i : sym_axis_5)
+        {
+            for(auto& j : sym_axis_5)
+            {
+                if(i != j && i.dist(j) < min_d*1.05)
+                {
+                    Atom add = i+j;
+                    add = add * (1.0/add.size()) * i.size() ;
+                    add.atom_name = " N  ";
+                    add.element = " N";
+
+                    exists = false;
+                    for(auto& a : sym_axis_2)
+                    {
+                        if(a.isAproxSame(add))
+                            exists = true;
+                    }
+
+                    if(!exists)
+                        sym_axis_2.push_back( add );
+                }
+            }
+        }
+
+        return sym_axis_2;
+    }
+
+    Atoms get_3_axis(Atoms& sym_axis_5)
+    {
+        bool exists = false;
+        double min_d = sym_axis_5.min_dist();
+        Atoms sym_axis_3;
+
+        for(auto& i : sym_axis_5)
+        {
+            for(auto& j : sym_axis_5)
+            {
+                for(auto& k : sym_axis_5)
+                {
+                    if( i != j && i.dist(j) < min_d*1.05 &&
+                        i != k && i.dist(k) < min_d*1.05 &&
+                        j != k && j.dist(k) < min_d*1.05 )
+                    {
+                        Atom add = i+j+k;
+                        add = add * (1.0/add.size()) * i.size() ;
+                        add.atom_name = " O  ";
+                        add.element = " O";
+
+                        exists = false;
+                        for(auto& a : sym_axis_3)
+                        {
+                            if(a.isAproxSame(add))
+                                exists = true;
+                        }
+
+                        if(!exists)
+                            sym_axis_3.push_back( add );
+                    }
+                }
+            }
+        }
+
+        return sym_axis_3;
+    }
+
+    Atoms get_5_axis(Atoms& com)
+    {
+        bool exists = false;
+        Atoms sym_axis_5;
+        Atoms sel;
+        vector<Atoms> penta;
+
+        for(auto& item : com)
+        {
+            sel = get_pentamer(com, item);
+            if(penta.empty())
+            {
+                penta.push_back(sel);
+                sym_axis_5.push_back( sel.center_of_mass() );
+            }
+
+            exists = false;
+            for(auto& p : penta)
+            {
+                if( sel.similar(p) )
+                {
+                    exists = true;
+                }
+            }
+            if(!exists)
+            {
+                penta.push_back(sel);
+                sym_axis_5.push_back( sel.center_of_mass() );
+            }
+        }
+
+        sym_axis_5.scale( com[0].size() / sym_axis_5[0].size() );
+
+        return sym_axis_5;
+    }
+
+
+    Atoms get_pentamer(Atoms& container, Atom origin)
     {
         Atoms sel;
-        double dist = min_dist(container);
+        Atoms penta;
+        double min_d = container.min_dist();
 
         for(double i : {1.5, 1.6, 1.7, 1.8, 1.9})
         {
-            sel = within(container[0], container, i*dist);
+            sel = within(origin, container, i*min_d);
             if(sel.size() > 5)
                 break;
         }
 
-        return sel;
-    }
+        // Remove extraneous protomer COMS
+        vector<int> nei;
 
-    double min_dist(Atoms& container)
-    {
-        double dist = 999.9;
-
-        Atom b = container[0];
-        for(auto& a : container)
+        for(auto& item : sel)
         {
-            if(a != b && b.dist(a) < dist)
+            nei.push_back( within(item, sel, min_d*1.01).size() );
+        }
+
+        for(int i=0; i<sel.size(); ++i)
+        {
+            if(nei[i] >= 3)
             {
-                dist = b.dist(a);
+                penta.push_back(sel[i]);
             }
         }
 
-        return dist;
+        return penta;
     }
+
+
 
     Atoms within(Atom& start, Atoms& container, double radius)
     {

@@ -191,37 +191,24 @@ class Atoms : public vector< Atom >
 public:
 	//
 	//
-	// Methods that change something in the container
+    // Methods altering items of the container
 	//
 	//
+    void project_to_unit_sphere()
+    {
+        Atom zero = Atom(0.0,0.0,0.0);
+
+        for(Atom& a : (*this))
+        {
+            a *= 1.0/a.pos.dist(zero.pos);
+        }
+    }
 
 	void set_mol_tag(int mtag)
 	{
 	    for(Atom& item : (*this))
 	        item.mol_tag = mtag;
 	}
-
-    void move(Atom move)
-    {
-        for(Atom& item : (*this))
-            item += move;
-    }
-
-    void scale(double scale)
-    {
-        for(Atom& item : (*this))
-            item *= scale;
-    }
-
-    void project_to_unit_sphere()
-    {
-    	Atom zero = Atom(0.0,0.0,0.0);
-
-    	for(Atom& a : (*this))
-    	{
-    		a *= 1.0/a.pos.dist(zero.pos);
-    	}
-    }
 
     void offset(int offs)
     {
@@ -231,11 +218,51 @@ public:
         }
     }
 
+    void scale(double scale)
+    {
+        for(Atom& item : (*this))
+            item *= scale;
+    }
+
+    void move(Atom move)
+    {
+        for(Atom& item : (*this))
+            item += move;
+    }
+
     //
     //
-    // Methods const
+    // const Methods
     //
     //
+    double min_dist() const
+    {
+        double dist = 999.9;
+
+        Atom b = this->at(0);
+        for(auto& a : *this)
+        {
+            if(a != b && b.dist(a) < dist)
+            {
+                dist = b.dist(a);
+            }
+        }
+
+        return dist;
+    }
+
+    bool similar(Atoms& other) const
+    {
+        for(auto& o : other)
+        {
+            for(auto& a : *this)
+            {
+                if(o == a)
+                    return true;
+            }
+        }
+        return false;
+    }
 
     int count_Atoms_of_Type( int atype) const
     {
