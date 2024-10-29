@@ -32,7 +32,7 @@ using namespace std;
  * @brief Structure_Container
  * map classes, each generating a different structure
  */
-class Particle_Container : public map<string, Particle*> // @suppress("Invalid template argument")
+class Particle_Container : public map<string, Particle*>
 {
 public:
     Particle_Container()
@@ -63,7 +63,7 @@ public:
 
     ~Particle_Container()
     {
-        for (auto const& [key, val] : (*this)) // @suppress("Symbol is not resolved")
+        for (auto const& [key, val] : (*this))
         {
              delete val;
         }
@@ -74,9 +74,9 @@ public:
 		cout << "Specify input files, run $ ./ico filename_1 filename_2 ...\n\n" << endl;
 		cout << "Example input files:\n" << endl;
 
-		for (auto& [key, val] : *this) // @suppress("Symbol is not resolved")
+        for (auto& [key, val] : *this)
 		{
-		    std::cout << (*val).help() << std::endl; // @suppress("Method cannot be resolved") // @suppress("Invalid overload")
+            std::cout << (*val).help() << std::endl;
 		}
         exit(1);
 	}
@@ -168,7 +168,7 @@ int main(int argc, char* argv[])
     //
     for(int i=1; i<argc; ++i)
     {
-        data.load_input(argv[i], i); // Load the input files specified as command line arguments
+        data.load_input(argv[i]); // Load the input files specified as command line arguments
         cerr << data.in.toString() << endl; // Report what was loaded
 
         //
@@ -178,7 +178,6 @@ int main(int argc, char* argv[])
         {
             data.load_data(data.in.infile); // Load Data from infile
             data.modify();                  // Modify the loaded Data
-            data.make_persistent();                     // Move loaded data to persistent data
         }
 
         //

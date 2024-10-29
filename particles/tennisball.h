@@ -98,8 +98,6 @@ public:
         }
 
         beads.erase(beads.begin()+data.in.num_of_beads, beads.end()); // erase second fib sphere
-
-        add(data);
     }
 
 private:

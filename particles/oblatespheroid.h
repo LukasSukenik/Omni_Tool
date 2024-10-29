@@ -39,7 +39,7 @@ public:
         for(auto& item : beads)
         {
             item.mol_tag = data.in.mol_tag;
-            item.N = i+1+data.in.offset+data.all_beads.size();
+            item.N = i+1+data.in.offset+data.get_bead_count();
             ++i;
         }
     }

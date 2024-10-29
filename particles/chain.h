@@ -35,21 +35,26 @@ public:
     void generate( Data& data )
     {
         load_params(data);
+
+        //
+        // TODO: WTF is this... it does not erase all data
+        //
         erase_all_data(data);
+
         int type = data.all_sigma_size;
         set_FF(data);
 
         // Bond parameters
         double bond_size = 11.0;
-        int offset = data.all_beads.size()+1;
-        int bondOffset = data.all_bonds.size()+1;
+        int offset = data.get_bead_count()+1;
+        int bondOffset = data.get_bead_count()+1;
         int bond_type = 86;
 
         //
         // Starting point, First chain BEAD
         //
         Atom next = get_COM(data);
-        next.N = data.all_beads.size()+1;
+        next.N = data.get_bead_count()+1;
         next.type = type+1;
         next.mol_tag = moltype;
         beads.push_back(next);
@@ -77,7 +82,7 @@ public:
                 next.pos.randomUnitSphere();
                 next = next*bond_size + beads.back(); // move atom to last generated atom (+ convert * random unit dist)
 
-                clashExist = ( clash(next, beads) || clash(next, data.all_beads) );
+                clashExist = ( clash(next, beads) || clash(next, data.beads[0] ) );
 
                 //
                 // Add bead to structure
@@ -159,17 +164,23 @@ public:
     void erase_all_data( Data& data )
     {
         // remove chain beads and bonds - type 12 and 86
-        data.all_beads.erase( data.all_beads.begin()+get_num_capsid_beads(data), data.all_beads.end() );
-        data.all_bonds.erase( data.all_bonds.begin()+get_first_chain_bond(data), data.all_bonds.end() );
+        //
+        // commented because all_beads removed, also what is this?
+        //
+        //data.all_beads.erase( data.all_beads.begin()+get_num_capsid_beads(data), data.all_beads.end() );
+        //data.all_bonds.erase( data.all_bonds.begin()+get_first_chain_bond(data), data.all_bonds.end() );
     }
 
     int get_num_capsid_beads(Data& data)
     {
         int count = 0;
-        for(Atom& i : data.all_beads)
+        for(Atoms& aa : data.beads)
         {
-            if(i.type != 12)
-                count++;
+            for(Atom& i : aa)
+            {
+                if(i.type != 12)
+                    count++;
+            }
         }
         return count;
     }
@@ -177,11 +188,14 @@ public:
     int get_first_chain_bond(Data& data)
     {
         int count=0;
-        for(Bond& i : data.all_bonds)
+        for(Bonds& bb : data.bonds)
         {
-            if(i.type == 86)
-                return count;
-            count++;
+            for(Bond& i : bb)
+            {
+                if(i.type == 86)
+                    return count;
+                count++;
+            }
         }
         return -1;
     }
@@ -225,12 +239,15 @@ public:
     {
         int count=0;
         Atom cm;
-        for(Atom& item : data.all_beads)
+        for(Atoms& aa : data.beads)
         {
-            cm += item;
-            ++count;
+            for(Atom& item : aa)
+            {
+                cm += item;
+                ++count;
+            }
         }
-        cm *= 1.0/count;
+        cm /= data.get_bead_count();
         return cm;
     }
 

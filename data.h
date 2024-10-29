@@ -14,6 +14,7 @@
 #include <string.h>
 
 #include <array>
+#include <map>
 
 #include "force_field.h"
 #include "atom.h"
@@ -35,6 +36,7 @@ public:
 	//
     /// Data
 	//
+    map<int, int> id_map;
     vector<Atoms> beads;
     vector<Bonds> bonds;
     vector<Angles> angles;
@@ -76,10 +78,10 @@ public:
         return !in.infile.empty();
     }
 
-    bool load_input(string input, int i)
+    bool load_input(string input)
     {
         in.clear();
-        in.loadInput(input, i);
+        in.loadInput(input);
         return true;
     }
 
@@ -89,9 +91,10 @@ public:
         {
             lammps.load(in_file);
             in.sim_box = lammps.sim_box;
+
+            beads.push_back(lammps.beads);
             bonds.push_back(lammps.bonds);
             angles.push_back(lammps.angles);
-            beads.push_back(lammps.beads);
 
             lammps.bonds.clear();
             lammps.angles.clear();
@@ -101,9 +104,88 @@ public:
         if(in.in.type == IO_Type::pdb)
         {
             pdb.load(in_file);
+
             beads.push_back(pdb.beads);
+            bonds.push_back(Bonds());
+            angles.push_back(Angles());
+
             pdb.beads.clear();
         }
+
+        id_map[in.id] = beads.size()-1;
+    }
+
+    ///
+    /// Data methods
+    ///
+    void modify()
+    {
+        beads[ id_map[in.id] ].scale(in.scale);    // Rescale atom positions
+        beads[ id_map[in.id] ].move(in.com_pos);   // Move entire system by vector
+
+        if(in.mol_tag > -1)
+            beads[ id_map[in.id] ].set_mol_tag(in.mol_tag); // Change mol_tag of all particles to one set by input
+
+        /*if(in.is_mtag_12())
+            align(in.mtag_1, in.mtag_2);*/ // align mol_tag particles in z axis and XY plane
+
+        // if generating into an existing structure that you did not load, give the number of particles as offset
+        //offset(all_beads.size());
+
+        if(beads.size() == 2)
+        {
+            Atoms sym_axis_2;
+            Atoms sym_axis_3;
+            Atoms sym_axis_5;
+
+            identify_symmetry(sym_axis_2, sym_axis_3, sym_axis_5);
+
+            align_2fold_on_x();
+        }
+
+        if( in.center )
+            beads[ id_map[in.id] ].center();
+    }
+
+
+    void merge(Atoms& all_beads, Bonds& all_bonds, Angles& all_angles)
+    {
+        merge(all_beads);
+        merge(all_bonds);
+        merge(all_angles);
+    }
+
+    bool is_overlap(Atoms& other, Force_Field& ff) const
+    {
+        for(auto& bb : beads)
+        {
+            if(bb.is_overlap(other, ff))
+                return true;
+        }
+        return false;
+    }
+
+    int get_bead_count() const
+    {
+        int count=0;
+        for(auto& bb : beads)
+        {
+            count += bb.size();
+        }
+        return count;
+    }
+
+    int get_Max_Mol_Tag()
+    {
+        int max=0;
+        for(auto& bb : beads)
+        {
+            if(max < bb.get_Max_Mol_Tag())
+            {
+                max = bb.get_Max_Mol_Tag();
+            }
+        }
+        return max;
     }
 
     ///
@@ -153,48 +235,7 @@ public:
         }
     }
 
-    ///
-    /// Data methods
-    ///
-    void modify()
-    {
-        cout << in.i << endl;
-        exit(-1);
-
-        beads[in.i].scale(in.scale);    // Rescale atom positions
-        beads[in.i].move(in.com_pos);   // Move entire system by vector
-
-        if(in.mol_tag > -1)
-            beads[in.i].set_mol_tag(in.mol_tag); // Change mol_tag of all particles to one set by input
-        /*if(in.is_mtag_12())
-            align(in.mtag_1, in.mtag_2);*/ // align mol_tag particles in z axis and XY plane
-
-        // if generating into an existing structure that you did not load, give the number of particles as offset
-        //offset(all_beads.size());
-
-
-        if(beads.size() == 2)
-        {
-            Atoms sym_axis_2;
-            Atoms sym_axis_3;
-            Atoms sym_axis_5;
-
-            identify_symmetry(sym_axis_2, sym_axis_3, sym_axis_5);
-
-            align_2fold_on_x();
-        }
-
-        if( in.center )
-            beads[in.i].center();
-    }
-
-    void merge(Atoms& all_beads, Bonds& all_bonds, Angles& all_angles)
-    {
-        merge(all_beads);
-        merge(all_bonds);
-        merge(all_angles);
-    }
-
+private:
     void merge(Atoms& all_beads)
     {
         for(auto& item : beads)
@@ -203,6 +244,7 @@ public:
         }
         beads.clear();
     }
+
 
     void merge(Bonds& all_bonds)
     {
@@ -213,6 +255,7 @@ public:
         bonds.clear();
     }
 
+
     void merge(Angles& all_angles)
     {
         for(auto& item : angles)
@@ -222,7 +265,7 @@ public:
         angles.clear();
     }
 
-private:
+
     void align_2fold_on_x()
     {
         if(beads.size() == 2)

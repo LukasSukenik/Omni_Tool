@@ -81,14 +81,14 @@ public:
 
     void make_persistent(Data& data)
     {
-        if(data.all_beads.is_overlap(beads, data.in.ff))
+        /*if(data.all_beads.is_overlap(beads, data.in.ff))
         {
             cerr << "WARNING: overlap detected" << endl;
-        }
+        }*/
 
-        data.all_beads.insert(data.all_beads.end(), this->beads.begin(), this->beads.end());
+        /*data.all_beads.insert(data.all_beads.end(), this->beads.begin(), this->beads.end());
         data.all_bonds.insert(data.all_bonds.end(), this->bonds.begin(), this->bonds.end());
-        data.all_angles.insert(data.all_angles.end(), this->angles.begin(), this->angles.end());
+        data.all_angles.insert(data.all_angles.end(), this->angles.begin(), this->angles.end());*/
 
         data.all_sigma = this->sigma;
         data.all_sigma_size = this->sigma_size;
@@ -146,6 +146,9 @@ private:
             Atoms temp;
             Tensor_xyz com_pos;
 
+            //
+            // Report
+            //
             if(copy.empty())
             {
                 cerr << "No particle created, can't populate system" << endl;
@@ -156,6 +159,9 @@ private:
                 cerr << "Copying particle of " << copy.size() << " atoms " << data.in.population.count << " times" << endl;
             }
 
+            //
+            // Copy, move, rotate
+            //
     		for(int i=0; i < data.in.population.count; ++i)
     		{
     			com_pos = data.in.sim_box.get_random_pos();
@@ -163,7 +169,7 @@ private:
     			temp.move(com_pos);
 
     			int tries=0;
-                while( beads.is_overlap(temp, data.in.ff) || data.all_beads.is_overlap(temp, data.in.ff) )
+                while( beads.is_overlap(temp, data.in.ff) || data.is_overlap(temp, data.in.ff) )
     			{
     				com_pos = data.in.sim_box.get_random_pos();
     				temp = copy;

@@ -58,8 +58,8 @@ public:
     virtual void generate( Data& data )
     {
         //bparam.push_back();
-        molTag_offset = data.all_beads.get_Max_Mol_Tag();
-        offset = data.all_beads.size();
+        molTag_offset = data.get_Max_Mol_Tag();
+        offset = data.get_bead_count();
         this->types = data.in.ff.types;
         ligandModulo = data.in.num_lig;
 

@@ -39,7 +39,7 @@ public:
         this->size = data.in.num_of_beads;
         this->c = data.in.c;
         this->box = data.in.sim_box;
-        this->offset = data.all_beads.size();
+        this->offset = data.get_bead_count();
 
         init(size);// set shift, fscale
         info();
@@ -71,7 +71,7 @@ public:
             //
             for(int i=0; i<penta.size(); ++i)
             {
-                this->offset = data.all_beads.size() + beads.size();
+                this->offset = data.get_bead_count() + beads.size();
                 generatePenta(penta_particles, penta[i]);
                 //random_Translate_Rotate(penta_particles);
                 /*if(i==1) { // patological case 1 rotate

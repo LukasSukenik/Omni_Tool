@@ -144,7 +144,7 @@ class IO_Input{
 public:
     IO_Input() {}
 
-    int i=0;
+    int id=0;
 
     // IO
     string infile; /// name of the filename with lammps_full atoms
@@ -200,14 +200,12 @@ public:
 
 
 
-    bool loadInput(string input, int i)
+    bool loadInput(string input)
     {
         std::fstream fs( input, std::fstream::in );
         string line, what;
         stringstream ss;
         int len=0;
-
-        this->i = i-1; // index of the file given to binary
 
         while( !fs.eof() ) // Lines in input
         {
@@ -226,6 +224,7 @@ public:
 
             // Load particle identifier
             if( what.compare("Particle_type:") == 0 )     { ss >> gen_structure; }
+            if( what.compare("ID:") == 0 )                { ss >> id; }
 
             // Load particle atom counts
             if( what.compare("Number_of_beads:") == 0 )   { ss >> num_of_beads; }
