@@ -144,6 +144,8 @@ class IO_Input{
 public:
     IO_Input() {}
 
+    int i=0;
+
     // IO
     string infile; /// name of the filename with lammps_full atoms
     IO out; /// Output type - none, pdb, lammps_full, xyz
@@ -198,12 +200,14 @@ public:
 
 
 
-    bool loadInput(string input)
+    bool loadInput(string input, int i)
     {
         std::fstream fs( input, std::fstream::in );
         string line, what;
         stringstream ss;
         int len=0;
+
+        this->i = i-1; // index of the file given to binary
 
         while( !fs.eof() ) // Lines in input
         {

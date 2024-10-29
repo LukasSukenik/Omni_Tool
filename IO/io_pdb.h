@@ -103,9 +103,9 @@ public:
              << std::setw(2)               << atom.charge << "\n"; // 79-80 Charge (optional)
     }
 
-    void print(Atoms& all_beads)
+    void print()
     {
-        for (Atom& atom : all_beads)
+        for (Atom& atom : beads)
         {
             print_atom(atom);
         }
@@ -150,10 +150,12 @@ class IO_XYZ
 public:
     IO_XYZ() {}
 
-    void print(Atoms& all_beads)
+    Atoms beads;
+
+    void print()
     {
-        cout << all_beads.size() << "\nparticle\n";
-        for (const Atom& atom : all_beads)
+        cout << beads.size() << "\nparticle\n";
+        for (const Atom& atom : beads)
         {
             cout << "C" << atom.type <<  " " << atom.pos << "\n";
         }

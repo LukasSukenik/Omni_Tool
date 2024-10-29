@@ -79,7 +79,7 @@ public:
         populate( data );
     }
 
-    void add(Data& data)
+    void make_persistent(Data& data)
     {
         if(data.all_beads.is_overlap(beads, data.in.ff))
         {

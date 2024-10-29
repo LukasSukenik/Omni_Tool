@@ -82,7 +82,7 @@ public:
 	}
 };
 
-void do_analysis()
+void do_analysis() // capsid stabilit
 {
 	Atom set_a[3];
 	set_a[0] = Atom(0,0,0);
@@ -168,7 +168,7 @@ int main(int argc, char* argv[])
     //
     for(int i=1; i<argc; ++i)
     {
-        data.load_input(argv[i]); // Load the input files specified as command line arguments
+        data.load_input(argv[i], i); // Load the input files specified as command line arguments
         cerr << data.in.toString() << endl; // Report what was loaded
 
         //
@@ -178,7 +178,7 @@ int main(int argc, char* argv[])
         {
             data.load_data(data.in.infile); // Load Data from infile
             data.modify();                  // Modify the loaded Data
-            data.add();                     // Move loaded data to persistent data
+            data.make_persistent();                     // Move loaded data to persistent data
         }
 
         //
@@ -191,7 +191,7 @@ int main(int argc, char* argv[])
                 cerr << "Generating: " << structure[ data.in.gen_structure ]->name << endl;
                 structure[ data.in.gen_structure ]->generate( data );
                 structure[ data.in.gen_structure ]->modify( data );
-                structure[ data.in.gen_structure ]->add(data); // particle data
+                structure[ data.in.gen_structure ]->make_persistent(data); // particle data
             }
             else
             {
@@ -207,9 +207,9 @@ int main(int argc, char* argv[])
     if(false)
     	do_analysis();
 
-    data.merge();
+
     data.print();
-    data.report();
+
 
     return 0;
 }

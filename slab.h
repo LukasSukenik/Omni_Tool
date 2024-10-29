@@ -1,7 +1,7 @@
 #ifndef SLAB_H
 #define SLAB_H
 
-//#include "sphere.h"
+#include "sphere.h"
 #include "particle.h"
 #include "cow.h"
 
@@ -29,8 +29,6 @@ public:
 
         sigma_size = 1;
         sigma[0][0] = bead_size*1.0;
-
-        add(data);
     }
 };
 
@@ -68,9 +66,8 @@ public:
             item += move;
 
         beads.insert(this->beads.end(), bVec.begin(), bVec.end());
-
-        add(data);
     }
+
 private:
     void gen_bonds(int row) {
         int actual;

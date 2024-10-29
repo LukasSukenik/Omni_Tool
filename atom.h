@@ -189,11 +189,52 @@ bool myfunction (Atom i,Atom j) { return (i.pos.size()<j.pos.size()); }
 class Atoms : public vector< Atom >
 {
 public:
+    //
+    //
+    // IO methods
+    //
+    //
+    string toString()
+    {
+        stringstream ss;
+        vector<int> moltags = get_Atom_Types();
+        vector<int> types = get_Atom_Types();
+
+        ss << "Beads: " << size() << endl;
+        ss << types.size() << " atom types:" << endl;
+        for(int atom_type : types)
+        {
+            ss << "Atom type " << atom_type << " of " << count_Atoms_of_Type(atom_type) << endl;
+        }
+
+        ss << moltags.size() << " molTypes:" << endl;
+        for(int mol_tag : moltags)
+        {
+            ss << "Molecule " << mol_tag << " with " << count_atoms_of_Mol_tag(mol_tag) << " atoms" << endl;
+        }
+
+        return ss.str();
+    }
+
 	//
 	//
     // Methods altering items of the container
 	//
 	//
+    /**
+     * @brief center - moves structure, so that center_of_mass is (0,0,0)
+     * @param mtag
+     */
+    void center(int mtag=-1)
+    {
+        if(!empty())
+        {
+            Atom cm = center_of_mass(mtag);
+            cm*=-1.0;
+            move( cm );
+        }
+    }
+
     void project_to_unit_sphere()
     {
         Atom zero = Atom(0.0,0.0,0.0);
@@ -210,7 +251,7 @@ public:
 	        item.mol_tag = mtag;
 	}
 
-    void offset(int offs)
+    void add_offset(int offs)
     {
         for(Atom& item : (*this))
         {
@@ -235,48 +276,10 @@ public:
     // const Methods
     //
     //
-    double min_dist() const
-    {
-        double dist = 999.9;
 
-        Atom b = this->at(0);
-        for(auto& a : *this)
-        {
-            if(a != b && b.dist(a) < dist)
-            {
-                dist = b.dist(a);
-            }
-        }
-
-        return dist;
-    }
-
-    bool similar(Atoms& other) const
-    {
-        for(auto& o : other)
-        {
-            for(auto& a : *this)
-            {
-                if(o == a)
-                    return true;
-            }
-        }
-        return false;
-    }
-
-    int count_Atoms_of_Type( int atype) const
-    {
-        int count = 0;
-        for(const Atom& item : (*this))
-        {
-            if( item.type == atype)
-            {
-                ++count;
-            }
-        }
-        return count;
-    }
-
+    //
+    // Getters
+    //
     vector<int> get_Atom_Types() const
     {
         vector<int> atom_types;
@@ -295,22 +298,6 @@ public:
                 atom_types.push_back( a.type );
         }
         return atom_types;
-    }
-
-
-
-
-    int count_atoms_of_Mol_tag(int mTag) const
-    {
-        int count = 0;
-        for(const Atom& item : (*this))
-        {
-            if( item.mol_tag == mTag)
-            {
-                ++count;
-            }
-        }
-        return count;
     }
 
     vector<int> get_Mol_Types() const
@@ -350,31 +337,93 @@ public:
 
     Atoms get_molecule(int mol_tag) const
     {
-    	Atoms temp;
-    	for(auto& a : (*this))
-    	{
-    		if(mol_tag == a.mol_tag)
-    		{
-    			temp.push_back(a);
-    		}
-    	}
-    	return temp;
+        Atoms temp;
+        for(auto& a : (*this))
+        {
+            if(mol_tag == a.mol_tag)
+            {
+                temp.push_back(a);
+            }
+        }
+        return temp;
     }
 
     double get_molecule_radius(int mol_tag) const
     {
-    	Atoms molecule = get_molecule(mol_tag);
-    	Atom mol_com = center_of_mass(mol_tag);
-    	double mol_radius = 0.0;
-    	for(auto& m : molecule)
-    	{
-    		mol_radius += mol_com.dist(m);
-    	}
-    	return mol_radius / molecule.size();
+        Atoms molecule = get_molecule(mol_tag);
+        Atom mol_com = center_of_mass(mol_tag);
+        double mol_radius = 0.0;
+        for(auto& m : molecule)
+        {
+            mol_radius += mol_com.dist(m);
+        }
+        return mol_radius / molecule.size();
     }
 
 
 
+
+    //
+    // Counters
+    //
+    int count_Atoms_of_Type( int atype) const
+    {
+        int count = 0;
+        for(const Atom& item : (*this))
+        {
+            if( item.type == atype)
+            {
+                ++count;
+            }
+        }
+        return count;
+    }
+
+    int count_atoms_of_Mol_tag(int mTag) const
+    {
+        int count = 0;
+        for(const Atom& item : (*this))
+        {
+            if( item.mol_tag == mTag)
+            {
+                ++count;
+            }
+        }
+        return count;
+    }
+
+
+
+
+
+    double min_dist() const
+    {
+        double dist = 999.9;
+
+        Atom b = this->at(0);
+        for(auto& a : *this)
+        {
+            if(a != b && b.dist(a) < dist)
+            {
+                dist = b.dist(a);
+            }
+        }
+
+        return dist;
+    }
+
+    bool similar(Atoms& other) const
+    {
+        for(auto& o : other)
+        {
+            for(auto& a : *this)
+            {
+                if(o == a)
+                    return true;
+            }
+        }
+        return false;
+    }
 
     bool is_overlap(Atom& b, Force_Field& ff) const
     {
