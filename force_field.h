@@ -350,6 +350,11 @@ public:
     map<int, LJ> lj;
     map<int,CosSQ> cos;
 
+    bool empty()
+    {
+        return types.empty() && lj.empty() && cos.empty();
+    }
+
     double energy(double r, int type1, int type2)
     {
     	//return cos[type1].energy(r);

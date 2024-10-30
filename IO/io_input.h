@@ -99,6 +99,13 @@ public:
 	bool random=false;
 	int count=0;
 
+    bool empty()
+    {
+        if(count == 0)
+            return true;
+        return false;
+    }
+
 	void clear()
 	{
 		random=false;
@@ -279,28 +286,42 @@ public:
     {
         stringstream ss;
 
+        // Loading a file
         if( !infile.empty() )
         {
             ss << "Load_file: " << infile << endl;
             ss << "Input_type:" << in << endl;
         }
+
+        // Generating structure
         if( !gen_structure.empty() )
             ss << "Particle_type: " << gen_structure << endl;
+
         ss << "Output_type: " << out << endl;
-        ss << "Number of beads: " << num_of_beads << endl;
-        ss << "Number of ligands: " << num_lig << endl;
-        ss << "Subdiv of beads: " << subdiv_beads << endl;
-        ss << "Subdiv of ligands: " << subdiv_lig << endl;
+
+        if( !gen_structure.empty() )
+        {
+            ss << "Number of beads: " << num_of_beads << endl;
+            ss << "Number of ligands: " << num_lig << endl;
+            ss << "Subdiv of beads: " << subdiv_beads << endl;
+            ss << "Subdiv of ligands: " << subdiv_lig << endl;
+            ss << "c: " << c << endl;
+            ss << "Patch_1: (" << patch_1.pos.x << "-" << patch_1.vel.x << ", " << patch_1.pos.y << "-" << patch_1.vel.y << ", " << patch_1.pos.z << "-" << patch_1.vel.z << ", " << patch_1.type << ")" << endl;
+            ss << "Patch_1: (" << patch_2.pos.x << ", " << patch_2.pos.y << ", " << patch_2.pos.z << ", " << patch_2.type << ")" << endl;
+        }
+
+        if(!sim_box.empty())
+            ss << "Box: ( " << sim_box << " )" << endl;
+
         ss << "Scale: " << scale << endl;
         ss << "Offset: " << offset << endl;
-        ss << "c: " << c << endl;
-        ss << "Box: ( " << sim_box << " )" << endl;
         ss << "Position: (" << com_pos.x << ", " << com_pos.y << ", " << com_pos.z << ")" << endl;
-        ss << "Patch_1: (" << patch_1.pos.x << "-" << patch_1.vel.x << ", " << patch_1.pos.y << "-" << patch_1.vel.y << ", " << patch_1.pos.z << "-" << patch_1.vel.z << ", " << patch_1.type << ")" << endl;
-        ss << "Patch_1: (" << patch_2.pos.x << ", " << patch_2.pos.y << ", " << patch_2.pos.z << ", " << patch_2.type << ")" << endl;
-        ss << "Populate: " << population << endl;
 
-        ss << "Force-Field: " << ff << endl;
+        if(!population.empty())
+            ss << "Populate: " << population << endl;
+
+        if(!ff.empty())
+            ss << "Force-Field: " << ff << endl;
 
         return ss.str();
     }
