@@ -32,6 +32,7 @@ HEADERS += \
     xdrfile-1.1.4/include/xdrfile.h \
     xdrfile-1.1.4/include/xdrfile_trr.h \
     xdrfile-1.1.4/include/xdrfile_xtc.h \
+    particles/particle_container.h \
     particles/chain.h \
     particles/cow.h \
     particles/dodecahedron.h \
