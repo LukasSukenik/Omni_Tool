@@ -19,7 +19,6 @@ HEADERS += \
     bond.h \
     data.h \
     force_field.h \
-    particle.h \
     rng.h \
     sim_box.h \
     types.h \
@@ -39,6 +38,7 @@ HEADERS += \
     particles/globular_sphere.h \
     particles/icosahedron.h \
     particles/oblatespheroid.h \
+    particles/particle.h \
     particles/pentamer.h \
     particles/sphere.h \
     particles/spherepatch.h \
