@@ -1,6 +1,7 @@
 #ifndef VIRUS_PSEUDOT3_H
 #define VIRUS_PSEUDOT3_H
 
+#include "system_base.h"
 #include "atom.h"
 
 class T3_Penta
@@ -21,10 +22,41 @@ public:
     }
 };
 
-class Virus_pseudoT3
+class Virus_pseudoT3 : public System_Base
 {
 public:
-    Virus_pseudoT3() {}
+    inline static const string keyword = "Virus_T=3p";
+    const string name = "Virus_T=3p";
+
+    Virus_pseudoT3() : System_Base("Virus_T=3p") {}
+
+    void generate( Data& data )
+    {
+        if(data.in.id == 2)
+        {
+            set_protomer(data.beads[0]); // TODO: make it work with input file
+            set_capsid(data.beads[data.id_map[data.in.id]]); // TODO: make it work with input file
+            calc_protomer_coms();
+            calc_pentamers();
+            calc_symmetry_axes();
+
+            align_2fold_on_x();
+        }
+    }
+
+    string help()
+    {
+        stringstream ss;
+
+        ss << "Load 2 files, first containing protomer, then full capsid" << endl;
+        ss << "System_type: Protomer\n";
+        ss << "Output_type: pdb # other keywords: xyz pdb lammps_full\n";
+
+        ss << "System_type: Virus_T=3*\n";
+        ss << "Output_type: pdb # other keywords: xyz pdb lammps_full\n";
+
+        return ss.str();
+    }
 
     Atoms protomer;
     Atoms capsid;

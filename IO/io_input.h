@@ -151,15 +151,18 @@ class IO_Input{
 public:
     IO_Input() {}
 
-    int id=0;
-
     // IO
-    string infile; /// name of the filename with lammps_full atoms
+    string file_structure; /// name of the filename with lammps_full atoms
     IO out; /// Output type - none, pdb, lammps_full, xyz
     IO in;  /// Input type  - none, pdb, lammps_full
 
     // particle identifier
     string gen_structure; /// keyword identifying the structure class
+
+    // system identifier
+    string system_type;
+
+    int id;
 
     // bead counts
     int num_of_beads=-1;
@@ -207,6 +210,7 @@ public:
 
 
 
+
     bool loadInput(string input)
     {
         std::fstream fs( input, std::fstream::in );
@@ -225,13 +229,16 @@ public:
             ss >> what;
 
             // Load io
-            if( what.compare("Load_file:") == 0 )         { ss >> infile; }
+            if( what.compare("Load_file:") == 0 )         { ss >> file_structure; }
             if( what.compare("Output_type:") == 0 )       { ss >> out; }
             if( what.compare("Input_type:") == 0 )        { ss >> in; }
+            if( what.compare("ID:") == 0 )                { ss >> id; }
 
             // Load particle identifier
             if( what.compare("Particle_type:") == 0 )     { ss >> gen_structure; }
-            if( what.compare("ID:") == 0 )                { ss >> id; }
+
+            // Load system identifier
+            if( what.compare("System_type:") == 0 )       { ss >> system_type; }
 
             // Load particle atom counts
             if( what.compare("Number_of_beads:") == 0 )   { ss >> num_of_beads; }
@@ -287,9 +294,9 @@ public:
         stringstream ss;
 
         // Loading a file
-        if( !infile.empty() )
+        if( !file_structure.empty() )
         {
-            ss << "Load_file: " << infile << endl;
+            ss << "Load_file: " << file_structure << endl;
             ss << "Input_type:" << in << endl;
         }
 
@@ -342,6 +349,7 @@ public:
 
         gen_structure.clear();
         in.clear();
+        system_type.clear();
 
         num_of_beads=-1;
         num_lig=-1;
@@ -372,7 +380,7 @@ public:
         ivx=Tensor_xyz(0.0, 0.0, 0.0);
 
         population.clear();
-        infile.clear();
+        file_structure.clear();
         bparam.clear();
         cparam.clear();
     }

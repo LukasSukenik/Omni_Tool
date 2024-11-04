@@ -45,4 +45,6 @@ HEADERS += \
     particles/surface.h \
     particles/slab.h \
     particles/tennisball.h \
+    Systems/system_base.h \
     Systems/virus_pseudot3.h \
+    Systems/system_container.h

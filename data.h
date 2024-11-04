@@ -3,14 +3,14 @@
 
 #include <iostream>
 #include <fstream>
+#include <sstream>
+
 #include <iomanip>
 #include <cmath>
 #include <limits>
-
 #include <cstdlib>
 #include <algorithm>
 #include <random>
-#include <sstream>
 #include <string.h>
 
 #include <array>
@@ -22,7 +22,7 @@
 #include "io_lammps.h"
 #include "io_pdb.h"
 
-#include "virus_pseudot3.h"
+//#include "virus_pseudot3.h"
 
 using namespace std;
 
@@ -75,9 +75,19 @@ public:
     ///
     /// Input methods
     ///
-    bool isDefined()
+    bool is_load_file()
     {
-        return !in.infile.empty();
+        return !in.file_structure.empty();
+    }
+
+    bool is_particle_gen()
+    {
+        return !in.gen_structure.empty();
+    }
+
+    bool is_system()
+    {
+        return !in.system_type.empty();
     }
 
     bool load_input(string input)
@@ -129,22 +139,11 @@ public:
             beads[ id_map[in.id] ].set_mol_tag(in.mol_tag); // Change mol_tag of all particles to one set by input
 
         /*if(in.is_mtag_12())
-            align(in.mtag_1, in.mtag_2);*/ // align mol_tag particles in z axis and XY plane
+            align(in.mtag_1, in.mtag_2); // align mol_tag particles in z axis and XY plane
+        */
 
         // if generating into an existing structure that you did not load, give the number of particles as offset
         //offset(all_beads.size());
-
-        if(in.id == 2)
-        {
-            Virus_pseudoT3 t3;
-            t3.set_protomer(beads[0]); // TODO: make it work with input file
-            t3.set_capsid(beads[id_map[in.id]]); // TODO: make it work with input file
-            t3.calc_protomer_coms();
-            t3.calc_pentamers();
-            t3.calc_symmetry_axes();
-
-            t3.align_2fold_on_x();
-        }
 
         if( in.center )
             beads[ id_map[in.id] ].center();
