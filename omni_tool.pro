@@ -22,7 +22,6 @@ HEADERS += \
     particle.h \
     rng.h \
     sim_box.h \
-    slab.h \
     types.h \
     xtcanalysis.h \
     welford.h \
@@ -44,8 +43,6 @@ HEADERS += \
     particles/sphere.h \
     particles/spherepatch.h \
     particles/surface.h \
+    particles/slab.h \
     particles/tennisball.h \
     Systems/virus_pseudot3.h \
-
-
-
