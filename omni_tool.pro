@@ -3,7 +3,7 @@ CONFIG += console c++17
 CONFIG -= app_bundle
 CONFIG -= qt
 
-INCLUDEPATH += xdrfile-1.1.4/include/ particles/ IO/
+INCLUDEPATH += xdrfile-1.1.4/include/ particles/ IO/ Systems/
 
 QMAKE_CXXFLAGS += -O2 -march=native -std=c++17 -Wno-unused-parameter -Wno-sign-compare
 
@@ -24,7 +24,6 @@ HEADERS += \
     sim_box.h \
     slab.h \
     types.h \
-    virus_pseudot3.h \
     xtcanalysis.h \
     welford.h \
     IO/io_input.h \
@@ -44,7 +43,8 @@ HEADERS += \
     particles/sphere.h \
     particles/spherepatch.h \
     particles/surface.h \
-    particles/tennisball.h
+    particles/tennisball.h \
+    Systems/virus_pseudot3.h \
 
 
 

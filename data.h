@@ -143,9 +143,7 @@ public:
             t3.calc_pentamers();
             t3.calc_symmetry_axes();
 
-            t3.printXYZ();
-
-            exit(1);
+            t3.align_2fold_on_x();
         }
 
         if( in.center )
