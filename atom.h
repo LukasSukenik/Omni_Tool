@@ -162,6 +162,12 @@ public:
     {
     	return pos.isAproxSame(o.pos, approx);
     }
+
+    friend std::ostream& operator<<(std::ostream& os, Atom& a)
+    {
+        os << a.pos << endl;
+        return os;
+    }
 };
 
 
@@ -269,6 +275,25 @@ public:
     {
         for(Atom& item : (*this))
             item += move;
+    }
+
+    //
+    // set join with other Atoms container, skip same atoms
+    //
+    void join(Atoms other)
+    {
+        bool same = false;
+        for(Atom& o : other)
+        {
+            bool same = false;
+            for(Atom& a : *(this))
+            {
+                if(a == o)
+                    same = true;
+            }
+            if(!same)
+                this->push_back(o);
+        }
     }
 
     //
@@ -515,6 +540,21 @@ public:
         }
         cm *= 1.0/count;
         return cm;
+    }
+
+    Atoms within(Atom& start, double radius)
+    {
+        Atoms select;
+
+        for(auto& a : *(this))
+        {
+            if( start.dist(a) < radius )
+            {
+                select.push_back(a);
+            }
+        }
+
+        return select;
     }
 
 

@@ -152,12 +152,21 @@ public:
 
     Atoms beads;
 
-    void print()
+    void print(char type='C')
     {
         cout << beads.size() << "\nparticle\n";
         for (const Atom& atom : beads)
         {
-            cout << "C" << atom.type <<  " " << atom.pos << "\n";
+            cout << type << " " << atom.pos << "\n";
+        }
+    }
+
+    static void print(Atoms& beads, char type='C')
+    {
+        cout << beads.size() << "\nparticle\n";
+        for (const Atom& atom : beads)
+        {
+            cout << type << " " << atom.pos << "\n";
         }
     }
 };

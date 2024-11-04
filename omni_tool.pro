@@ -24,6 +24,7 @@ HEADERS += \
     sim_box.h \
     slab.h \
     types.h \
+    virus_pseudot3.h \
     xtcanalysis.h \
     welford.h \
     IO/io_input.h \
