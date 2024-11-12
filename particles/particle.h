@@ -39,7 +39,7 @@ public:
     /// Local data for structure, need to save to Data class for output
     Atoms beads;
     Bonds bonds;
-    vector<Angle> angles;
+    Angles angles;
     vector<LJ> bparam;
 
     int typeNano = 1;
@@ -81,14 +81,17 @@ public:
 
     void make_persistent(Data& data)
     {
-        /*if(data.all_beads.is_overlap(beads, data.in.ff))
+        for(Atoms& bds : data.coll_beads)
         {
-            cerr << "WARNING: overlap detected" << endl;
-        }*/
+            if(bds.is_overlap(beads, data.in.ff))
+            {
+                cerr << "WARNING: overlap detected" << endl;
+            }
+        }
 
-        /*data.all_beads.insert(data.all_beads.end(), this->beads.begin(), this->beads.end());
-        data.all_bonds.insert(data.all_bonds.end(), this->bonds.begin(), this->bonds.end());
-        data.all_angles.insert(data.all_angles.end(), this->angles.begin(), this->angles.end());*/
+        data.coll_beads.push_back(beads);
+        data.coll_bonds.push_back(bonds);
+        data.coll_angles.push_back(angles);
 
         data.all_sigma = this->sigma;
         data.all_sigma_size = this->sigma_size;

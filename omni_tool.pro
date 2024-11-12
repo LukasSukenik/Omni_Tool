@@ -35,6 +35,7 @@ HEADERS += \
     particles/cow.h \
     particles/dodecahedron.h \
     particles/ellipsoid.h \
+    particles/lipid.h \
     particles/globular_sphere.h \
     particles/icosahedron.h \
     particles/oblatespheroid.h \
@@ -47,4 +48,6 @@ HEADERS += \
     particles/tennisball.h \
     Systems/system_base.h \
     Systems/virus_pseudot3.h \
+    Systems/membrane.h \
+    Systems/vesicle.h \
     Systems/system_container.h

@@ -51,32 +51,91 @@ public:
     string charge = "  ";
 
     //
-    // not used for output
+    // variables for fast loading
     //
     int to_type=-1; // used in dodecahedron to change the type after bonds are generated - design mistake
     double temp_dist = -1.0;
-
-
-
+    bool loaded = false; // used for loading lipids
 
     //
     // Constructors
     //
     Atom() {}
     Atom(Tensor_xyz pos, int type=0): type(type), pos(pos) {}
+    Atom(int N, Tensor_xyz pos, int type=0): N(N), type(type), pos(pos) {}
     Atom(myFloat x, myFloat y, myFloat z, int type=0): type(type), pos(x,y,z) {}
 
     Atom(myFloat x, myFloat y, myFloat z, myFloat vx, myFloat vy, myFloat vz, int type=0): type(type), pos(x,y,z), vel(vx,vy,vz) {}
 
     Atom(myFloat x, myFloat y, myFloat z, int type, int mol_tag): mol_tag(mol_tag), type(type), pos(x,y,z) {}
     Atom(Tensor_xyz pos, int type, int mol_tag): mol_tag(mol_tag), type(type), pos(pos) {}
+    Atom(int N, Tensor_xyz pos, int type, int mol_tag): N(N), mol_tag(mol_tag), type(type), pos(pos) {}
 
+    //
+    // Geometric funstions
+    //
+    double size() const
+    {
+        return pos.size();
+    }
+
+    double dist(const Atom& o) const
+    {
+        return pos.dist(o.pos);
+    }
+
+    double distSQ(const Atom& o) const
+    {
+        return pos.distSQ(o.pos);
+    }
+
+    bool isAproxSame(const Atom& o, myFloat approx = 0.000001) const
+    {
+        return pos.isAproxSame(o.pos, approx);
+    }
+
+    bool isNeighbor(const Atom& o, myFloat len = 1.0, myFloat margin = 0.00000001) const
+    {
+        Atom vec(o.pos.x - pos.x, o.pos.y - pos.y, o.pos.z - pos.z);
+        double dist = vec.pos.x*vec.pos.x + vec.pos.y*vec.pos.y + vec.pos.z*vec.pos.z;
+        return ( dist < len+margin && dist > len-margin );
+    }
+
+    double dot(const Atom& o) const
+    {
+        return pos.dot(o.pos);
+    }
+
+    inline Atom cross(const Atom& B) const
+    {
+        return Atom(pos.cross(B.pos));
+    }
+
+    void rotate(Quat& q)
+    {
+        pos.rotate(q);
+    }
+
+    inline void rotate(Atom& axis, myFloat angle)
+    {
+        pos.rotate(axis.pos, angle);
+    }
+
+    void normalise()
+    {
+        pos.normalise();
+    }
+
+    //
+    // Operators
+    //
     bool operator==(const Atom& o) const
     {
     	return (this->pos == o.pos);
     }
 
-    bool operator!=(const Atom& o) const {
+    bool operator!=(const Atom& o) const
+    {
         return !(*this == o);
     }
 
@@ -111,82 +170,23 @@ public:
         return Atom(pos-o.pos, type);
     }
 
-    double dot(const Atom& o) const
-    {
-    	return pos.dot(o.pos);
-    }
-
-    inline Atom cross(const Atom& B) const
-    {
-        return Atom(pos.cross(B.pos));
-    }
-
-    void rotate(Quat& q)
-    {
-    	pos.rotate(q);
-    }
-
-    inline void rotate(Atom& axis, myFloat angle)
-    {
-    	pos.rotate(axis.pos, angle);
-    }
-
-    void normalise()
-    {
-        pos.normalise();
-    }
-
-    double size() const
-    {
-    	return pos.size();
-    }
-
-    double dist(const Atom& o) const
-    {
-    	return pos.dist(o.pos);
-    }
-
-    double distSQ(const Atom& o) const
-    {
-    	return pos.distSQ(o.pos);
-    }
-
-    bool isNeighbor(const Atom& o, myFloat len = 1.0, myFloat margin = 0.00000001) const
-    {
-        Atom vec(o.pos.x - pos.x, o.pos.y - pos.y, o.pos.z - pos.z);
-        double dist = vec.pos.x*vec.pos.x + vec.pos.y*vec.pos.y + vec.pos.z*vec.pos.z;
-        return ( dist < len+margin && dist > len-margin );
-    }
-
-    bool isAproxSame(const Atom& o, myFloat approx = 0.000001) const
-    {
-    	return pos.isAproxSame(o.pos, approx);
-    }
-
+    //
+    // Output
+    //
     friend std::ostream& operator<<(std::ostream& os, Atom& a)
     {
         os << a.pos << endl;
         return os;
     }
+
+    //
+    // friend functions
+    //
+
 };
 
-
-
-
-bool sortN(const Atom& i, const Atom& j) {
-    return i.N < j.N;
-}
-
-
-
-
-bool isAproxSame(const myFloat& a, const myFloat& b, myFloat approx = 0.000001) {
-    return (a < b+approx && a > b - approx);
-}
-
-
-
-
+bool sortN(const Atom& i, const Atom& j) { return i.N < j.N; }
+bool isAproxSame(const myFloat& a, const myFloat& b, myFloat approx = 0.000001) { return (a < b+approx && a > b - approx); }
 bool myfunction (Atom i,Atom j) { return (i.pos.size()<j.pos.size()); }
 
 

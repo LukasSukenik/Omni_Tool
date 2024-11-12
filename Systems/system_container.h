@@ -6,6 +6,8 @@
 
 #include "system_base.h"
 #include "virus_pseudot3.h"
+#include "membrane.h"
+#include "vesicle.h"
 
 using namespace std;
 
@@ -22,6 +24,7 @@ public:
         // Add systems
         //
         (*this)[Virus_pseudoT3::keyword] = new Virus_pseudoT3();
+        (*this)[Vesicle::keyword] = new Vesicle();
         //(*this)[Icosahedron<Surface>::keyword] = new Icosahedron<Surface>();
     }
 

@@ -84,7 +84,7 @@ public:
 
     void generate( Data data )
     {
-        vector<Atom> ligand;
+        Atoms ligand;
 
         fibonacci_sphere(beads, data.in.num_of_beads, typeNano);
         fibonacci_sphere(ligand, data.in.num_lig, typeTemp); // second fib. sphere

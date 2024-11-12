@@ -44,6 +44,7 @@ int main(int argc, char* argv[])
         {
             data.load_data(data.in.file_structure); // Load Data from infile
             data.modify();                  // Modify the loaded Data
+            // analyze
         }
 
         //
@@ -60,7 +61,7 @@ int main(int argc, char* argv[])
             }
             else
             {
-                cerr << "main :keyword: not found " << data.in.gen_structure << endl;
+                cerr << "main.cpp particle keyword not found " << data.in.gen_structure << endl;
             	exit(2);
             }
         }
@@ -72,26 +73,18 @@ int main(int argc, char* argv[])
         {
             if(systems.count(data.in.system_type) > 0)
             {
-                cerr << "Generating: " << particles[ data.in.system_type ]->name << endl;
+                cerr << "Generating: " << systems[ data.in.system_type ]->name << endl;
                 systems[ data.in.system_type ]->generate( data );
             }
             else
             {
-                cerr << "main :keyword: not found " << data.in.system_type << endl;
+                cerr << "main.cpp system :keyword: not found " << data.in.system_type << endl;
                 exit(2);
             }
         }
     }
 
-    //
-    // Analyze stuff
-    //
-    if(false)
-    	do_analysis();
-
-
     data.print();
-
 
     return 0;
 }

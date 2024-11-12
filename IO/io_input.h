@@ -165,10 +165,18 @@ public:
     int id;
 
     // bead counts
-    int num_of_beads=-1;
+    int num_of_beads=-1; // chain, dodecahedron, ellipsoid, globular_sphere, icosahedron, oblatespheroid, pentamer, slab, sphere, spherepatch, tennisball
     int num_lig=-1;
     int subdiv_beads=-1;
     int subdiv_lig=-1;
+
+    // from gen_membrane
+    int op=-1;
+    double radius;
+    double trim;
+    int num_lipids;
+    int multiple;
+    int num_rec;
 
     // atom types
     int chain_type=-1;
@@ -214,6 +222,12 @@ public:
     bool loadInput(string input)
     {
         std::fstream fs( input, std::fstream::in );
+        if(!fs.is_open())
+        {
+            cerr << "Failed to open file: " << input << endl;
+            return false;
+        }
+
         string line, what;
         stringstream ss;
         int len=0;
@@ -245,6 +259,14 @@ public:
             if( what.compare("Number_of_ligands:") == 0 ) { ss >> num_lig; }
             if( what.compare("Subdiv_of_beads:") == 0 )   { ss >> subdiv_beads; }
             if( what.compare("Subdiv_of_ligands:") == 0 ) { ss >> subdiv_lig; }
+
+            // from gen_membrane
+            if( what.compare("Operation_type:") == 0 )      { ss >> op; }
+            if( what.compare("Radius:") == 0 )              { ss >> radius; }
+            if( what.compare("Trim:") == 0 )                { ss >> trim; }
+            if( what.compare("Num_lipids:") == 0 )          { ss >> num_lipids; }
+            if( what.compare("Multiple:") == 0 )            { ss >> multiple; }
+            if( what.compare("Number_of_receptors:") == 0 ) { ss >> num_rec; }
 
             // Load atom and molecule types
             if( what.compare("Atom_type:") == 0 )         { ss >> atom_type; }

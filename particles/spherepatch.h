@@ -14,7 +14,7 @@ public:
 
     void generate( Data& data )
     {
-        vector<Atom> ligand;
+        Atoms ligand;
 
         // generate nano
         int nano_start = beads.size();

@@ -82,7 +82,7 @@ public:
                 next.pos.randomUnitSphere();
                 next = next*bond_size + beads.back(); // move atom to last generated atom (+ convert * random unit dist)
 
-                clashExist = ( clash(next, beads) || clash(next, data.beads[0] ) );
+                clashExist = ( clash(next, beads) || clash(next, data.coll_beads[0] ) );
 
                 //
                 // Add bead to structure
@@ -174,7 +174,7 @@ public:
     int get_num_capsid_beads(Data& data)
     {
         int count = 0;
-        for(Atoms& aa : data.beads)
+        for(Atoms& aa : data.coll_beads)
         {
             for(Atom& i : aa)
             {
@@ -188,7 +188,7 @@ public:
     int get_first_chain_bond(Data& data)
     {
         int count=0;
-        for(Bonds& bb : data.bonds)
+        for(Bonds& bb : data.coll_bonds)
         {
             for(Bond& i : bb)
             {
@@ -239,7 +239,7 @@ public:
     {
         int count=0;
         Atom cm;
-        for(Atoms& aa : data.beads)
+        for(Atoms& aa : data.coll_beads)
         {
             for(Atom& item : aa)
             {

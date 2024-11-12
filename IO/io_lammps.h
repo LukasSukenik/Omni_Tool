@@ -69,12 +69,13 @@ public:
         cerr << "Load done" << endl;
 
         loadAngles(in_file);
+
     }
 
     void print()
     {
         if(beads.empty()) {
-            cerr << "No beads generated" << endl;
+            cerr << "IO_Lammps::print() beads.empty() -> Nothing to generate" << endl;
             return;
         }
 

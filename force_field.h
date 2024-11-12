@@ -15,6 +15,10 @@
 
 using namespace std;
 
+/**
+ * @brief ran - 0.0 to 1.0
+ * @return
+ */
 double ran() {
     return unif(rng);
 }

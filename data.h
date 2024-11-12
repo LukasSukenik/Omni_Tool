@@ -39,9 +39,9 @@ public:
     /// Data
 	//
     map<int, int> id_map;
-    vector<Atoms> beads;
-    vector<Bonds> bonds;
-    vector<Angles> angles;
+    vector<Atoms> coll_beads;
+    vector<Bonds> coll_bonds;
+    vector<Angles> coll_angles;
 
     //
     /// force field stuff - deprecated
@@ -104,9 +104,9 @@ public:
             lammps.load(in_file);
             in.sim_box = lammps.sim_box;
 
-            beads.push_back(lammps.beads);
-            bonds.push_back(lammps.bonds);
-            angles.push_back(lammps.angles);
+            coll_beads.push_back(lammps.beads);
+            coll_bonds.push_back(lammps.bonds);
+            coll_angles.push_back(lammps.angles);
 
             lammps.bonds.clear();
             lammps.angles.clear();
@@ -117,14 +117,14 @@ public:
         {
             pdb.load(in_file);
 
-            beads.push_back(pdb.beads);
-            bonds.push_back(Bonds());
-            angles.push_back(Angles());
+            coll_beads.push_back(pdb.beads);
+            coll_bonds.push_back(Bonds());
+            coll_angles.push_back(Angles());
 
             pdb.beads.clear();
         }
 
-        id_map[in.id] = beads.size()-1;
+        id_map[in.id] = coll_beads.size()-1;
     }
 
     ///
@@ -132,11 +132,11 @@ public:
     ///
     void modify()
     {
-        beads[ id_map[in.id] ].scale(in.scale);    // Rescale atom positions
-        beads[ id_map[in.id] ].move(in.com_pos);   // Move entire system by vector
+        coll_beads[ id_map[in.id] ].scale(in.scale);    // Rescale atom positions
+        coll_beads[ id_map[in.id] ].move(in.com_pos);   // Move entire system by vector
 
         if(in.mol_tag > -1)
-            beads[ id_map[in.id] ].set_mol_tag(in.mol_tag); // Change mol_tag of all particles to one set by input
+            coll_beads[ id_map[in.id] ].set_mol_tag(in.mol_tag); // Change mol_tag of all particles to one set by input
 
         /*if(in.is_mtag_12())
             align(in.mtag_1, in.mtag_2); // align mol_tag particles in z axis and XY plane
@@ -146,7 +146,7 @@ public:
         //offset(all_beads.size());
 
         if( in.center )
-            beads[ id_map[in.id] ].center();
+            coll_beads[ id_map[in.id] ].center();
     }
 
 
@@ -159,7 +159,7 @@ public:
 
     bool is_overlap(Atoms& other, Force_Field& ff) const
     {
-        for(auto& bb : beads)
+        for(auto& bb : coll_beads)
         {
             if(bb.is_overlap(other, ff))
                 return true;
@@ -170,7 +170,7 @@ public:
     int get_bead_count() const
     {
         int count=0;
-        for(auto& bb : beads)
+        for(auto& bb : coll_beads)
         {
             count += bb.size();
         }
@@ -180,7 +180,7 @@ public:
     int get_Max_Mol_Tag()
     {
         int max=0;
-        for(auto& bb : beads)
+        for(auto& bb : coll_beads)
         {
             if(max < bb.get_Max_Mol_Tag())
             {
@@ -240,31 +240,31 @@ public:
 private:
     void merge(Atoms& all_beads)
     {
-        for(auto& item : beads)
+        for(auto& item : coll_beads)
         {
             all_beads.insert(all_beads.end(), item.begin(), item.end());
         }
-        beads.clear();
+        coll_beads.clear();
     }
 
 
     void merge(Bonds& all_bonds)
     {
-        for(auto& item : bonds)
+        for(auto& item : coll_bonds)
         {
             all_bonds.insert(all_bonds.end(), item.begin(), item.end());
         }
-        bonds.clear();
+        coll_bonds.clear();
     }
 
 
     void merge(Angles& all_angles)
     {
-        for(auto& item : angles)
+        for(auto& item : coll_angles)
         {
             all_angles.insert(all_angles.end(), item.begin(), item.end());
         }
-        angles.clear();
+        coll_angles.clear();
     }
 
     LJ getBeadParam(int type)

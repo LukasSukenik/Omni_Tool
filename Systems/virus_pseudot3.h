@@ -34,8 +34,8 @@ public:
     {
         if(data.in.id == 2)
         {
-            set_protomer(data.beads[0]); // TODO: make it work with input file
-            set_capsid(data.beads[data.id_map[data.in.id]]); // TODO: make it work with input file
+            set_protomer(data.coll_beads[0]); // TODO: make it work with input file
+            set_capsid(data.coll_beads[data.id_map[data.in.id]]); // TODO: make it work with input file
             calc_protomer_coms();
             calc_pentamers();
             calc_symmetry_axes();

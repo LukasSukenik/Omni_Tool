@@ -38,7 +38,7 @@ public:
     }
 
 
-    void fibonacci_sphere(vector<Atom>& container, int samples, int type, int mol_tag=0)
+    void fibonacci_sphere(Atoms& container, int samples, int type, int mol_tag=0)
     {
         const double PI = 3.141592653589793;
         double offset = 2.0/samples;
@@ -56,6 +56,14 @@ public:
 
             container.push_back(Atom(x,y,z,type, mol_tag));
         }
+
+    }
+
+    Atoms fibonacci_sphere(int samples, int type, int mol_tag=0)
+    {
+        Atoms a;
+        fibonacci_sphere( a, samples, type, mol_tag);
+        return a;
     }
 
     void move(Atom move)
