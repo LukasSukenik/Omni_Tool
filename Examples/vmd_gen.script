@@ -1,0 +1,46 @@
+proc setlook {} {
+rotate stop
+color Display Background white
+display projection orthographic
+mol material AOChalky
+mol selection "name 4"
+mol representation VDW 0.5 10.0
+mol color colorID 22
+mol addrep 0
+mol material AOChalky
+mol selection "name 1"
+mol representation VDW 0.5 10.0
+mol color colorID 20
+mol addrep 0
+mol material AOChalky
+mol selection "name 2 || name 5"
+mol representation VDW 0.5 10.000000
+mol color colorID 3
+mol addrep 0
+mol material AOChalky
+mol selection "name 3 || name 6"
+mol representation VDW 0.5 10.0
+mol color colorID 23
+mol addrep 0
+mol material AOChalky
+mol selection "name 7"
+mol representation VDW 0.5 10.0
+mol color colorID 4
+mol addrep 0
+#axes location off
+}
+
+topo readlammpsdata data.ves
+
+set sel [atomselect top "all"]
+$sel set radius 1.0
+
+
+display resetview
+
+pbc box
+#pbc wrap -all
+setlook
+
+display ambientocclusion on
+display rendermode {Tachyon RTX RTRT}

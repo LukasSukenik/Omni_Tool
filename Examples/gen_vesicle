@@ -1,0 +1,9 @@
+System_type: Vesicle
+Output_type: lammps_full
+Radius: 14
+Num_lipids: 1900
+Mol_tag: 1
+Lammps_offset: 0 
+Number_of_receptors: 950
+Sim_box: -30 30 -30 30 -30 30 
+Position_shift: 0 0 0
