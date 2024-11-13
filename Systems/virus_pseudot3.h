@@ -30,7 +30,7 @@ public:
 
     Virus_pseudoT3() : System_Base("Virus_T=3p") {}
 
-    void generate( Data& data )
+    void load( Data& data )
     {
         if(data.in.id == 2)
         {

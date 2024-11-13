@@ -1,7 +1,10 @@
 #ifndef TYPES_H
 #define TYPES_H
 
-typedef long double myFloat;
+#include <cstring>
+
+//typedef long double myFloat;
+typedef float myFloat;
 
 class My_string{
 public:

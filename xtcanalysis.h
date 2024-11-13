@@ -7,16 +7,14 @@
 #include <iostream>
 #include <vector>
 
-#include "welford.h"
+#include "tensor_xyz.h"
 
 #include "xdrfile-1.1.4/include/xdrfile.h"
 #include "xdrfile-1.1.4/include/xdrfile_xtc.h"
 
 using namespace std;
 
-
-
-class XTCAnalysis
+class Trajectory : public vector< vector<Tensor_xyz> >
 {
 private:
     char fileName[64];
@@ -28,54 +26,17 @@ private:
     matrix box;
     float prec;
 
-public:
-    Welford_Algo average;
+    int first_step;
+    int status=exdrOK;
 
-    XTCAnalysis()
+public:   
+    Trajectory() {}
+
+    void load(string inName, int stop=-1)
     {
-        // -1 for all fold indexes
-    }
+        Tensor_xyz pos;
 
-
-    /**
-     * @brief potential - cos^2 potential
-     * @param dist
-     * @param epsilon
-     * @param sigma
-     * @param rm
-     * @return
-     */
-    double potential(double dist, double epsilon, double sigma, double rm)
-    {
-        if(dist > rm+sigma)
-            return 0.0;
-        if(dist > rm)
-        {
-            const double pih = std::atan(1.0)*2;
-            return -epsilon * cos( pih * (dist - rm) / sigma ) * cos( pih * (dist - rm) / sigma );
-        }
-        else
-        {
-            // https://en.wikipedia.org/wiki/Lennard-Jones_potential
-            // -epsilon from cos^2 potential, eps for LJ is 1.0
-            double ssigma = rm / pow(2.0, 1.0/6.0);
-            return 4*epsilon*( pow(ssigma/dist, 12) - pow(ssigma/dist,6) );
-        }
-    }
-
-    int analyse(string inName, int stop=-1)
-    {
-        int status=exdrOK;
-        double dist,max=0;
-
-        int first_step;
-
-        // convert string to char
-        int i;
-        for (i = 0; inName[i] != '\0'; ++i) {
-          fileName[i] = inName[i];
-        }
-        fileName[i] = '\0';
+        string_to_char(inName); // inName -> fileName
 
         status = read_xtc_natoms(fileName, &natoms);
         if (status == exdrOK)
@@ -84,30 +45,45 @@ public:
             if (xfp != NULL)
             {
                 rvec k[natoms];
-                status = read_xtc(xfp, natoms, &first_step, &time, box, k, &prec);
 
-                while(status == exdrOK && ( stop == -1 || step < first_step+stop) ) // Analyze frame
+                status = read_xtc(xfp, natoms, &first_step, &time, box, k, &prec);
+                while(status == exdrOK && ( stop == -1 || step < first_step+stop) ) // Load frame
                 {
                     status = read_xtc(xfp, natoms, &step, &time, box, k, &prec);
 
-                    i = 0; // atom index
-                    double x = k[i][0];
-                    double y = k[i][1];
-                    double z = k[i][2];
+                    // add frame
+                    this->push_back( vector<Tensor_xyz>() );
+                    for(int i=0; i<natoms; ++i)
+                    {
+                        this->back().resize(natoms);
+                        this->back()[i].x = k[i][0];
+                        this->back()[i].y = k[i][1];
+                        this->back()[i].z = k[i][2];
+                    }
                 }
                 xdrfile_close(xfp);
             }
             else
             {
-                cout << "File not opened:" << fileName << endl;
+                cerr << "XTC_Loader::load - File not opened:" << fileName << endl;
             }
         }
         else
         {
-            fprintf(stderr, "read_xtc_natoms failure; return code %d", status);
-            cerr << inName << endl;
+            cerr << "XTC_Loader::load read_xtc_natoms failure; return code " << status << endl;
+            cerr << "Filename: " << inName << endl;
         }
-        return -1;
+    }
+
+private:
+
+    void string_to_char(string inName)
+    {
+        int i;
+        for (i = 0; inName[i] != '\0'; ++i) {
+          fileName[i] = inName[i];
+        }
+        fileName[i] = '\0';
     }
 };
 

@@ -1,4 +1,4 @@
-System_type: Vesicle
+Particle_type: Vesicle
 Output_type: lammps_full
 Radius: 14
 Num_lipids: 1900

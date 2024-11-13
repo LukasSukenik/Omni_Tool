@@ -12,6 +12,7 @@
 #include "slab.h"
 #include "globular_sphere.h"
 #include "ellipsoid.h"
+#include "vesicle.h"
 
 using namespace std;
 
@@ -46,6 +47,7 @@ public:
         (*this)[Monomer::keyword] = new Monomer();
 
         (*this)[Ellipsoid::keyword] = new Ellipsoid();
+        (*this)[Vesicle::keyword] = new Vesicle();
     }
 
     ~Particle_Container()

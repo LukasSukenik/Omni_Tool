@@ -125,6 +125,12 @@ public:
         }
 
         id_map[in.id] = coll_beads.size()-1;
+
+        if(coll_beads.empty())
+        {
+            cerr << "Data::load_data coll_beads is empty, nothing was loded" << endl;
+            exit(1);
+        }
     }
 
     ///

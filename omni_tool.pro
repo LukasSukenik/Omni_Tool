@@ -24,6 +24,7 @@ HEADERS += \
     types.h \
     xtcanalysis.h \
     welford.h \
+    tensor_xyz.h \
     IO/io_input.h \
     IO/io_lammps.h \
     IO/io_pdb.h \

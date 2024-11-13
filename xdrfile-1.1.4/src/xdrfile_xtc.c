@@ -43,7 +43,7 @@ static int xtc_header(XDRFILE *xd,int *natoms,int *step,float *time,mybool bRead
 	magic  = MAGIC;
 	if ((result = xdrfile_write_int(&magic,n,xd)) != n)
 		{
-            printf("xdrfile_write_int success\n");
+            //printf("xdrfile_write_int success\n");
 			if (bRead)
 				return exdrENDOFFILE;
 			else

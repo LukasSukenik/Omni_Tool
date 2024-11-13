@@ -1,0 +1,8 @@
+Output_type: lammps_full
+Lammps_offset: 0
+Position_shift: 0 0 0
+Sim_box: -30 30 -30 30 -30 30 
+Load_file: data.ves
+Input_type: lammps_full
+ID: 1
+System_type: Vesicle

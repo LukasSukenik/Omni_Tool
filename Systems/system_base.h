@@ -27,7 +27,7 @@ public:
      *
      * @param data
      */
-    virtual void generate( Data& data )=0;
+    virtual void load( Data& data )=0;
 
     virtual string help()
     {

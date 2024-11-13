@@ -54,7 +54,7 @@ int main(int argc, char* argv[])
         {
             if(particles.count(data.in.gen_structure) > 0)
             {
-                cerr << "Generating: " << particles[ data.in.gen_structure ]->name << endl;
+                cerr << "Generating particle: " << particles[ data.in.gen_structure ]->name << endl;
                 particles[ data.in.gen_structure ]->generate( data );
                 particles[ data.in.gen_structure ]->modify( data );
                 particles[ data.in.gen_structure ]->make_persistent(data); // particle data
@@ -73,8 +73,8 @@ int main(int argc, char* argv[])
         {
             if(systems.count(data.in.system_type) > 0)
             {
-                cerr << "Generating: " << systems[ data.in.system_type ]->name << endl;
-                systems[ data.in.system_type ]->generate( data );
+                cerr << "Loading system: " << systems[ data.in.system_type ]->name << endl;
+                systems[ data.in.system_type ]->load( data );
             }
             else
             {
