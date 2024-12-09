@@ -32,7 +32,7 @@ private:
 public:   
     Trajectory() {}
 
-    void load(string inName, int stop=-1)
+    void load(string inName, int start=-1, int stop=-1)
     {
         Tensor_xyz pos;
 
@@ -51,14 +51,16 @@ public:
                 {
                     status = read_xtc(xfp, natoms, &step, &time, box, k, &prec);
 
-                    // add frame
-                    this->push_back( vector<Tensor_xyz>() );
-                    for(int i=0; i<natoms; ++i)
+                    if(step > start)// add frame
                     {
-                        this->back().resize(natoms);
-                        this->back()[i].x = k[i][0];
-                        this->back()[i].y = k[i][1];
-                        this->back()[i].z = k[i][2];
+                        this->push_back( vector<Tensor_xyz>() );
+                        for(int i=0; i<natoms; ++i)
+                        {
+                            this->back().resize(natoms);
+                            this->back()[i].x = k[i][0];
+                            this->back()[i].y = k[i][1];
+                            this->back()[i].z = k[i][2];
+                        }
                     }
                 }
                 xdrfile_close(xfp);

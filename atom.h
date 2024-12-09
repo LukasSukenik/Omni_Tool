@@ -502,7 +502,7 @@ public:
 
 
 
-    Atom center_of_mass() const
+    Atom get_center_of_mass() const
     {
         return this->center_of_mass(-1,-1,-1);
     }

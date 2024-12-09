@@ -30,7 +30,7 @@ public:
 
     Virus_pseudoT3() : System_Base("Virus_T=3p") {}
 
-    void load( Data& data )
+    void execute( Data& data )
     {
         if(data.in.id == 2)
         {
@@ -210,7 +210,7 @@ private:
         Atoms sa5;
         for(T3_Penta& p : penta)
         {
-            sa5.push_back( p.coms.center_of_mass() );
+            sa5.push_back( p.coms.get_center_of_mass() );
         }
 
         sa5.scale( proto_coms[0].size() / sa5[0].size() );
@@ -251,12 +251,12 @@ private:
                     exists = false;
                     for(auto& a : sa2)
                     {
-                        if(a.isAproxSame(cm.center_of_mass()))
+                        if(a.isAproxSame(cm.get_center_of_mass()))
                             exists = true;
                     }
 
                     if(!exists)
-                        sa2.push_back( cm.center_of_mass() );
+                        sa2.push_back( cm.get_center_of_mass() );
 
                     cm.clear();
                 }
@@ -298,13 +298,13 @@ private:
                         exists = false;
                         for(auto& a : sa3)
                         {
-                            if(a.isAproxSame(cm.center_of_mass()))
+                            if(a.isAproxSame(cm.get_center_of_mass()))
                                 exists = true;
                         }
 
                         if(!exists)
                         {
-                            sa3.push_back( cm.center_of_mass() );
+                            sa3.push_back( cm.get_center_of_mass() );
                         }
 
                         cm.clear();

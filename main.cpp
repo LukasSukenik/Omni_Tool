@@ -74,7 +74,7 @@ int main(int argc, char* argv[])
             if(systems.count(data.in.system_type) > 0)
             {
                 cerr << "Loading system: " << systems[ data.in.system_type ]->name << endl;
-                systems[ data.in.system_type ]->load( data );
+                systems[ data.in.system_type ]->execute( data );
             }
             else
             {

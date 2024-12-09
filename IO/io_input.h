@@ -161,6 +161,9 @@ public:
 
     // system identifier
     string system_type;
+    string system_function;
+    double system_var_a = 0.0;
+    double system_var_b = 0.0;
 
     int id;
 
@@ -253,6 +256,7 @@ public:
 
             // Load system identifier
             if( what.compare("System_type:") == 0 )       { ss >> system_type; }
+            if( what.compare("System_execute:") == 0 )       { ss >> system_function >> system_var_a >> system_var_b; }
 
             // Load particle atom counts
             if( what.compare("Number_of_beads:") == 0 )   { ss >> num_of_beads; }
@@ -372,6 +376,9 @@ public:
         gen_structure.clear();
         in.clear();
         system_type.clear();
+        system_function.clear();
+        system_var_a=0.0;
+        system_var_b=0.0;
 
         num_of_beads=-1;
         num_lig=-1;
