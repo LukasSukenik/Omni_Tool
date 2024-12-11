@@ -19,7 +19,8 @@ public:
 
     void execute(Data& data)
     {
-        Atoms& ves = data.coll_beads[ data.id_map[data.in.id] ];
+        int sys_id = data.id_map[data.in.id];
+        Atoms& ves = data.coll_beads[sys_id];
 
         if(data.in.system_function.compare("rdf") == 0)
         {
@@ -27,7 +28,21 @@ public:
             cerr << "Generated radial distribution function" << endl;
         }
 
-        exit(0);
+        if(data.in.system_function.compare("Make_2_Vesicle_System") == 0)
+        {
+            data.coll_beads.push_back(ves);
+            Atoms& ves = data.coll_beads[ sys_id ]; // push_back can allocate memory, which will brick the reference ves
+            Atoms& ves2 = data.coll_beads.back();
+
+            ves2.set_mol_tag(2);
+            while( ves.is_overlap(ves2) )
+            {
+                ves.move(Atom(1.0, 0.0, 0.0));
+                ves2.move(Atom(-1.0, 0.0, 0.0));
+            }
+
+            cerr << "Generated 2 vesicle system" << endl;
+        }
     }
 
     void analyze_leaflet_lipid_count(Atoms& ves)

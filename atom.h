@@ -462,11 +462,55 @@ public:
         return false;
     }
 
+    bool is_overlap(Atom& b, double cutoff=1.0) const
+    {
+        for(const Atom& a : (*this))
+        {
+            if( b.dist(a) < cutoff )
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    bool is_within_hollow(Atoms& other) const
+    {
+        vector<int> molecules = get_Mol_Types();
+        Atom mol_com;
+        double mol_radius;
+
+        for(auto mol_i : molecules)
+        {
+            mol_com = center_of_mass(mol_i);
+            mol_radius = get_molecule_radius(mol_i);
+
+            for(Atom& o : other)
+            {
+                if( o.dist(mol_com) < mol_radius ) // overlap of atom o with this container
+                {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    bool is_overlap(Atoms& other) const
+    {
+        for(Atom& o : other)
+        {
+            if( is_overlap(o) ) // overlap of atom o with this container
+            {
+                return true;
+            }
+        }
+
+        return is_within_hollow(other);
+    }
+
     bool is_overlap(Atoms& other, Force_Field& ff) const
     {
-    	//
-        // One-All particle overlap
-    	//
     	for(Atom& o : other)
     	{
     		if( is_overlap(o, ff) ) // overlap of atom o with this container
@@ -475,28 +519,7 @@ public:
     		}
     	}
 
-    	//
-    	// Test if particle is within a hollow molecule
-    	//
-    	vector<int> molecules = get_Mol_Types();
-    	Atom mol_com;
-    	double mol_radius;
-
-    	for(auto mol_i : molecules)
-    	{
-    		mol_com = center_of_mass(mol_i);
-    		mol_radius = get_molecule_radius(mol_i);
-
-    		for(Atom& o : other)
-    		{
-    		 	if( o.dist(mol_com) < mol_radius ) // overlap of atom o with this container
-    		 	{
-    		    	return true;
-    		    }
-    		}
-    	}
-
-    	return false;
+        return is_within_hollow(other);
     }
 
 
