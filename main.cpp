@@ -67,7 +67,7 @@ int main(int argc, char* argv[])
         }
 
         //
-        // generate a system if specified
+        // execute a system-wide method if specified
         //
         if( data.is_system() )
         {

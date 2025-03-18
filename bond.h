@@ -31,13 +31,13 @@ public:
 class Bonds : public vector< Bond >
 {
 public:
-    void offset(int offs)
+    void offset(int bond_N_offset, int atom_N_offset)
     {
         for(Bond& item : (*this))
         {
-            item.N += offs;
-            item.at1 += offs;
-            item.at2 += offs;
+            item.N += bond_N_offset;
+            item.at1 += atom_N_offset;
+            item.at2 += atom_N_offset;
         }
     }
 

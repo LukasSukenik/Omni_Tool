@@ -21,29 +21,95 @@ public:
     {
         int sys_id = data.id_map[data.in.id];
         Atoms& ves = data.coll_beads[sys_id];
+        vector<int> mol_tags = ves.get_Mol_Types();
 
-        if(data.in.system_function.compare("rdf") == 0)
+        if(data.in.system_function.compare("is_Single_Vesicle") == 0)
         {
-            radial_distribution_histogram(ves, data.in.system_var_a, data.in.system_var_b);
-            cerr << "Generated radial distribution function" << endl;
+            const Atoms& ves_1 = ves.get_molecule(mol_tags[0]);
+            const Atoms& ves_2 = ves.get_molecule(mol_tags[1]);
+
+            cout << ves_1.size() << " " << ves_2.size() << endl;
+
+            exit(0);
         }
-
-        if(data.in.system_function.compare("Make_2_Vesicle_System") == 0)
+        if(data.in.system_function.compare("rdf") == 0) { radial_distribution_histogram(ves, data.in.system_var_a, data.in.system_var_b); }
+        if(data.in.system_function.compare("Make_2_Vesicle_System") == 0) { make_2_Vesicle_System(data, sys_id); }
+        if(data.in.system_function.compare("Analyze_Fusion") == 0)
         {
-            data.coll_beads.push_back(ves);
-            Atoms& ves = data.coll_beads[ sys_id ]; // push_back can allocate memory, which will brick the reference ves
-            Atoms& ves2 = data.coll_beads.back();
+            const Atoms& ves_1 = ves.get_molecule(mol_tags[0]);
+            const Atoms& ves_2 = ves.get_molecule(mol_tags[1]);
 
-            ves2.set_mol_tag(2);
-            while( ves.is_overlap(ves2) )
-            {
-                ves.move(Atom(1.0, 0.0, 0.0));
-                ves2.move(Atom(-1.0, 0.0, 0.0));
-            }
+            cout << ves_1.size() << " " << ves_2.size() << endl;
 
-            cerr << "Generated 2 vesicle system" << endl;
+            exit(0);
         }
     }
+
+private:
+
+    ///
+    /// START /// radial_distribution_histogram ///
+    ///
+    void radial_distribution_histogram(Atoms& at_col, double r_max, int hist_size)
+    {
+        double r=0.0;
+        vector<int> histogram(hist_size,0);
+        Atom com = at_col.get_center_of_mass();
+
+        for(Atom& a : at_col)
+        {
+            r = a.pos.dist(com.pos);
+            if(r > r_max)
+            {
+                cerr << "Vesicle sigma radius exeeds bounds of histogram set at " << r_max << ", r calculated at " << r << endl;
+                exit(1);
+            }
+            histogram[(int) hist_size * (r/r_max)]++;
+        }
+
+        for(unsigned int i=0; i<histogram.size(); ++i)
+        {
+            cout << r_max * i / histogram.size() << " " << histogram[i] << endl;
+        }
+
+        cerr << "Generated radial distribution function" << endl;
+    }
+    ///
+    /// END /// radial_distribution_histogram ///
+    ///
+
+    ///
+    /// START /// Make_2_Vesicle_System ///
+    ///
+    void make_2_Vesicle_System(Data& data, int sys_id)
+    {
+        data.coll_beads.push_back(  data.coll_beads[sys_id] );
+        data.coll_bonds.push_back(  data.coll_bonds[sys_id] );
+
+        Atoms& ves2 = data.coll_beads.back();
+        Bonds& bonds2 = data.coll_bonds.back();
+
+        bonds2.offset(bonds2.size(), ves2.size());
+        ves2.add_offset(ves2.size());
+        ves2.set_mol_tag(2);
+
+        Atoms& ves = data.coll_beads[ sys_id ]; // push_back can allocate memory, which will brick the reference ves
+
+        while( ves.is_overlap(ves2, 1.0) )
+        {
+
+            ves.move(Atom(0.01, 0.0, 0.0));
+            ves2.move(Atom(-0.01, 0.0, 0.0));
+        }
+
+        cerr << "Generated 2 vesicle system" << endl;
+    }
+    ///
+    /// END /// Make_2_Vesicle_System ///
+    ///
+
+
+
 
     void analyze_leaflet_lipid_count(Atoms& ves)
     {
@@ -76,28 +142,7 @@ public:
         }
     }
 
-    void radial_distribution_histogram(Atoms& at_col, double r_max, int hist_size)
-    {
-        double r=0.0;
-        vector<int> histogram(hist_size,0);
-        Atom com = at_col.get_center_of_mass();
 
-        for(Atom& a : at_col)
-        {
-            r = a.pos.dist(com.pos);
-            if(r > r_max)
-            {
-                cerr << "Vesicle sigma radius exeeds bounds of histogram set at " << r_max << ", r calculated at " << r << endl;
-                exit(1);
-            }
-            histogram[(int) hist_size * (r/r_max)]++;
-        }
-
-        for(unsigned int i=0; i<histogram.size(); ++i)
-        {
-            cout << r_max * i / histogram.size() << " " << histogram[i] << endl;
-        }
-    }
 
     void radial_distribution_histogram(vector<Tensor_xyz>& frame)
     {

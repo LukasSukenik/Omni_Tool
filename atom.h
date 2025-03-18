@@ -496,11 +496,11 @@ public:
         return false;
     }
 
-    bool is_overlap(Atoms& other) const
+    bool is_overlap(Atoms& other, double cutoff=1.0) const
     {
         for(Atom& o : other)
         {
-            if( is_overlap(o) ) // overlap of atom o with this container
+            if( is_overlap(o, cutoff) ) // overlap of atom o with this container
             {
                 return true;
             }
