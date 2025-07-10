@@ -76,7 +76,6 @@ public:
     {
         scale( data.in.scale );
         move( data.in.com_pos );
-        populate( data );
     }
 
     void make_persistent(Data& data)
@@ -138,29 +137,27 @@ public:
         return !same;
     }
 
-private:
-
-    void populate(Data& data)
+    virtual void populate(Data& data)
     {
     	if( data.in.population.random )
     	{
-            Atoms copy(beads);
-            beads.clear();
-            Atoms temp;
-            Tensor_xyz com_pos;
-
             //
             // Report
             //
-            if(copy.empty())
+            if(beads.empty())
             {
                 cerr << "No particle created, can't populate system" << endl;
                 exit(-1);
             }
             else
             {
-                cerr << "Copying particle of " << copy.size() << " atoms " << data.in.population.count << " times" << endl;
+                cerr << "Copying particle of " << beads.size() << " atoms " << data.in.population.count << " times" << endl;
             }
+
+            Atoms copy(beads);
+            beads.clear();
+            Atoms temp;
+            Tensor_xyz com_pos;
 
             //
             // Copy, move, rotate
@@ -199,6 +196,8 @@ private:
     	}
     	cerr << "populate " << data.in.population << endl;
     }
+
+private:
 
     void move(Atom move)
     {

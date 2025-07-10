@@ -177,7 +177,7 @@ public:
     double get_cutoff(int type1, int type2)
     {
         //cerr << type1 << ":" << type2 << " = " << 0.5 * ( lj[type1].sigma + lj[type2].sigma ) << endl;
-        return ( lj[type1].sigma + lj[type2].sigma );
+        return 0.5 * ( lj[type1].sigma + lj[type2].sigma );
     }
 
     friend std::ostream& operator<<(std::ostream& os, Force_Field& ff)

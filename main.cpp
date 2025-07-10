@@ -57,6 +57,7 @@ int main(int argc, char* argv[])
                 cerr << "Generating particle: " << particles[ data.in.gen_structure ]->name << endl;
                 particles[ data.in.gen_structure ]->generate( data );
                 particles[ data.in.gen_structure ]->modify( data );
+                particles[ data.in.gen_structure ]->populate( data );
                 particles[ data.in.gen_structure ]->make_persistent(data); // particle data
             }
             else

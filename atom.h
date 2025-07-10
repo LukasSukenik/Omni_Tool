@@ -62,13 +62,13 @@ public:
     //
     Atom() {}
     Atom(Tensor_xyz pos, int type=0): type(type), pos(pos) {}
-    Atom(int N, Tensor_xyz pos, int type=0): N(N), type(type), pos(pos) {}
-    Atom(myFloat x, myFloat y, myFloat z, int type=0): type(type), pos(x,y,z) {}
-
-    Atom(myFloat x, myFloat y, myFloat z, myFloat vx, myFloat vy, myFloat vz, int type=0): type(type), pos(x,y,z), vel(vx,vy,vz) {}
-
-    Atom(myFloat x, myFloat y, myFloat z, int type, int mol_tag): mol_tag(mol_tag), type(type), pos(x,y,z) {}
     Atom(Tensor_xyz pos, int type, int mol_tag): mol_tag(mol_tag), type(type), pos(pos) {}
+
+    Atom(myFloat x, myFloat y, myFloat z, int type=0): type(type), pos(x,y,z) {}
+    Atom(myFloat x, myFloat y, myFloat z, myFloat vx, myFloat vy, myFloat vz, int type=0): type(type), pos(x,y,z), vel(vx,vy,vz) {}
+    Atom(myFloat x, myFloat y, myFloat z, int type, int mol_tag): mol_tag(mol_tag), type(type), pos(x,y,z) {}
+
+    Atom(int N, Tensor_xyz pos, int type=0): N(N), type(type), pos(pos) {}
     Atom(int N, Tensor_xyz pos, int type, int mol_tag): N(N), mol_tag(mol_tag), type(type), pos(pos) {}
 
     //
@@ -496,7 +496,7 @@ public:
         return false;
     }
 
-    bool is_overlap(Atoms& other, double cutoff=1.0) const
+    bool is_overlap(Atoms& other, double cutoff=1.0, bool check_hollow=false) const
     {
         for(Atom& o : other)
         {
@@ -506,10 +506,13 @@ public:
             }
         }
 
-        return is_within_hollow(other);
+        if(check_hollow)
+            return is_within_hollow(other);
+
+        return false;
     }
 
-    bool is_overlap(Atoms& other, Force_Field& ff) const
+    bool is_overlap(Atoms& other, Force_Field& ff, bool check_hollow=false) const
     {
     	for(Atom& o : other)
     	{
@@ -519,7 +522,10 @@ public:
     		}
     	}
 
-        return is_within_hollow(other);
+        if(check_hollow)
+            return is_within_hollow(other);
+
+        return false;
     }
 
 

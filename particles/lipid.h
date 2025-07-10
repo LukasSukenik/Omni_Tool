@@ -3,6 +3,7 @@
 
 #include <vector>
 
+#include "particle.h"
 #include "atom.h"
 #include "bond.h"
 
@@ -21,9 +22,9 @@ using namespace std;
 
 
 
-class Lipid {
+class Lipid : public Particle {
 public:
-    Lipid(){}
+    inline static const string keyword = "lipid";
 
     enum class Leaflet {upper, lower};
 
@@ -38,7 +39,90 @@ public:
     Atoms part;  // consecutive:  0:HEAD, 1:TAIL, 2:TAIL (the further one)
     Bonds bond;      // 0: between 1-2 TAIL_HEAD_BOND, 1: 2-3 TAIL_TAIL_BOND, 2: 1-3 HARMONIC_BOND, 3: 3-4 TAIL_END_BOND, 4: 2-4 HARMONIC_BOND2
 
-    Lipid(Atom p1, Atom p2, Atom p3, Atom p4)
+
+    Lipid() : Particle("lipid") {}
+    Lipid(Atom p1, Atom p2, Atom p3, Atom p4) : Particle("lipid")
+    {
+        set_lipid(p1, p2, p3, p4);
+    }
+
+
+    void generate( Data& data )
+    {
+        set_lipid(0, Tensor_xyz(0,0,0), Tensor_xyz(0,0,1));
+
+        beads.insert(beads.end(), part.begin(), part.end());
+        bonds.insert(bonds.end(), bond.begin(), bond.end());
+    }
+
+    void populate(Data& data)
+    {
+        if( data.in.population.random )
+        {
+            //
+            // Report
+            //
+            if(beads.empty())
+            {
+                cerr << "No particle created, can't populate system" << endl;
+                exit(-1);
+            }
+            else
+            {
+                cerr << "Copying particle of " << beads.size() << " atoms " << data.in.population.count << " times" << endl;
+            }
+
+            Tensor_xyz random_pos;
+            Tensor_xyz random_dir;
+
+            //
+            // Copy, move, rotate
+            //
+            for(int i=1; i < data.in.population.count; ++i)
+            {
+                random_pos = data.in.sim_box.get_random_pos();
+                random_dir.randomUnitSphere();
+                set_lipid(i, random_pos, random_dir); // stores new lipid into part
+
+                int tries=0;
+                while( !data.in.sim_box.is_in_box(part) || beads.is_overlap(part, 0.9) )
+                {
+                    random_pos = data.in.sim_box.get_random_pos();
+                    random_dir.randomUnitSphere();
+                    set_lipid(i, random_pos, random_dir);
+
+                    if(tries % 10000 == 0)
+                        cerr << "Molecule " << i << " trial " << tries << endl;
+
+                    if(tries > 1000000)
+                    {
+                        cerr << "Particles::populate -> Can't generate any more particles, simulation box is full, tries" << tries << endl;
+                        exit(1);
+                    }
+                    ++tries;
+                }
+
+                beads.insert( beads.end(), part.begin(), part.end() );
+                bonds.insert( bonds.end(), bond.begin(), bond.end() );
+
+                cerr << "Generating population, particle " << i << " of " << data.in.population.count << ", successful on try " << tries << endl;
+            }
+        }
+        cerr << "populate " << data.in.population << endl;
+    }
+
+    void set_lipid(int mol_N, Tensor_xyz pos, Tensor_xyz dir)
+    {
+        Atom p1 = Atom(4*mol_N +1, pos, head_upper_leaf);
+        Atom p2 = Atom(4*mol_N +2, pos + dir, tail_upper_leaf);
+        Atom p3 = Atom(4*mol_N +3, pos + dir*2.0, tail_upper_leaf);
+        Atom p4 = Atom(4*mol_N +4, pos + dir*3.0, tail_2_upper_leaf);
+
+        set_lipid(p1, p2, p3, p4, 4*mol_N +1, 5*mol_N +1);
+    }
+
+
+    void set_lipid(Atom p1, Atom p2, Atom p3, Atom p4, int pN=1, int bN=1)
     {
         part.resize(4);
         bond.resize(5);
@@ -48,8 +132,8 @@ public:
         part[2] = p3;
         part[3] = p4;
 
-        changeN_part(p1.N, 1);
-        changeN_bond(p1.N);
+        changeN_part(pN, 1);
+        changeN_bond(pN, bN);
 
         bond[0].type = TAIL_HEAD_BOND;
         bond[1].type = TAIL_TAIL_BOND;
@@ -78,27 +162,27 @@ public:
 
     }
 
-    void changeN_bond(int N) {
-        bond[0].N = N;
-        bond[1].N = N+1;
-        bond[2].N = N+2;
-        bond[3].N = N+3;
-        bond[4].N = N+4;
+    void changeN_bond(int pN, int bN) {
+        bond[0].N = bN;
+        bond[1].N = bN+1;
+        bond[2].N = bN+2;
+        bond[3].N = bN+3;
+        bond[4].N = bN+4;
 
-        bond[0].at1 = N;
-        bond[0].at2 = N+1;
+        bond[0].at1 = pN;
+        bond[0].at2 = pN+1;
 
-        bond[1].at1 = N+1;
-        bond[1].at2 = N+2;
+        bond[1].at1 = pN+1;
+        bond[1].at2 = pN+2;
 
-        bond[2].at1 = N;
-        bond[2].at2 = N+2;
+        bond[2].at1 = pN;
+        bond[2].at2 = pN+2;
 
-        bond[3].at1 = N+2;
-        bond[3].at2 = N+3;
+        bond[3].at1 = pN+2;
+        bond[3].at2 = pN+3;
 
-        bond[4].at1 = N+1;
-        bond[4].at2 = N+3;
+        bond[4].at1 = pN+1;
+        bond[4].at2 = pN+3;
     }
 
     void set_bead_type(Leaflet leaf)

@@ -48,6 +48,7 @@ public:
 
         (*this)[Ellipsoid::keyword] = new Ellipsoid();
         (*this)[Vesicle::keyword] = new Vesicle();
+        (*this)[Lipid::keyword] = new Lipid();
     }
 
     ~Particle_Container()

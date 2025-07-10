@@ -116,7 +116,7 @@ public:
     {
     	if(pop.random)
     	{
-    		os << pop.count << " random";
+            os << pop.count << " random";
     	}
     	else
     	{

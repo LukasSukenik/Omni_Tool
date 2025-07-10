@@ -14,6 +14,7 @@ SOURCES += main.cpp \
     xdrfile-1.1.4/src/xdrfile_xtc.c
 
 HEADERS += \
+    Systems/lipid_nanoparticle.h \
     angle.h \
     atom.h \
     bond.h \

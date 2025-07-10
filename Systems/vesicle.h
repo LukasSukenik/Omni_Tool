@@ -5,7 +5,6 @@
 #include "atom.h"
 #include "xtcanalysis.h"
 
-
 #include "sphere.h"
 #include "lipid.h"
 
@@ -42,6 +41,47 @@ public:
             cout << ves_1.size() << " " << ves_2.size() << endl;
 
             exit(0);
+        }
+    }
+
+
+    void generate( Data& data )
+    {
+        test_input(data);
+
+        double outer_leaflet_radius = data.in.radius+4.0;
+        double inner_leaflet_area = pow(data.in.radius, 2);
+        double outer_leaflet_area = pow(outer_leaflet_radius, 2);
+        double sphere_surface_relative_increase = outer_leaflet_area / (inner_leaflet_area);
+
+
+        int lower_leaflet_lipid_count = data.in.num_lipids * 1.0 / (1.0 + sphere_surface_relative_increase);
+        int lower_leaflet_receptor_count = data.in.num_rec * 1.0/ (1.0 + sphere_surface_relative_increase);
+        int upper_leaflet_lipid_count = data.in.num_lipids * sphere_surface_relative_increase / (1.0 + sphere_surface_relative_increase);
+        int upper_leaflet_receptor_count = data.in.num_rec * sphere_surface_relative_increase / (1.0 + sphere_surface_relative_increase);
+
+        vector<Lipid> lower_leaflet = gen_lower_leaflet(lower_leaflet_lipid_count, data.in.mol_tag, data.in.radius);
+        convert_receptors(lower_leaflet, lower_leaflet_receptor_count);
+
+        vector<Lipid> upper_leaflet = gen_upper_leaflet(upper_leaflet_lipid_count, data.in.mol_tag, outer_leaflet_radius, lower_leaflet.size()*4);
+        convert_receptors(upper_leaflet, upper_leaflet_receptor_count);
+
+        for(Lipid& lip : lower_leaflet)
+        {
+            beads.insert(beads.end(), lip.part.begin(), lip.part.end());
+            bonds.insert(bonds.end(), lip.bond.begin(), lip.bond.end());
+        }
+
+        for(Lipid& lip : upper_leaflet)
+        {
+            beads.insert(beads.end(), lip.part.begin(), lip.part.end());
+            bonds.insert(bonds.end(), lip.bond.begin(), lip.bond.end());
+        }
+
+        if(lower_leaflet.empty() || upper_leaflet.empty())
+        {
+            cerr << "Vesicle::generate leaflet empty" << endl;
+            exit(1);
         }
     }
 
@@ -192,45 +232,7 @@ private:
     }
 
 
-    void generate( Data& data )
-    {
-        test_input(data);
 
-        double outer_leaflet_radius = data.in.radius+4.0;
-        double inner_leaflet_area = pow(data.in.radius, 2);
-        double outer_leaflet_area = pow(outer_leaflet_radius, 2);
-        double sphere_surface_relative_increase = outer_leaflet_area / (inner_leaflet_area);
-
-
-        int lower_leaflet_lipid_count = data.in.num_lipids * 1.0 / (1.0 + sphere_surface_relative_increase);
-        int lower_leaflet_receptor_count = data.in.num_rec * 1.0/ (1.0 + sphere_surface_relative_increase);
-        int upper_leaflet_lipid_count = data.in.num_lipids * sphere_surface_relative_increase / (1.0 + sphere_surface_relative_increase);
-        int upper_leaflet_receptor_count = data.in.num_rec * sphere_surface_relative_increase / (1.0 + sphere_surface_relative_increase);
-
-        vector<Lipid> lower_leaflet = gen_lower_leaflet(lower_leaflet_lipid_count, data.in.mol_tag, data.in.radius);
-        convert_receptors(lower_leaflet, lower_leaflet_receptor_count);
-
-        vector<Lipid> upper_leaflet = gen_upper_leaflet(upper_leaflet_lipid_count, data.in.mol_tag, outer_leaflet_radius, lower_leaflet.size()*4);
-        convert_receptors(upper_leaflet, upper_leaflet_receptor_count);
-
-        for(Lipid& lip : lower_leaflet)
-        {
-            beads.insert(beads.end(), lip.part.begin(), lip.part.end());
-            bonds.insert(bonds.end(), lip.bond.begin(), lip.bond.end());
-        }
-
-        for(Lipid& lip : upper_leaflet)
-        {
-            beads.insert(beads.end(), lip.part.begin(), lip.part.end());
-            bonds.insert(bonds.end(), lip.bond.begin(), lip.bond.end());
-        }
-
-        if(lower_leaflet.empty() || upper_leaflet.empty())
-        {
-            cerr << "Vesicle::generate leaflet empty" << endl;
-            exit(1);
-        }
-    }
 
     void test_input(Data& data)
     {

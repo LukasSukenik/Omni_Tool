@@ -16,6 +16,6 @@ then
   make
 else
   echo "qmake"
-  qmake ico.pro
+  qmake omni_tool.pro
   make
 fi
