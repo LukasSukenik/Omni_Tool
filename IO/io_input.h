@@ -153,6 +153,7 @@ public:
 
     // IO
     string file_structure; /// name of the filename with lammps_full atoms
+    string trajectory;
     IO out; /// Output type - none, pdb, lammps_full, xyz
     IO in;  /// Input type  - none, pdb, lammps_full
 
@@ -247,6 +248,7 @@ public:
 
             // Load io
             if( what.compare("Load_file:") == 0 )         { ss >> file_structure; }
+            if( what.compare("Trajectory_file:") == 0 )   { ss >> trajectory; }
             if( what.compare("Output_type:") == 0 )       { ss >> out; }
             if( what.compare("Input_type:") == 0 )        { ss >> in; }
             if( what.compare("ID:") == 0 )                { ss >> id; }
@@ -324,6 +326,11 @@ public:
         {
             ss << "Load_file: " << file_structure << endl;
             ss << "Input_type:" << in << endl;
+        }
+
+        if( !trajectory.empty() )
+        {
+            ss << "Trajectory_file: " << trajectory << endl;
         }
 
         // Generating structure
@@ -410,6 +417,7 @@ public:
 
         population.clear();
         file_structure.clear();
+        trajectory.clear();
         bparam.clear();
         cparam.clear();
     }

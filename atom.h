@@ -8,7 +8,6 @@
 
 
 
-
 class Atom{
 public:
     //
@@ -195,6 +194,18 @@ bool myfunction (Atom i,Atom j) { return (i.pos.size()<j.pos.size()); }
 class Atoms : public vector< Atom >
 {
 public:
+
+    void set_frame(vector<Tensor_xyz>& frame)
+    {
+        this->clear();
+        this->resize(frame.size());
+
+        for(unsigned int i=0; i<frame.size(); ++i)
+        {
+            (*this)[i].pos = frame[i];
+        }
+    }
+
     //
     //
     // IO methods
