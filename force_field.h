@@ -16,31 +16,6 @@
 
 using namespace std;
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 /**
  * @brief The BeadParam class
  * Bead LJ parameters
@@ -48,6 +23,7 @@ using namespace std;
 class LJ {
 public:
 	LJ(){}
+    LJ(double sigma) : sigma(sigma) {}
 	LJ(int type, double epsilon, double sigma, double cutoff) : type(type), epsilon(epsilon), sigma(sigma), cutoff(cutoff) {}
 	LJ(int type1, int type2, double epsilon, double sigma, double cutoff) : type1(type1), type2(type2), epsilon(epsilon), sigma(sigma), cutoff(cutoff) {}
 
