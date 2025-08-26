@@ -184,7 +184,7 @@ public:
 
     // atom types
     int chain_type=-1;
-    int atom_type=1;
+    vector<int> atom_type;
 
     // molecule types
     int mol_tag=-1;
@@ -275,7 +275,7 @@ public:
             if( what.compare("Number_of_receptors:") == 0 ) { ss >> num_rec; }
 
             // Load atom and molecule types
-            if( what.compare("Atom_type:") == 0 )         { ss >> atom_type; }
+            if( what.compare("Atom_type:") == 0 )         { load_atom_type(ss); }
             if( what.compare("Mol_tag:") == 0 ) 		  { ss >> mol_tag; }
             if( what.compare("Chain_type:") == 0 ) 		  { ss >> chain_type; }
 
@@ -315,6 +315,15 @@ public:
         fs.close();
 
         return true;
+    }
+
+    void load_atom_type(stringstream& ss)
+    {
+        int temp_type;
+        while( ss >> temp_type )
+        {
+            atom_type.push_back(temp_type);
+        }
     }
 
     string toString()
@@ -397,7 +406,7 @@ public:
         b=0;
         c=0;
 
-        atom_type=1;
+        atom_type.clear();
         chain_type=-1;
         mol_tag=-1;
 
