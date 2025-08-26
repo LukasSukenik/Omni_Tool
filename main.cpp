@@ -15,8 +15,36 @@ using namespace std;
 
 void do_analysis();
 
+
+
+
+class Version
+{
+public:
+    int v=2;
+
+    Version()
+    {
+        splash();
+    }
+
+    void splash()
+    {
+        cerr << "*******************" << endl;
+        cerr << "*                 *" << endl;
+        cerr << "* Omni Tool :: v" << v << " *" << endl;
+        cerr << "*                 *" << endl;
+        cerr << "*******************" << endl;
+    }
+};
+
+
+
+
 int main(int argc, char* argv[])
 {
+    Version v;
+
     Data data;
     Particle_Container particles;
     System_Container systems;
