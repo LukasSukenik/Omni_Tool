@@ -95,6 +95,10 @@ public:
         data.all_sigma = this->sigma;
         data.all_sigma_size = this->sigma_size;
         data.all_sigma_cosatt = this->sigma_cosatt;
+
+        beads.clear();
+        bonds.clear();
+        angles.clear();
     }
 
     virtual string help()
@@ -241,7 +245,7 @@ public:
 
     void generate( Data& data )
     {
-        beads.push_back(Atom(0,0,0,data.in.atom_type,data.in.mol_tag));
+        beads.push_back(Atom(0,0,0,data.in.atom_type[0],data.in.mol_tag));
     }
 
     string help()

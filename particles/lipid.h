@@ -28,6 +28,10 @@ public:
 
     enum class Leaflet {upper, lower};
 
+    int type_head = 1;
+    int type_tail_1 = 2;
+    int type_tail_2 = 3;
+
     static const int head_upper_leaf = 1;
     static const int tail_upper_leaf = 2;
     static const int tail_2_upper_leaf = 3;
@@ -49,10 +53,18 @@ public:
 
     void generate( Data& data )
     {
-        set_lipid(0, Tensor_xyz(0,0,0), Tensor_xyz(0,0,1));
+        set_input(data);
+        set_lipid(0, Tensor_xyz(0,0,0), Tensor_xyz(0,0,1), data.in.mol_tag);
 
         beads.insert(beads.end(), part.begin(), part.end());
         bonds.insert(bonds.end(), bond.begin(), bond.end());
+    }
+
+    void set_input( Data& data )
+    {
+        type_head = data.in.atom_type[0];
+        type_tail_1 = data.in.atom_type[1];
+        type_tail_2 = data.in.atom_type[2];
     }
 
     void populate(Data& data)
@@ -69,30 +81,47 @@ public:
             }
             else
             {
-                cerr << "Copying particle of " << beads.size() << " atoms " << data.in.population.count << " times" << endl;
+                cerr << "Population particle of " << part.size() << " atoms " << data.in.population.count << " times, coll_beads.size" << data.coll_beads.size() << endl;
+                // clear beads and bonds to generate new particles with random distribution
+                // - in lipid class the necessary particles and bodns already stored in part and bond
+                beads.clear();
+                bonds.clear();
             }
 
             Tensor_xyz random_pos;
             Tensor_xyz random_dir;
+            int mol_tag = data.in.mol_tag;
+            int existing_lipid_count = 0;
+            if(!data.coll_beads.empty())
+            {
+                existing_lipid_count = data.coll_beads[0].size() / part.size();
+                cerr << "lipid::populate coll_beads[0].size " << data.coll_beads[0].size() << "\n";
+            }
 
             //
             // Copy, move, rotate
             //
-            for(int i=1; i < data.in.population.count; ++i)
+            for(int i=0; i < data.in.population.count; ++i)
             {
                 random_pos = data.in.sim_box.get_random_pos();
                 random_dir.randomUnitSphere();
-                set_lipid(i, random_pos, random_dir); // stores new lipid into part
+                set_lipid(i+existing_lipid_count, random_pos, random_dir, mol_tag); // stores new lipid into part
+                cerr << "lipid::populate lipid_N " << i+existing_lipid_count << "\n";
 
                 int tries=0;
-                while( !data.in.sim_box.is_in_box(part) || beads.is_overlap(part, 0.9) )
+                bool is_coll_overlap = false;
+                if(!data.coll_beads.empty())
+                {
+                    is_coll_overlap = data.coll_beads[0].is_overlap(part, 0.9);
+                }
+                while( !data.in.sim_box.is_in_box(part) || beads.is_overlap(part, 0.9) || is_coll_overlap )
                 {
                     random_pos = data.in.sim_box.get_random_pos();
                     random_dir.randomUnitSphere();
-                    set_lipid(i, random_pos, random_dir);
+                    set_lipid(i+existing_lipid_count, random_pos, random_dir, mol_tag);
 
-                    if(tries % 10000 == 0)
-                        cerr << "Molecule " << i << " trial " << tries << endl;
+                    if(tries != 0 && tries % 10000 == 0)
+                        cerr << "Molecule " << i << " trial " << tries << "\n";
 
                     if(tries > 1000000)
                     {
@@ -100,6 +129,11 @@ public:
                         exit(1);
                     }
                     ++tries;
+
+                    if(!data.coll_beads.empty())
+                    {
+                        is_coll_overlap = data.coll_beads[0].is_overlap(part, 0.9);
+                    }
                 }
 
                 beads.insert( beads.end(), part.begin(), part.end() );
@@ -107,16 +141,21 @@ public:
 
                 cerr << "Generating population, particle " << i << " of " << data.in.population.count << ", successful on try " << tries << endl;
             }
+
+            if(data.coll_beads.size() > 2)
+            {
+                cerr << "Lipid::populate - multiple collection overlap not implemented, max collections is 2" << endl;
+            }
         }
         cerr << "populate " << data.in.population << endl;
     }
 
-    void set_lipid(int mol_N, Tensor_xyz pos, Tensor_xyz dir)
+    void set_lipid(int mol_N, Tensor_xyz pos, Tensor_xyz dir, int mol_tag=1)
     {
-        Atom p1 = Atom(4*mol_N +1, pos, head_upper_leaf);
-        Atom p2 = Atom(4*mol_N +2, pos + dir, tail_upper_leaf);
-        Atom p3 = Atom(4*mol_N +3, pos + dir*2.0, tail_upper_leaf);
-        Atom p4 = Atom(4*mol_N +4, pos + dir*3.0, tail_2_upper_leaf);
+        Atom p1 = Atom(4*mol_N +1, pos, type_head, mol_tag);
+        Atom p2 = Atom(4*mol_N +2, pos + dir, type_tail_1, mol_tag);
+        Atom p3 = Atom(4*mol_N +3, pos + dir*2.0, type_tail_1, mol_tag);
+        Atom p4 = Atom(4*mol_N +4, pos + dir*3.0, type_tail_2, mol_tag);
 
         set_lipid(p1, p2, p3, p4, 4*mol_N +1, 5*mol_N +1);
     }
@@ -132,7 +171,7 @@ public:
         part[2] = p3;
         part[3] = p4;
 
-        changeN_part(pN, 1);
+        changeN_part(pN);
         changeN_bond(pN, bN);
 
         bond[0].type = TAIL_HEAD_BOND;
@@ -149,17 +188,11 @@ public:
         return dir;
     }
 
-    void changeN_part(int N, int mol_tag) {
+    void changeN_part(int N) {
         part[0].N = N;
         part[1].N = N+1;
         part[2].N = N+2;
         part[3].N = N+3;
-
-        part[0].mol_tag = mol_tag;
-        part[1].mol_tag = mol_tag;
-        part[2].mol_tag = mol_tag;
-        part[3].mol_tag = mol_tag;
-
     }
 
     void changeN_bond(int pN, int bN) {
