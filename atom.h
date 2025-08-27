@@ -473,13 +473,28 @@ public:
         return false;
     }
 
-    bool is_overlap(Atom& b, double cutoff=1.0) const
+    bool is_overlap(Atom& b, double cutoffSQ=1.0) const
     {
         for(const Atom& a : (*this))
         {
-            if( b.dist(a) < cutoff )
+            if( b.distSQ(a) < cutoffSQ )
             {
                 return true;
+            }
+        }
+        return false;
+    }
+
+    bool is_overlap(Atom& b, double cutoffSQ, vector< vector<int>* >& nei) const
+    {
+        for(int j=0; j<nei.size(); ++j)
+        {
+            for(int i : (*nei[j]))
+            {
+                if( b.distSQ( (*this)[i] ) < cutoffSQ )
+                {
+                    return true;
+                }
             }
         }
         return false;
@@ -511,7 +526,7 @@ public:
     {
         for(Atom& o : other)
         {
-            if( is_overlap(o, cutoff) ) // overlap of atom o with this container
+            if( is_overlap(o, cutoff*cutoff) ) // overlap of atom o with this container
             {
                 return true;
             }
@@ -519,6 +534,19 @@ public:
 
         if(check_hollow)
             return is_within_hollow(other);
+
+        return false;
+    }
+
+    bool is_overlap(Atoms& other, double cutoff, vector< vector<int>* >& nei) const
+    {
+        for(Atom& o : other)
+        {
+            if( is_overlap(o, cutoff*cutoff, nei) ) // overlap of atom o with this container
+            {
+                return true;
+            }
+        }
 
         return false;
     }
