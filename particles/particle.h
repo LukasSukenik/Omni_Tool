@@ -13,10 +13,11 @@
 #include "xdrfile-1.1.4/include/xdrfile.h"
 #include "xdrfile-1.1.4/include/xdrfile_xtc.h"
 
-#include<stdio.h>
+#include <stdio.h>
 
 #include "data.h"
 #include "atom.h"
+#include "cell_list.h""
 
 
 using namespace std;
@@ -33,6 +34,9 @@ public:
     const string name = "Abstract class of Particle";
 
     Simulation_Box box;
+
+    Cell_List cell_list;
+    Cell_List coll_cell_list;
 
     const double degToRad = 0.0174532925;
 

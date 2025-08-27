@@ -18,6 +18,7 @@ HEADERS += \
     angle.h \
     atom.h \
     bond.h \
+    cell_list.h \
     data.h \
     force_field.h \
     rng.h \

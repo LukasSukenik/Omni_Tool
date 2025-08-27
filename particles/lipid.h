@@ -7,8 +7,6 @@
 #include "atom.h"
 #include "bond.h"
 
-
-
 #define RECEPTOR_BOND_TYPE 4
 #define RECEPTOR_ANGLE_TYPE 1
 
@@ -20,194 +18,7 @@
 
 using namespace std;
 
-class Tensor_xyz_integer
-{
-public:
-    Tensor_xyz_integer(){}
-    int x,y,z;
-};
 
-class Cell_List : public vector<vector<vector< vector<int >* >>> // 3D spatial indices + list of index to coll_beads
-{
-public:
-    Cell_List(){}
-
-    Tensor_xyz_integer number_of_cells;
-    Tensor_xyz cell_size; // for lipids at leat 4.0
-
-    double xlo = 0.0; // for spatial indices
-    double xhi = 0.0;
-    double ylo = 0.0;
-    double yhi = 0.0;
-    double zlo = 0.0;
-    double zhi = 0.0;
-
-    vector< vector<int>* > neighbors;
-    vector<int>* empty_list;
-
-    void show()
-    {
-        cerr << "xlo:" << xlo << " xhi:" << xhi << endl;
-        cerr << "ylo:" << ylo << " yhi:" << yhi << endl;
-        cerr << "zlo:" << zlo << " zhi:" << zhi << endl;
-        cerr << "number of cells: " << number_of_cells.x << ", " << number_of_cells.y << ", " << number_of_cells.z << endl;
-        cerr << "cell_size: " << cell_size.x << ", " << cell_size.y << ", " << cell_size.x << endl;
-    }
-
-
-    void init_cell_list(Data& data)
-    {
-        xlo = data.in.sim_box.xlo;
-        xhi = data.in.sim_box.xhi;
-        ylo = data.in.sim_box.ylo;
-        yhi = data.in.sim_box.yhi;
-        zlo = data.in.sim_box.zlo;
-        zhi = data.in.sim_box.zhi;
-
-        number_of_cells.x = floor( (xhi - xlo)/4.0 );
-        number_of_cells.y = floor( (yhi - ylo)/4.0 );
-        number_of_cells.z = floor( (zhi - zlo)/4.0 );
-
-        cell_size.x = (xhi - xlo) / number_of_cells.x;
-        cell_size.y = (xhi - xlo) / number_of_cells.x;
-        cell_size.z = (xhi - xlo) / number_of_cells.x;
-
-        empty_list = new vector<int>();
-
-        neighbors.resize(27);
-        neighbors.assign(27, empty_list);
-
-        (*this).resize( number_of_cells.x );
-
-        for(int i=0; i<number_of_cells.x; ++i)
-        {
-            (*this)[i].resize(number_of_cells.y);
-
-            for(int j=0; j<number_of_cells.y; ++j)
-            {
-                (*this)[i][j].resize(number_of_cells.z);
-                for(int k=0; k<number_of_cells.z; ++k)
-                {
-                    (*this)[i][j][k] = new vector<int >();
-                    (*this)[i][j][k]->reserve(100);
-                }
-            }
-        }
-        cerr << "Cell_List::init_cell_list" << endl;
-        show();
-    }
-
-    void delete_cell_list()
-    {
-        int number_of_cells = this->size();
-        for(int i=0; i<number_of_cells; ++i)
-        {
-            for(int j=0; j<number_of_cells; ++j)
-            {
-                for(int k=0; k<number_of_cells; ++k)
-                {
-                    delete (*this)[i][j][k];
-                }
-            }
-        }
-        delete empty_list;
-    }
-
-    int get_spatial_X(Tensor_xyz pos)
-    {
-        return floor(floor(pos.x - xlo) / cell_size.x);
-    }
-
-    int get_spatial_Y(Tensor_xyz pos)
-    {
-        return floor(floor(pos.y - ylo) / cell_size.y);
-    }
-
-    int get_spatial_Z(Tensor_xyz pos)
-    {
-        return floor(floor(pos.z - zlo) / cell_size.z);
-    }
-
-    void add_lipid_to_cell_list(Atoms& part, int offset)
-    {
-        for(unsigned int i=0; i<part.size(); ++i)
-        {
-            (*this)[get_spatial_X(part[i].pos)]
-                     [get_spatial_Y(part[i].pos)]
-                     [get_spatial_Z(part[i].pos)]->push_back(offset + i);
-            //cerr << "Cell_List::add_lipid_cell_list [" << get_spatial_index(part[0].pos.x) << ", " << get_spatial_index(part[0].pos.y) << ", " << get_spatial_index(part[0].pos.z) << "] = " << beads.size() + i << endl;
-        }
-    }
-
-    void set_neighbors(Tensor_xyz pos)
-    {
-        //cerr << "Cell_List::set_neighbors start" << endl;
-        int x = get_spatial_X(pos);
-        int y = get_spatial_Y(pos);
-        int z = get_spatial_Z(pos);
-        for(int i=0; i<3; ++i)
-        {
-            for(int j=0; j<3; ++j)
-            {
-                for(int k=0; k<3; ++k)
-                {
-                    if(x+i-1 < 0 || y+j-1 < 0 || z+k-1 < 0 || x+i-1 >= number_of_cells.x || y+j-1 >= number_of_cells.y || z+k-1 >= number_of_cells.z )
-                    {
-                        neighbors[(i*9) +(j*3) + k] = empty_list;
-                    }
-                    else
-                    {
-                        neighbors[(i*9) +(j*3) + k] = (*this)[x+i-1][y+j-1][z+k-1];
-                    }
-                }
-            }
-        }
-        //cerr << "Cell_List::set_neighbors end" << endl;
-        //show_neighbors();
-    }
-
-    void show_neighbors()
-    {
-        int sum=0;
-        for(int i=0; i<3; ++i)
-        {
-            for(int j=0; j<3; ++j)
-            {
-                for(int k=0; k<3; ++k)
-                {
-                    cerr << "Neighbor:" << i << ", " << j << ", " << k << " : " << neighbors[(i*9) +(j*3) + k]->size() << endl;
-                    sum += neighbors[(i*9) +(j*3) + k]->size();
-                }
-            }
-        }
-        cerr << "Neighbor sum: " << sum << endl;
-    }
-
-    bool validate_neighbors(Atom test, Atoms& beads)
-    {
-        double max_dist_SQ = 4.0 * ( cell_size.x*cell_size.x + cell_size.y*cell_size.y + cell_size.z*cell_size.z );
-
-        for(int i=0; i<3; ++i)
-        {
-            for(int j=0; j<3; ++j)
-            {
-                for(int k=0; k<3; ++k)
-                {
-                    for(int index : (*neighbors[(i*9) +(j*3) + k]) )
-                    {
-                        if(test.distSQ(beads[index]) > max_dist_SQ)
-                        {
-                            cerr << "validate_neighbors::Maximal distance exceeded: " << "[" << i << ", " << j << ", " << k << "] : " << sqrt(test.distSQ(beads[index])) << " > " << sqrt(max_dist_SQ) << endl;
-                            cerr << "    test[" << test.pos.x << ", " << test.pos.y << ", " << test.pos.z << "] vs beads[" << index << "]:[" << beads[index].pos.x << ", " << beads[index].pos.y << ", " << beads[index].pos.z << "]" << endl;
-                            exit(1);
-                        }
-                    }
-                }
-            }
-        }
-        return true;
-    }
-};
 
 class Lipid : public Particle {
 public:
@@ -229,9 +40,6 @@ public:
 
     Atoms part;  // consecutive:  0:HEAD, 1:TAIL, 2:TAIL (the further one)
     Bonds bond;      // 0: between 1-2 TAIL_HEAD_BOND, 1: 2-3 TAIL_TAIL_BOND, 2: 1-3 HARMONIC_BOND, 3: 3-4 TAIL_END_BOND, 4: 2-4 HARMONIC_BOND2
-
-    Cell_List cell_list;
-
 
     Lipid() : Particle("lipid") {}
     Lipid(Atom p1, Atom p2, Atom p3, Atom p4) : Particle("lipid")
@@ -282,8 +90,26 @@ public:
         return 0;
     }
 
+    void eval_attempts(int tries, int mol_count)
+    {
+        if(tries != 0 && tries % 10000 == 0)
+            cerr << "Molecule " << mol_count << " trial " << tries << "\n";
 
+        if(tries > 10*1000*1000) // with cell list 10M is feasible
+        {
+            cerr << "Particles::populate -> Can't generate any more particles, simulation box is full, tries" << tries << endl;
+            exit(1);
+        }
+    }
 
+    bool is_coll_overlap(vector<Atoms>& coll_Atoms)
+    {
+        if(!coll_Atoms.empty())
+        {
+            return coll_Atoms[0].is_overlap(part, 0.9, coll_cell_list.neighbors);
+        }
+        return false;
+    }
 
     void populate(Data& data)
     {
@@ -296,50 +122,43 @@ public:
             int mol_tag = data.in.mol_tag;
             int existing_lipid_count = get_lipid_count(data);
 
-            cell_list.init_cell_list(data);
+            cell_list.init(data);
+            coll_cell_list.init(data);
+
+            if(!data.coll_beads.empty())
+            {
+                coll_cell_list.add(data.coll_beads[0]);
+            }
 
             //
             // Copy, move, rotate
             //
             for(int i=0; i < data.in.population.count; ++i)
             {
+                cerr << "lipid::populate lipid_N " << i+existing_lipid_count << "\n";
+
                 random_pos = data.in.sim_box.get_random_pos();
                 random_dir.randomUnitSphere();
                 set_lipid(i+existing_lipid_count, random_pos, random_dir, mol_tag); // stores new lipid into part
-                cell_list.set_neighbors( part.get_center_of_mass().pos );
 
-                cerr << "lipid::populate lipid_N " << i+existing_lipid_count << "\n";
+                cell_list.set_neighbors( part.get_center_of_mass().pos );
+                coll_cell_list.set_neighbors( part.get_center_of_mass().pos );
 
                 int tries=0;
-                bool is_coll_overlap = false;
-                if(!data.coll_beads.empty())
-                {
-                    is_coll_overlap = data.coll_beads[0].is_overlap(part, 0.9);
-                }
-                while( !data.in.sim_box.is_in_box(part) || beads.is_overlap(part, 0.9, cell_list.neighbors) || is_coll_overlap ) // beads.is_overlap(part, 0.9)
+                while( !data.in.sim_box.is_in_box(part) || beads.is_overlap(part, 0.9, cell_list.neighbors) || is_coll_overlap( data.coll_beads ) ) // beads.is_overlap(part, 0.9)
                 {
                     random_pos = data.in.sim_box.get_random_pos();
                     random_dir.randomUnitSphere();
                     set_lipid(i+existing_lipid_count, random_pos, random_dir, mol_tag);
+
                     cell_list.set_neighbors( part.get_center_of_mass().pos );
+                    coll_cell_list.set_neighbors( part.get_center_of_mass().pos );
 
-                    if(tries != 0 && tries % 10000 == 0)
-                        cerr << "Molecule " << i << " trial " << tries << "\n";
-
-                    if(tries > 1000000)
-                    {
-                        cerr << "Particles::populate -> Can't generate any more particles, simulation box is full, tries" << tries << endl;
-                        exit(1);
-                    }
+                    eval_attempts(tries, i);
                     ++tries;
-
-                    if(!data.coll_beads.empty())
-                    {
-                        is_coll_overlap = data.coll_beads[0].is_overlap(part, 0.9);
-                    }
                 }
 
-                cell_list.add_lipid_to_cell_list(part, beads.size());
+                cell_list.add(part, beads.size());
                 beads.insert( beads.end(), part.begin(), part.end() );
                 bonds.insert( bonds.end(), bond.begin(), bond.end() );
 
@@ -353,7 +172,8 @@ public:
                 cerr << "Lipid::populate - multiple collection overlap not implemented, max collections is 2" << endl;
             }
 
-            cell_list.delete_cell_list();
+            cell_list.delete_all();
+            coll_cell_list.delete_all();
         }
         cerr << "populate " << data.in.population << endl;
     }
