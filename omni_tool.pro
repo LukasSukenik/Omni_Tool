@@ -14,7 +14,6 @@ SOURCES += main.cpp \
     xdrfile-1.1.4/src/xdrfile_xtc.c
 
 HEADERS += \
-    Systems/lipid_nanoparticle.h \
     angle.h \
     atom.h \
     bond.h \
@@ -49,8 +48,14 @@ HEADERS += \
     particles/surface.h \
     particles/slab.h \
     particles/tennisball.h \
-    Systems/system_base.h \
-    Systems/virus_pseudot3.h \
+    Systems/flat_membrane.h \
+    Systems/lipid_nanoparticle.h \
     Systems/membrane.h \
+    Systems/system_base.h \
+    Systems/system_container.h \
     Systems/vesicle.h \
-    Systems/system_container.h
+    Systems/virus_pseudot3.h
+
+
+
+

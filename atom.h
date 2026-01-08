@@ -296,7 +296,7 @@ public:
         bool same = false;
         for(Atom& o : other)
         {
-            bool same = false;
+            same = false;
             for(Atom& a : *(this))
             {
                 if(a == o)

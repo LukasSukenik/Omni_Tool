@@ -82,7 +82,7 @@ public:
 
     bool is_particle_gen()
     {
-        return !in.gen_structure.empty();
+        return !in.gen_structure_ID.empty();
     }
 
     bool is_system()
@@ -215,7 +215,7 @@ public:
             lammps.bonds = all_bonds;
             lammps.angles = all_angles;
 
-            lammps.print();
+            lammps.print(in);
         }
         if( in.out.type == IO_Type::xyz)
         {

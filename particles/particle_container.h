@@ -13,6 +13,7 @@
 #include "globular_sphere.h"
 #include "ellipsoid.h"
 #include "vesicle.h"
+#include "flat_membrane.h"
 
 using namespace std;
 
@@ -49,6 +50,7 @@ public:
         (*this)[Ellipsoid::keyword] = new Ellipsoid();
         (*this)[Vesicle::keyword] = new Vesicle();
         (*this)[Lipid::keyword] = new Lipid();
+        (*this)[Flat_Membrane::keyword] = new Flat_Membrane();
     }
 
     ~Particle_Container()

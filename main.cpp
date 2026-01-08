@@ -80,17 +80,17 @@ int main(int argc, char* argv[])
         //
         if( data.is_particle_gen() )
         {
-            if(particles.count(data.in.gen_structure) > 0)
+            if(particles.count(data.in.gen_structure_ID) > 0)
             {
-                cerr << "Generating particle: " << particles[ data.in.gen_structure ]->name << endl;
-                particles[ data.in.gen_structure ]->generate( data );
-                particles[ data.in.gen_structure ]->modify( data );
-                particles[ data.in.gen_structure ]->populate( data );
-                particles[ data.in.gen_structure ]->make_persistent(data); // particle data
+                cerr << "Generating particle: " << particles[ data.in.gen_structure_ID ]->name << endl;
+                particles[ data.in.gen_structure_ID ]->generate( data );
+                particles[ data.in.gen_structure_ID ]->modify( data );
+                particles[ data.in.gen_structure_ID ]->populate( data );
+                particles[ data.in.gen_structure_ID ]->make_persistent(data); // particle data
             }
             else
             {
-                cerr << "main.cpp particle keyword not found " << data.in.gen_structure << endl;
+                cerr << "main.cpp :: " << data.in.gen_structure_ID << " keyword not found in particle_container" << endl;
             	exit(2);
             }
         }

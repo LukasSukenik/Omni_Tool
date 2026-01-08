@@ -87,6 +87,10 @@ public:
 
 
 
+
+
+
+
 /**
  * @brief Populate
  * Defines the population of particles in the simulation box
@@ -158,7 +162,7 @@ public:
     IO in;  /// Input type  - none, pdb, lammps_full
 
     // particle identifier
-    string gen_structure; /// keyword identifying the structure class
+    string gen_structure_ID; /// keyword identifying the structure class
 
     // system identifier
     string system_type;
@@ -185,6 +189,9 @@ public:
     // atom types
     int chain_type=-1;
     vector<int> atom_type;
+
+    // atom type mass
+    vector<int> atom_mass;
 
     // molecule types
     int mol_tag=-1;
@@ -254,7 +261,7 @@ public:
             if( what.compare("ID:") == 0 )                { ss >> id; }
 
             // Load particle identifier
-            if( what.compare("Particle_type:") == 0 )     { ss >> gen_structure; }
+            if( what.compare("Particle_type:") == 0 )     { ss >> gen_structure_ID; }
 
             // Load system identifier
             if( what.compare("System_type:") == 0 )       { ss >> system_type; }
@@ -276,6 +283,7 @@ public:
 
             // Load atom and molecule types
             if( what.compare("Atom_type:") == 0 )         { load_atom_type(ss); }
+            if( what.compare("Atom_mass:") == 0 )         { load_atom_mass(ss); }
             if( what.compare("Mol_tag:") == 0 ) 		  { ss >> mol_tag; }
             if( what.compare("Chain_type:") == 0 ) 		  { ss >> chain_type; }
 
@@ -326,6 +334,15 @@ public:
         }
     }
 
+    void load_atom_mass(stringstream& ss)
+    {
+        int temp_mass;
+        while( ss >> temp_mass )
+        {
+            atom_mass.push_back(temp_mass);
+        }
+    }
+
     string toString()
     {
         stringstream ss;
@@ -343,12 +360,12 @@ public:
         }
 
         // Generating structure
-        if( !gen_structure.empty() )
-            ss << "Particle_type: " << gen_structure << endl;
+        if( !gen_structure_ID.empty() )
+            ss << "Particle_type: " << gen_structure_ID << endl;
 
         ss << "Output_type: " << out << endl;
 
-        if( !gen_structure.empty() )
+        if( !gen_structure_ID.empty() )
         {
             ss << "Number of beads: " << num_of_beads << endl;
             ss << "Number of ligands: " << num_lig << endl;
@@ -389,7 +406,7 @@ public:
         // sim_box;
         // ff;
 
-        gen_structure.clear();
+        gen_structure_ID.clear();
         in.clear();
         system_type.clear();
         system_function.clear();
@@ -407,6 +424,7 @@ public:
         c=0;
 
         atom_type.clear();
+        atom_mass.clear();
         chain_type=-1;
         mol_tag=-1;
 
