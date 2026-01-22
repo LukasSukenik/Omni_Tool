@@ -53,7 +53,15 @@ public:
 
 
     Lipid() : Particle("lipid") {}
-    Lipid(Atom p1, Atom p2, Atom p3, Atom p4, int mol_N=0, Leaflet leaf=Leaflet::upper, bool is_receptor=false) : Particle("lipid")
+    Lipid(Atom p1, Atom p2, Atom p3, Atom p4, int mol_N=0) // usecase: Loading of an existing membrane, so we already know the bead types, bond types generated anew
+    {
+        store_lipid_part(p1, p2, p3, p4);
+        set_lipid_part_N(mol_N);
+        bond.resize(5);
+        set_bond_types();
+        set_lipid_bond_N(mol_N);
+    }
+    Lipid(Atom p1, Atom p2, Atom p3, Atom p4, int mol_N, Leaflet leaf, bool is_receptor=false) : Particle("lipid")
     {
         // assumes atom.pos, atom.N, atom.mol_tag is set, atom.type is now set after in vesicle.h, TODO move inside constructor
         store_lipid_part(p1, p2, p3, p4);
@@ -91,6 +99,48 @@ public:
 
         beads.insert(beads.end(), part.begin(), part.end());
         bonds.insert(bonds.end(), bond.begin(), bond.end());
+    }
+
+    void move(Tensor_xyz m)
+    {
+        if(part.size() != 4)
+        {
+            cerr << "Lipid::move , lipid invalid size of " << part.size() << endl;
+            exit(-1);
+        }
+        part[0].pos += m;
+        part[1].pos += m;
+        part[2].pos += m;
+        part[3].pos += m;
+    }
+
+    void set_mol_tag(int mol_tag)
+    {
+        part[0].mol_tag = mol_tag;
+        part[1].mol_tag = mol_tag;
+        part[2].mol_tag = mol_tag;
+        part[3].mol_tag = mol_tag;
+    }
+
+    //
+    // Operators
+    //
+    Lipid& operator=(const Lipid& other)
+    {
+        if (this != &other) {
+            part = other.part;
+            bond = other.bond;
+        }
+        return *this;
+    }
+
+    bool is_tail(int type)
+    {
+        if(type == type_tail_2_lower_leaf || type == type_tail_2_upper_leaf || type == type_tail_lower_leaf || type == type_tail_upper_leaf)
+        {
+            return true;
+        }
+        return false;
     }
 
 private: // Lipid Generation
@@ -136,9 +186,6 @@ private: // Lipid Generation
         }
     }
 
-
-
-private: // Lipid Generation
     void gen_lipid(Tensor_xyz pos, Tensor_xyz dir, int mol_N=0, int mol_tag=1)
     {
         // Atom.N, Atom.pos, Atom.type, Atom.mol_tag
@@ -341,6 +388,26 @@ public:
 class Lipids : public vector<Lipid>
 {
 public:
+    Lipids(){}
+    Lipids(Atoms& mem, int mol_tag=1, int offset=0)
+    {
+        int num_lipids = mem.size()/4;
+        resize(num_lipids);
+        for(int i=0; i<num_lipids; ++i)
+        {
+            at(i) = Lipid(mem[4*i +0], mem[4*i +1], mem[4*i +2], mem[4*i +3], i+offset, Lipid::Leaflet::upper, false);
+            at(i).set_mol_tag(mol_tag);
+        }
+    }
+
+    void move(Tensor_xyz m)
+    {
+        for(Lipid& lip : (*this))
+        {
+            lip.move(m);
+        }
+    }
+
     bool update_positions(vector<Tensor_xyz>& frame)
     {
         if(4*size() != frame.size())

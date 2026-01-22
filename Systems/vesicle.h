@@ -156,7 +156,7 @@ private:
         Lipids vesicle;
         for(int i=0; i<ves.size(); i+=4)
         {
-            vesicle.push_back( Lipid(ves[i], ves[i+1], ves[i+2], ves[i+3]) );
+            vesicle.push_back( Lipid(ves[i], ves[i+1], ves[i+2], ves[i+3], i) );
         }
 
         Trajectory traj;
