@@ -181,7 +181,16 @@ public:
     //
     // friend functions
     //
+    friend std::istream& operator>>(std::istream& is, Atom& a)
+    {
+        string str;
 
+        is >> a.pos.x >> a.pos.y >> a.pos.z;
+        is >> a.vel.x >> a.vel.y >> a.vel.z;
+        is >> a.type;
+
+        return is;
+    }
 };
 
 bool sortN(const Atom& i, const Atom& j) { return i.N < j.N; }
@@ -214,7 +223,7 @@ public:
     string toString()
     {
         stringstream ss;
-        vector<int> moltags = get_Atom_Types();
+        vector<int> moltags = get_Mol_Types();
         vector<int> types = get_Atom_Types();
 
         ss << "Beads: " << size() << endl;

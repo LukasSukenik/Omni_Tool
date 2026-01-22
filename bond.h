@@ -7,6 +7,9 @@
 
 using namespace std;
 
+/**
+ * @brief The Bond class - N cant be 0
+ */
 class Bond {
 public:
     Bond() : N(-1), type(-1), at1(-1), at2(-1) {}

@@ -29,12 +29,17 @@ public:
         typeLig = data.in.atom_type[0] + 1;
 
         int orientations = orientY;
+        int num_beads = data.in.beads_per_area * surface(data.in.scale, data.in.scale*data.in.c);
+        int num_ligs = data.in.ligs_per_area * surface(data.in.scale, data.in.scale*data.in.c);
 
-        fibonacci_spheroid(beads, data.in.num_of_beads, data.in.c, typeNano, orientations);
-        fibonacci_spheroid(ligand, data.in.num_lig, data.in.c, typeTemp, orientations);
+        fibonacci_spheroid(beads, num_beads, data.in.c, typeNano, orientations);
+        fibonacci_spheroid(ligand, num_ligs, data.in.c, typeTemp, orientations);
         gen_ligands( data, ligand, data.in.patch_1, typeNano, typeTemp);
         gen_ligands( data, ligand, data.in.patch_2, typeNano, typeTemp);
 
+        gen_TMD(data.in.c, data.in.scale, data.in.tmd.size, data.in.tmd.proximal_n, data.in.tmd.distal_n, orientations);
+
+        // add to existing data
         int i=0;
         for(auto& item : beads)
         {
@@ -42,10 +47,66 @@ public:
             item.N = i+1+data.in.offset+data.get_bead_count();
             ++i;
         }
+        i=0;
+        for(auto& b : bonds)
+        {
+            b.N += data.get_bond_count();
+            b.at1 += data.get_bead_count();
+            b.at2 += data.get_bead_count();
+        }
+        for(auto& a : angles)
+        {
+            a.at1 += data.get_bead_count();
+            a.at2 += data.get_bead_count();
+            a.at3 += data.get_bead_count();
+        }
+
+        cerr << "Oblate beads size " << beads.size() << endl;
+    }
+
+
+
+    double surface(double equator_r, double polar_r)
+    {
+        const double PI = 3.141592653589793;
+        double a = equator_r;
+        double c = polar_r;
+        if(polar_r > equator_r)
+        {
+            double frac = (a*a) / (c*c);
+            double e = sqrt(1 - frac );
+            return 2*PI*a*a * (1+ c/(a*e)*asin(e));
+        }
+        return 0.0;
+    }
+
+    /**
+     * @brief gen_TMD - generate transmembrane domain
+     */
+    void gen_TMD(double c, double scale, int size, int n_proxima, int n_distal, int orientation)
+    {
+        double increment = 0.9 * 1.0/scale;
+        if(orientY == orientation)
+        {
+            int type;
+            beads.push_back( Atom(0, -c+increment, 0, 8) );
+            beads.push_back( Atom(0, -c, 0, 8) );
+            bonds.push_back( Bond(1, 6, beads.size()-1, beads.size() ) ); // beads indexed from 0, but the at1, at2, values indexed from 1 -> so no -1
+
+            for(int i=1; i<=size; ++i)
+            {
+                type = 12;
+                if(i <= n_proxima || i > size-n_distal) { type = 11; }
+                beads.push_back( Atom(0, -c -i*increment, 0, type) );
+                bonds.push_back(Bond(i+1, 6, beads.size()-1, beads.size() ));
+                angles.push_back( Angle(i, 1, beads.size()-2, beads.size()-1, beads.size() ) );
+            }
+        }
     }
 
 protected:
-    void fibonacci_spheroid(vector<Atom>& container, int samples, double c, const int type, int orientation) {
+    void fibonacci_spheroid(vector<Atom>& container, int samples, double c, const int type, int orientation)
+    {
         const double PI = 3.141592653589793;
         double tolerance = 0.0001;
 

@@ -97,9 +97,9 @@ protected:
     {
         for(auto& lig : ligand)
         {
-            if(lig.pos.x < patch.pos.x && lig.pos.x > patch.vel.x &&
-               lig.pos.y < patch.pos.y*data.in.c && lig.pos.y > patch.vel.y*data.in.c &&
-               lig.pos.z < patch.pos.z && lig.pos.z > patch.vel.z)
+            if(lig.pos.x > patch.pos.x && lig.pos.x < patch.vel.x &&
+                lig.pos.y > patch.pos.y*data.in.c && lig.pos.y < patch.vel.y*data.in.c &&
+               lig.pos.z > patch.pos.z && lig.pos.z < patch.vel.z)
             {
                 Atom* select = &beads[0]; // Stupid C++, for some reason reference dont work
                 for(auto& item : beads)

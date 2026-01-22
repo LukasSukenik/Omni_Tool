@@ -102,8 +102,10 @@ public:
 
     void print(IO_Input& in)
     {
+        cerr << endl;
+        cerr << "IO_Lammps::print(), beads:" << beads.size() << ", bonds:" << bonds.size() << ", angles:" << angles.size() << endl;
         if(beads.empty()) {
-            cerr << "IO_Lammps::print() beads.empty() -> Nothing to generate" << endl;
+            cerr << "beads.empty() -> Nothing to generate" << endl;
             return;
         }
 
@@ -352,15 +354,23 @@ void IO_Lammps::loadBonds(string filename)
                 break;
         }
 
+        cerr << "Found keyword::Bonds" << endl;
         while(!in.eof())
         {
+            in.getline(str, 256);
+            if (strstr(str, "Angles") != NULL)
+                break;
+
+            istringstream iss(str);
             bond = Bond();
-            in >> bond.N >> bond.type >> bond.at1 >> bond.at2;
-            if(bond.N >= 0)
+            iss >> bond.N >> bond.type >> bond.at1 >> bond.at2;
+
+            if(bond.N > 0)
                 bonds.push_back(bond);
         }
     }
     in.close();
+    cerr << "File " << filename << " Loaded " << bonds.size() << " bonds" << endl;
 
     std::sort(bonds.begin(), bonds.end(), Bond::sort_Bond_by_type);
 

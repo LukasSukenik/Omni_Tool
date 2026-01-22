@@ -183,6 +183,16 @@ public:
         return count;
     }
 
+    int get_bond_count() const
+    {
+        int count=0;
+        for(auto& bb : coll_bonds)
+        {
+            count += bb.size();
+        }
+        return count;
+    }
+
     int get_Max_Mol_Tag()
     {
         int max=0;

@@ -89,6 +89,24 @@ public:
 
 
 
+class TMD
+{
+public:
+    TMD(){}
+
+    int size;
+    int proximal_n;
+    int distal_n;
+
+    void clear()
+    {
+        size = 0;
+        proximal_n = 0;
+        distal_n = 0;
+    }
+};
+
+
 
 
 /**
@@ -175,8 +193,11 @@ public:
     // bead counts
     int num_of_beads=-1; // chain, dodecahedron, ellipsoid, globular_sphere, icosahedron, oblatespheroid, pentamer, slab, sphere, spherepatch, tennisball
     int num_lig=-1;
+    double beads_per_area=0.0;
+    double ligs_per_area=0.0;
     int subdiv_beads=-1;
     int subdiv_lig=-1;
+    TMD tmd; // transmembrane domain
 
     // from gen_membrane
     int op=-1;
@@ -214,7 +235,6 @@ public:
     int seed=0;
     Tensor_xyz ivx = Tensor_xyz(0.0, 0.0, 0.0);
     bool fit = false;
-    int offset = 1;
 
     // Population data
     Population population;
@@ -227,6 +247,8 @@ public:
     vector<CosSQ> cparam;
     Force_Field ff;
 
+    // Deprecated
+    int offset = 0;
 
 
 
@@ -268,10 +290,13 @@ public:
             if( what.compare("System_execute:") == 0 )       { ss >> system_function >> system_var_a >> system_var_b; }
 
             // Load particle atom counts
+            if( what.compare("Beads_per_area:") == 0 )   { ss >> beads_per_area; }
+            if( what.compare("Ligands_per_area:") == 0 ) { ss >> ligs_per_area; }
             if( what.compare("Number_of_beads:") == 0 )   { ss >> num_of_beads; }
             if( what.compare("Number_of_ligands:") == 0 ) { ss >> num_lig; }
             if( what.compare("Subdiv_of_beads:") == 0 )   { ss >> subdiv_beads; }
             if( what.compare("Subdiv_of_ligands:") == 0 ) { ss >> subdiv_lig; }
+            if( what.compare("Trans_membrane_domain:") == 0 ) { ss >> tmd.size; ss >> tmd.proximal_n; ss >> tmd.distal_n; }
 
             // from gen_membrane
             if( what.compare("Operation_type:") == 0 )      { ss >> op; }
@@ -290,13 +315,9 @@ public:
             // Load particle properties: aspect ration, patches
             if( what.compare("b:") == 0 )                 { ss >> b; }
             if( what.compare("c:") == 0 )                 { ss >> c; }
-            if( what.compare("Patch:") == 0 )
-            {
-                patches.push_back(Atom());
-                ss >> patches.back().pos.x >> patches.back().pos.y >> patches.back().pos.z;
-                ss >> patches.back().vel.x >> patches.back().vel.y >> patches.back().vel.z;
-                ss >> patches.back().type;
-            }
+            if( what.compare("Patch:") == 0 )             { Atom a; ss >> a; patches.push_back(a); }
+            if( what.compare("Patch_1:") == 0 )           { ss >> patch_1; }
+            if( what.compare("Patch_2:") == 0 )           { ss >> patch_2; }
 
             // Load system
             if( what.compare("Scale:") == 0 )             { ss >> scale; }
@@ -367,13 +388,16 @@ public:
 
         if( !gen_structure_ID.empty() )
         {
+            ss << "Beads_per_area: " << beads_per_area << endl;
+            ss << "Ligands_per_area: " << ligs_per_area << endl;
             ss << "Number of beads: " << num_of_beads << endl;
             ss << "Number of ligands: " << num_lig << endl;
             ss << "Subdiv of beads: " << subdiv_beads << endl;
             ss << "Subdiv of ligands: " << subdiv_lig << endl;
             ss << "c: " << c << endl;
             ss << "Patch_1: (" << patch_1.pos.x << "-" << patch_1.vel.x << ", " << patch_1.pos.y << "-" << patch_1.vel.y << ", " << patch_1.pos.z << "-" << patch_1.vel.z << ", " << patch_1.type << ")" << endl;
-            ss << "Patch_1: (" << patch_2.pos.x << ", " << patch_2.pos.y << ", " << patch_2.pos.z << ", " << patch_2.type << ")" << endl;
+            ss << "Patch_2: (" << patch_2.pos.x << ", " << patch_2.pos.y << ", " << patch_2.pos.z << ", " << patch_2.type << ")" << endl;
+            ss << "Trans_membrane_domain: (" << tmd.size << ", " << tmd.proximal_n << ", " << tmd.distal_n << ")" << endl;
         }
 
         if(!sim_box.empty())
@@ -413,13 +437,16 @@ public:
         system_var_a=0.0;
         system_var_b=0.0;
 
+        beads_per_area=0.0;
+        ligs_per_area=0.0;
         num_of_beads=-1;
         num_lig=-1;
         subdiv_beads=-1;
         subdiv_lig=-1;
+        tmd.clear();
 
         scale=1.0;
-        offset=1;
+        offset=0;
         b=0;
         c=0;
 
