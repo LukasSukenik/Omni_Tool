@@ -6,6 +6,112 @@
 
 #include "lipid.h"
 
+
+
+class Unassigned : public vector<int>
+{
+public:
+    Unassigned(Atoms& a)
+    {
+        unassigned_size = a.size();
+        resize(a.size());
+        for(int i=0; i<size(); ++i)
+        {
+            at(i) = i;
+        }
+    }
+
+    int unassigned_size = 0;
+
+    void remove(int index)
+    {
+        at(index) = at(unassigned_size-1); // move last id to front
+        --unassigned_size; // decrease size by 1
+    }
+};
+
+class Cluster : public vector<int>
+{
+public:
+    Cluster(){}
+    Cluster(int atom_ID)
+    {
+        push_back(atom_ID);
+    }
+
+    bool is_filled = false;
+
+    void fill_cluster(Atoms& a, Unassigned& id, double cutoff)
+    {
+        int particle_ID = 0;
+        bool added=false;
+        for(int i=0; i<size(); ++i) // cluster.size() dynamically evaluated each time
+        {
+            particle_ID = at(i);
+            for(int j=0; j<id.unassigned_size; ++j) // unassigned particles
+            {
+                if(a[particle_ID].distSQ( a[id.at(j)] ) < cutoff*cutoff)
+                {
+                    added = false;
+                    for(int k=0; k<size(); ++k)
+                    {
+                        if(at(k) == id.at(j))
+                        {
+                            added = true;
+                        }
+                    }
+                    if(!added)
+                    {
+                        push_back(id.at(j));
+                        id.remove(j);
+                        //cerr << "Push " << particle_ID << "::" << j << " " << mem[particle_ID].dist(mem[j]) << endl;
+                    }
+                }
+            }
+        }
+        is_filled = true;
+    }
+};
+
+class Clusters : public vector< Cluster >
+{
+public:
+    Clusters(){}
+
+    int analyze(Atoms& a, double cutoff)
+    {
+        Unassigned un_id(a); // list of particles not assigned to a cluster
+        int safety = 10*1000;
+        int count=0;
+
+        while(un_id.unassigned_size > 0 && count<safety )
+        {
+            push_back(Cluster( un_id.at(0) )); // add the first particle
+            un_id.remove(0);
+            back().fill_cluster(a, un_id, cutoff);
+            count++;
+        }
+
+        int total_particle_count = 0;
+        int cluster_count = size();
+
+        for(int i=0; i<size(); ++i)
+        {
+            total_particle_count += at(i).size();
+        }
+
+        if(a.size() != total_particle_count)
+        {
+            cerr << "Total particle count = " << a.size() << " != particle count in clusters " << total_particle_count << endl;
+        }
+
+        return cluster_count;
+    }
+};
+
+
+
+
 class Flat_Membrane : public System_Base, public Particle
 {
 public:
@@ -23,54 +129,8 @@ public:
         if(data.in.system_function.compare("Copy_Z") == 0) { copy_Z(data, mem); }
         if(data.in.system_function.compare("Cluster_Analysis") == 0)
         {
-            //
-            // Analysis only on lipid tails
-            //
-            Lipid test;
-
-            cell_list.init(data);
-            cell_list.add(mem);
-
-
-
-            vector<int> unassigned; // list of particles not assigned to a cluster
-            int unassigned_size = mem.size();
-            unassigned.resize(mem.size());
-            for(int i=0; i<unassigned.size(); ++i)
-            {
-                unassigned[i] = i;
-            }
-
-            vector<int> cluster; // list of particles of cluster
-            cluster.push_back(0); // add the first particle
-            double cutoff=1.6;
-            int particle_ID = 0;
-            bool added=false;
-            for(int i=0; i<cluster.size(); ++i) // cluster.size() dynamically evaluated each time
-            {
-                particle_ID = cluster[i];
-                for(int j=1; j<mem.size(); ++j)
-                {
-                    if(mem[particle_ID].distSQ(mem[j]) < cutoff*cutoff)
-                    {
-                        added = false;
-                        for(int k=0; k<cluster.size(); ++k)
-                        {
-                            if(cluster[k] == j)
-                            {
-                                added = true;
-                            }
-                        }
-                        if(!added)
-                        {
-                            cluster.push_back(j);
-                            //cerr << "Push " << particle_ID << "::" << j << " " << mem[particle_ID].dist(mem[j]) << endl;
-                        }
-                    }
-                }
-            }
-            cerr << "Cluster size: " << cluster.size() << endl;
-            exit(1);
+            Clusters clusters; // list of particle indexes
+            cerr << "Cluster analysis: number of clusters: " << clusters.analyze(mem, 1.6) << endl;
         }
     }
 
