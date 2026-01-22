@@ -38,7 +38,21 @@ public:
         return a;
     }
 
-    Atom usePBC(Tensor_xyz& pos_orig, double scale) const
+    bool is_in_box(Atoms atms)
+    {
+        for(auto& a : atms)
+        {
+            if(a.pos.x > xhi || a.pos.x < xlo)
+                return false;
+            if(a.pos.y > yhi || a.pos.y < ylo)
+                return false;
+            if(a.pos.z > zhi || a.pos.z < zlo)
+                return false;
+        }
+        return true;
+    }
+
+    Atom usePBC(Tensor_xyz& pos_orig, double scale) const // used by dodecahedron only, dont touch
     {
         Tensor_xyz pos = pos_orig;
 

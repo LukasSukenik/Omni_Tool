@@ -15,8 +15,36 @@ using namespace std;
 
 void do_analysis();
 
+
+
+
+class Version
+{
+public:
+    int v=4;
+
+    Version()
+    {
+        splash();
+    }
+
+    void splash()
+    {
+        cerr << "*******************" << endl;
+        cerr << "*                 *" << endl;
+        cerr << "* Omni Tool :: v" << v << " *" << endl;
+        cerr << "*                 *" << endl;
+        cerr << "*******************" << endl;
+    }
+};
+
+
+
+
 int main(int argc, char* argv[])
 {
+    Version v;
+
     Data data;
     Particle_Container particles;
     System_Container systems;
@@ -52,16 +80,17 @@ int main(int argc, char* argv[])
         //
         if( data.is_particle_gen() )
         {
-            if(particles.count(data.in.gen_structure) > 0)
+            if(particles.count(data.in.gen_structure_ID) > 0)
             {
-                cerr << "Generating particle: " << particles[ data.in.gen_structure ]->name << endl;
-                particles[ data.in.gen_structure ]->generate( data );
-                particles[ data.in.gen_structure ]->modify( data );
-                particles[ data.in.gen_structure ]->make_persistent(data); // particle data
+                cerr << "Generating particle: " << particles[ data.in.gen_structure_ID ]->name << endl;
+                particles[ data.in.gen_structure_ID ]->generate( data );
+                particles[ data.in.gen_structure_ID ]->modify( data );
+                particles[ data.in.gen_structure_ID ]->populate( data );
+                particles[ data.in.gen_structure_ID ]->make_persistent(data); // particle data
             }
             else
             {
-                cerr << "main.cpp particle keyword not found " << data.in.gen_structure << endl;
+                cerr << "main.cpp :: " << data.in.gen_structure_ID << " keyword not found in particle_container" << endl;
             	exit(2);
             }
         }

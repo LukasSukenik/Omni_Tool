@@ -88,6 +88,7 @@ public:
 
 
 
+
 class TMD
 {
 public:
@@ -104,6 +105,7 @@ public:
         distal_n = 0;
     }
 };
+
 
 
 
@@ -136,7 +138,7 @@ public:
     {
     	if(pop.random)
     	{
-    		os << pop.count << " random";
+            os << pop.count << " random";
     	}
     	else
     	{
@@ -173,11 +175,12 @@ public:
 
     // IO
     string file_structure; /// name of the filename with lammps_full atoms
+    string trajectory;
     IO out; /// Output type - none, pdb, lammps_full, xyz
     IO in;  /// Input type  - none, pdb, lammps_full
 
     // particle identifier
-    string gen_structure; /// keyword identifying the structure class
+    string gen_structure_ID; /// keyword identifying the structure class
 
     // system identifier
     string system_type;
@@ -206,7 +209,10 @@ public:
 
     // atom types
     int chain_type=-1;
-    int atom_type=1;
+    vector<int> atom_type;
+
+    // atom type mass
+    vector<int> atom_mass;
 
     // molecule types
     int mol_tag=-1;
@@ -271,12 +277,13 @@ public:
 
             // Load io
             if( what.compare("Load_file:") == 0 )         { ss >> file_structure; }
+            if( what.compare("Trajectory_file:") == 0 )   { ss >> trajectory; }
             if( what.compare("Output_type:") == 0 )       { ss >> out; }
             if( what.compare("Input_type:") == 0 )        { ss >> in; }
             if( what.compare("ID:") == 0 )                { ss >> id; }
 
             // Load particle identifier
-            if( what.compare("Particle_type:") == 0 )     { ss >> gen_structure; }
+            if( what.compare("Particle_type:") == 0 )     { ss >> gen_structure_ID; }
 
             // Load system identifier
             if( what.compare("System_type:") == 0 )       { ss >> system_type; }
@@ -300,7 +307,8 @@ public:
             if( what.compare("Number_of_receptors:") == 0 ) { ss >> num_rec; }
 
             // Load atom and molecule types
-            if( what.compare("Atom_type:") == 0 )         { ss >> atom_type; }
+            if( what.compare("Atom_type:") == 0 )         { load_atom_type(ss); }
+            if( what.compare("Atom_mass:") == 0 )         { load_atom_mass(ss); }
             if( what.compare("Mol_tag:") == 0 ) 		  { ss >> mol_tag; }
             if( what.compare("Chain_type:") == 0 ) 		  { ss >> chain_type; }
 
@@ -338,6 +346,24 @@ public:
         return true;
     }
 
+    void load_atom_type(stringstream& ss)
+    {
+        int temp_type;
+        while( ss >> temp_type )
+        {
+            atom_type.push_back(temp_type);
+        }
+    }
+
+    void load_atom_mass(stringstream& ss)
+    {
+        int temp_mass;
+        while( ss >> temp_mass )
+        {
+            atom_mass.push_back(temp_mass);
+        }
+    }
+
     string toString()
     {
         stringstream ss;
@@ -349,13 +375,18 @@ public:
             ss << "Input_type:" << in << endl;
         }
 
+        if( !trajectory.empty() )
+        {
+            ss << "Trajectory_file: " << trajectory << endl;
+        }
+
         // Generating structure
-        if( !gen_structure.empty() )
-            ss << "Particle_type: " << gen_structure << endl;
+        if( !gen_structure_ID.empty() )
+            ss << "Particle_type: " << gen_structure_ID << endl;
 
         ss << "Output_type: " << out << endl;
 
-        if( !gen_structure.empty() )
+        if( !gen_structure_ID.empty() )
         {
             ss << "Beads_per_area: " << beads_per_area << endl;
             ss << "Ligands_per_area: " << ligs_per_area << endl;
@@ -399,7 +430,7 @@ public:
         // sim_box;
         // ff;
 
-        gen_structure.clear();
+        gen_structure_ID.clear();
         in.clear();
         system_type.clear();
         system_function.clear();
@@ -419,7 +450,8 @@ public:
         b=0;
         c=0;
 
-        atom_type=1;
+        atom_type.clear();
+        atom_mass.clear();
         chain_type=-1;
         mol_tag=-1;
 
@@ -439,6 +471,7 @@ public:
 
         population.clear();
         file_structure.clear();
+        trajectory.clear();
         bparam.clear();
         cparam.clear();
     }

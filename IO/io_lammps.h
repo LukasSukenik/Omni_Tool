@@ -8,13 +8,42 @@
 
 #include "types.h"
 #include "sim_box.h"
+#include "io_input.h"
 
 
 
 
 /**
  * @brief The IO_Lammps class
- * Class for IO of files in lammps data formats
+ * Class for IO of files in lammps full data format
+ *
+ * Annotation of lammps full format:
+ *
+ * LAMMPS Description           (1st line of file)
+ *
+ * 100 atoms         (this must be the 3rd line, 1st 2 lines are ignored)
+ * 95 bonds          (# of bonds to be simulated)
+ * 50 angles         (include these lines even if number = 0)
+ *
+ * 5 atom types           (# of nonbond atom types)
+ * 10 bond types          (# of bond types = sets of bond coefficients)    (do not include a bond,angle,dihedral,improper type line if number of bonds,angles,etc is 0)
+ *
+ * -0.5 0.5 xlo xhi       (for periodic systems this is box size, for non-periodic it is min/max extent of atoms)
+ * -0.5 0.5 ylo yhi
+ * -0.5 0.5 zlo zhi       (do not include this line for 2-d simulations)
+ *
+ * Masses
+ *
+ * 1 mass
+ * ...
+ * N mass                           (N = # of atom types)
+ *
+ * Atoms
+ *
+ * 1 molecule-tag atom-type q x y z nx ny nz  (nx,ny,nz are optional - see "true flag" input command)
+ * ...
+ * N molecule-tag atom-type q x y z nx ny nz  (N = # of atoms)
+ *
  */
 class IO_Lammps
 {
@@ -69,10 +98,9 @@ public:
         cerr << "Load done" << endl;
 
         loadAngles(in_file);
-
     }
 
-    void print()
+    void print(IO_Input& in)
     {
         cerr << endl;
         cerr << "IO_Lammps::print(), beads:" << beads.size() << ", bonds:" << bonds.size() << ", angles:" << angles.size() << endl;
@@ -126,8 +154,20 @@ public:
         // Print Masses
         //
         cout << "\nMasses\n\n";
-        for(int i=0; i<num_a_types; ++i )
-            cout << i+1 << " mass_" << i+1 << "\n";
+
+        if(in.atom_mass.empty() && num_a_types != in.atom_type.size())
+        {
+            for(int i=0; i<num_a_types; ++i )
+                cout << i+1 << " mass_" << i+1 << "\n";
+        }
+        else
+        {
+            if(in.atom_type.size() == in.atom_mass.size()) // this is only implemented for single file generation, if 2 files are used then this will be broken, working for flat membrane
+            {
+                for(int i=0; i<in.atom_mass.size(); ++i)
+                    cout << i+1 << " " << in.atom_mass[i] << "\n";
+            }
+        }
 
         //
         // Print Atoms

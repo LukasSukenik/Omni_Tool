@@ -7,7 +7,9 @@
 #include "system_base.h"
 #include "virus_pseudot3.h"
 #include "membrane.h"
+#include "lipid_nanoparticle.h"
 #include "vesicle.h"
+#include "flat_membrane.h"
 
 using namespace std;
 
@@ -25,6 +27,8 @@ public:
         //
         (*this)[Virus_pseudoT3::keyword] = new Virus_pseudoT3();
         (*this)[Vesicle::keyword] = new Vesicle();
+        (*this)[Lipid_Nanoparticle::keyword] = new Lipid_Nanoparticle();
+        (*this)[Flat_Membrane::keyword] = new Flat_Membrane();
         //(*this)[Icosahedron<Surface>::keyword] = new Icosahedron<Surface>();
     }
 

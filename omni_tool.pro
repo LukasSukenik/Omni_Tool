@@ -17,6 +17,7 @@ HEADERS += \
     angle.h \
     atom.h \
     bond.h \
+    cell_list.h \
     data.h \
     force_field.h \
     rng.h \
@@ -47,8 +48,14 @@ HEADERS += \
     particles/surface.h \
     particles/slab.h \
     particles/tennisball.h \
-    Systems/system_base.h \
-    Systems/virus_pseudot3.h \
+    Systems/flat_membrane.h \
+    Systems/lipid_nanoparticle.h \
     Systems/membrane.h \
+    Systems/system_base.h \
+    Systems/system_container.h \
     Systems/vesicle.h \
-    Systems/system_container.h
+    Systems/virus_pseudot3.h
+
+
+
+

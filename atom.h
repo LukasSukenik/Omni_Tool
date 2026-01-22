@@ -8,7 +8,6 @@
 
 
 
-
 class Atom{
 public:
     //
@@ -62,13 +61,13 @@ public:
     //
     Atom() {}
     Atom(Tensor_xyz pos, int type=0): type(type), pos(pos) {}
-    Atom(int N, Tensor_xyz pos, int type=0): N(N), type(type), pos(pos) {}
-    Atom(myFloat x, myFloat y, myFloat z, int type=0): type(type), pos(x,y,z) {}
-
-    Atom(myFloat x, myFloat y, myFloat z, myFloat vx, myFloat vy, myFloat vz, int type=0): type(type), pos(x,y,z), vel(vx,vy,vz) {}
-
-    Atom(myFloat x, myFloat y, myFloat z, int type, int mol_tag): mol_tag(mol_tag), type(type), pos(x,y,z) {}
     Atom(Tensor_xyz pos, int type, int mol_tag): mol_tag(mol_tag), type(type), pos(pos) {}
+
+    Atom(myFloat x, myFloat y, myFloat z, int type=0): type(type), pos(x,y,z) {}
+    Atom(myFloat x, myFloat y, myFloat z, myFloat vx, myFloat vy, myFloat vz, int type=0): type(type), pos(x,y,z), vel(vx,vy,vz) {}
+    Atom(myFloat x, myFloat y, myFloat z, int type, int mol_tag): mol_tag(mol_tag), type(type), pos(x,y,z) {}
+
+    Atom(int N, Tensor_xyz pos, int type=0): N(N), type(type), pos(pos) {}
     Atom(int N, Tensor_xyz pos, int type, int mol_tag): N(N), mol_tag(mol_tag), type(type), pos(pos) {}
 
     //
@@ -204,6 +203,18 @@ bool myfunction (Atom i,Atom j) { return (i.pos.size()<j.pos.size()); }
 class Atoms : public vector< Atom >
 {
 public:
+
+    void set_frame(vector<Tensor_xyz>& frame)
+    {
+        this->clear();
+        this->resize(frame.size());
+
+        for(unsigned int i=0; i<frame.size(); ++i)
+        {
+            (*this)[i].pos = frame[i];
+        }
+    }
+
     //
     //
     // IO methods
@@ -294,7 +305,7 @@ public:
         bool same = false;
         for(Atom& o : other)
         {
-            bool same = false;
+            same = false;
             for(Atom& a : *(this))
             {
                 if(a == o)
@@ -471,13 +482,28 @@ public:
         return false;
     }
 
-    bool is_overlap(Atom& b, double cutoff=1.0) const
+    bool is_overlap(Atom& b, double cutoffSQ=1.0) const
     {
         for(const Atom& a : (*this))
         {
-            if( b.dist(a) < cutoff )
+            if( b.distSQ(a) < cutoffSQ )
             {
                 return true;
+            }
+        }
+        return false;
+    }
+
+    bool is_overlap(Atom& b, double cutoffSQ, vector< vector<int>* >& nei) const
+    {
+        for(int j=0; j<nei.size(); ++j)
+        {
+            for(int i : (*nei[j]))
+            {
+                if( b.distSQ( (*this)[i] ) < cutoffSQ )
+                {
+                    return true;
+                }
             }
         }
         return false;
@@ -505,20 +531,36 @@ public:
         return false;
     }
 
-    bool is_overlap(Atoms& other, double cutoff=1.0) const
+    bool is_overlap(Atoms& other, double cutoff=1.0, bool check_hollow=false) const
     {
         for(Atom& o : other)
         {
-            if( is_overlap(o, cutoff) ) // overlap of atom o with this container
+            if( is_overlap(o, cutoff*cutoff) ) // overlap of atom o with this container
             {
                 return true;
             }
         }
 
-        return is_within_hollow(other);
+        if(check_hollow)
+            return is_within_hollow(other);
+
+        return false;
     }
 
-    bool is_overlap(Atoms& other, Force_Field& ff) const
+    bool is_overlap(Atoms& other, double cutoff, vector< vector<int>* >& nei) const
+    {
+        for(Atom& o : other)
+        {
+            if( is_overlap(o, cutoff*cutoff, nei) ) // overlap of atom o with this container
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    bool is_overlap(Atoms& other, Force_Field& ff, bool check_hollow=false) const
     {
     	for(Atom& o : other)
     	{
@@ -528,7 +570,10 @@ public:
     		}
     	}
 
-        return is_within_hollow(other);
+        if(check_hollow)
+            return is_within_hollow(other);
+
+        return false;
     }
 
 

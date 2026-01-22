@@ -13,10 +13,11 @@
 #include "xdrfile-1.1.4/include/xdrfile.h"
 #include "xdrfile-1.1.4/include/xdrfile_xtc.h"
 
-#include<stdio.h>
+#include <stdio.h>
 
 #include "data.h"
 #include "atom.h"
+#include "cell_list.h"
 
 
 using namespace std;
@@ -33,6 +34,9 @@ public:
     const string name = "Abstract class of Particle";
 
     Simulation_Box box;
+
+    Cell_List cell_list;
+    Cell_List coll_cell_list;
 
     const double degToRad = 0.0174532925;
 
@@ -76,7 +80,6 @@ public:
     {
         scale( data.in.scale );
         move( data.in.com_pos );
-        populate( data );
     }
 
     void make_persistent(Data& data)
@@ -96,6 +99,10 @@ public:
         data.all_sigma = this->sigma;
         data.all_sigma_size = this->sigma_size;
         data.all_sigma_cosatt = this->sigma_cosatt;
+
+        beads.clear();
+        bonds.clear();
+        angles.clear();
     }
 
     virtual string help()
@@ -138,29 +145,27 @@ public:
         return !same;
     }
 
-private:
-
-    void populate(Data& data)
+    virtual void populate(Data& data)
     {
     	if( data.in.population.random )
     	{
-            Atoms copy(beads);
-            beads.clear();
-            Atoms temp;
-            Tensor_xyz com_pos;
-
             //
             // Report
             //
-            if(copy.empty())
+            if(beads.empty())
             {
                 cerr << "No particle created, can't populate system" << endl;
                 exit(-1);
             }
             else
             {
-                cerr << "Copying particle of " << copy.size() << " atoms " << data.in.population.count << " times" << endl;
+                cerr << "Copying particle of " << beads.size() << " atoms " << data.in.population.count << " times" << endl;
             }
+
+            Atoms copy(beads);
+            beads.clear();
+            Atoms temp;
+            Tensor_xyz com_pos;
 
             //
             // Copy, move, rotate
@@ -199,6 +204,8 @@ private:
     	}
     	cerr << "populate " << data.in.population << endl;
     }
+
+private:
 
     void move(Atom move)
     {
@@ -242,7 +249,7 @@ public:
 
     void generate( Data& data )
     {
-        beads.push_back(Atom(0,0,0,data.in.atom_type,data.in.mol_tag));
+        beads.push_back(Atom(0,0,0,data.in.atom_type[0],data.in.mol_tag));
     }
 
     string help()

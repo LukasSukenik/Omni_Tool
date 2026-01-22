@@ -16,31 +16,6 @@
 
 using namespace std;
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 /**
  * @brief The BeadParam class
  * Bead LJ parameters
@@ -48,6 +23,7 @@ using namespace std;
 class LJ {
 public:
 	LJ(){}
+    LJ(double sigma) : sigma(sigma) {}
 	LJ(int type, double epsilon, double sigma, double cutoff) : type(type), epsilon(epsilon), sigma(sigma), cutoff(cutoff) {}
 	LJ(int type1, int type2, double epsilon, double sigma, double cutoff) : type1(type1), type2(type2), epsilon(epsilon), sigma(sigma), cutoff(cutoff) {}
 
@@ -177,7 +153,7 @@ public:
     double get_cutoff(int type1, int type2)
     {
         //cerr << type1 << ":" << type2 << " = " << 0.5 * ( lj[type1].sigma + lj[type2].sigma ) << endl;
-        return ( lj[type1].sigma + lj[type2].sigma );
+        return 0.5 * ( lj[type1].sigma + lj[type2].sigma );
     }
 
     friend std::ostream& operator<<(std::ostream& os, Force_Field& ff)
