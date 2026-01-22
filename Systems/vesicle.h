@@ -34,6 +34,8 @@ public:
         }
         if(data.in.system_function.compare("rdf") == 0) { radial_distribution_histogram(ves, data.in.system_var_a, data.in.system_var_b); }
         if(data.in.system_function.compare("Make_2_Vesicle_System") == 0) { make_2_Vesicle_System(data, sys_id); }
+        if(data.in.system_function.compare("Rotate_System") == 0) { rotate(ves, data, sys_id); }
+        if(data.in.system_function.compare("Make_Ves_Nano_Ves_System") == 0) { make_sys(ves, data, sys_id); }
         if(data.in.system_function.compare("Analyze_Fusion") == 0)
         {
             const Atoms& ves_1 = ves.get_molecule(mol_tags[0]);
@@ -46,6 +48,107 @@ public:
     }
 
 private:
+
+    void make_sys(Atoms& ves2,Data& data, int sys_id)
+    {
+        cerr << endl;
+        cerr << "System::Vesicle::make_sys()" << endl;
+
+        if(data.coll_beads.size() < 2) // we need 2 systems
+        {
+            cerr << "Need 2 systems, have " << data.coll_beads.size()  << endl;
+            exit(1);
+        }
+
+        Atoms& ves_nano = data.coll_beads[0];
+        Atoms nano = data.coll_beads[0].get_molecule(2);
+        Atom nano_cm = nano.get_center_of_mass();
+        Bonds& ves_nano_bonds = data.coll_bonds[0];
+        Bonds& ves2_bonds = data.coll_bonds[sys_id];
+
+        double max_x=0.0;
+        for(auto& a : ves2)
+        {
+            if(max_x < a.pos.x)
+                max_x = a.pos.x;
+        }
+
+        ves2.move( Atom(max_x, 0, nano_cm.pos.z) );
+
+        move_while_overlap(Atom(0.5,0,0), ves2, nano);
+        move_while_overlap(Atom(0,0,0.5), ves2, ves_nano);
+        for(int i : {1,2,3})
+        {
+            move_until_overlap(Atom(-0.5,0,0), ves2, nano);
+            move_while_overlap(Atom(0,0,0.5), ves2, ves_nano);
+        }
+
+        // add to existing data
+        for(auto& item : ves2)
+        {
+            item.N += ves_nano.size();
+        }
+        for(auto& b : ves2_bonds)
+        {
+            b.N += ves_nano_bonds.size();
+            b.at1 += ves_nano.size();
+            b.at2 += ves_nano.size();
+        }
+    }
+
+    void move_while_overlap(Atom move, Atoms& ves2, Atoms& other)
+    {
+        int i=0;
+        while(ves2.is_overlap(other))
+        {
+            ves2.move( move );
+            ++i;
+            if(i>200)
+            {
+                cerr << "Not possible to achieve no overlap, terminating" << endl; exit(1);
+            }
+        }
+    }
+
+    void move_until_overlap(Atom move, Atoms& ves2, Atoms& other)
+    {
+        int i=0;
+        while(!ves2.is_overlap(other))
+        {
+            ves2.move( move );
+            ++i;
+            if(i>200)
+            {
+                cerr << "Not possible to achieve no overlap, terminating" << endl; exit(1);
+            }
+        }
+        ves2.move( move*-1.0 );
+    }
+
+
+    void rotate(Atoms& sys, Data& data, int sys_id)
+    {
+        cerr << endl;
+        cerr << "System::Vesicle::rotate()" << endl;
+
+        vector<int> mol_tags = sys.get_Mol_Types();
+
+        Atom cm_ves = sys.center_of_mass(mol_tags[0]);
+        Atom cm_nano = sys.center_of_mass(mol_tags[1]);
+        Atom nano_vec = cm_nano;
+        nano_vec.normalise();
+
+        Atom z_axis = Atom(0,0,-1);
+        Atom rot_axis = z_axis.cross(nano_vec);
+        rot_axis.normalise();
+
+        double angle = acos( nano_vec.dot(z_axis) );
+
+        for(auto& a: sys)
+        {
+            a.rotate(rot_axis, angle);
+        }
+    }
 
     ///
     /// START /// radial_distribution_histogram ///
@@ -177,7 +280,7 @@ private:
         for(Lipid& lip : vesicle)
         {
             dir = lip.get_direction();
-            head_dir = lip.part[0];
+            head_dir = lip.part[0]; // assumes cm is 0,0,0, TODO make it CM neutral
             head_dir.normalise();
 
             if( dir.dot(head_dir) > 0.0)
