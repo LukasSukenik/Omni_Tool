@@ -6,7 +6,7 @@
 
 #include "lipid.h"
 
-
+#include "xtcanalysis.h"
 
 class Unassigned : public vector<int>
 {
@@ -21,6 +21,23 @@ public:
         }
     }
 
+    Unassigned(Atoms& a, bool only_tails)
+    {
+        only_tails = true;
+        Lipid test;
+        resize(a.size());
+
+        for(int i=0; i<a.size(); ++i)
+        {
+            if( test.is_tail(a[i].type) )
+            {
+                at(unassigned_size) = i;
+                ++unassigned_size;
+            }
+        }
+    }
+
+    bool only_tails = false;
     int unassigned_size = 0;
 
     void remove(int index)
@@ -80,7 +97,8 @@ public:
 
     int analyze(Atoms& a, double cutoff)
     {
-        Unassigned un_id(a); // list of particles not assigned to a cluster
+        bool only_tails = true;
+        Unassigned un_id(a, only_tails); // list of particles not assigned to a cluster
         int safety = 10*1000;
         int count=0;
 
@@ -100,10 +118,10 @@ public:
             total_particle_count += at(i).size();
         }
 
-        if(a.size() != total_particle_count)
+        /*if(a.size() != total_particle_count) // does not take into account tail selection
         {
             cerr << "Total particle count = " << a.size() << " != particle count in clusters " << total_particle_count << endl;
-        }
+        }*/
 
         return cluster_count;
     }
@@ -129,8 +147,21 @@ public:
         if(data.in.system_function.compare("Copy_Z") == 0) { copy_Z(data, mem); }
         if(data.in.system_function.compare("Cluster_Analysis") == 0)
         {
+            cerr << endl;
+            cerr << "Cluster analysis:" << endl;
+
+            double cutoff = 2.0;
             Clusters clusters; // list of particle indexes
-            cerr << "Cluster analysis: number of clusters: " << clusters.analyze(mem, 1.6) << endl;
+            Trajectory traj;
+            traj.load("file.xtc");
+
+            for(int i=0; i<traj.frame_count(); ++i)
+            {
+                clusters = Clusters();
+                mem.set_frame(traj[i]);
+                cout << i << " " << clusters.analyze(mem, cutoff) << endl;
+            }
+
         }
     }
 

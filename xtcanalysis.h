@@ -77,6 +77,11 @@ public:
         }
     }
 
+    inline int frame_count()
+    {
+        return size();
+    }
+
 private:
 
     void string_to_char(string inName)
