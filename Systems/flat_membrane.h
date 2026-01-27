@@ -153,7 +153,8 @@ public:
             double cutoff = 2.0;
             Clusters clusters; // list of particle indexes
             Trajectory traj;
-            traj.load("file.xtc");
+
+            traj.load(data.in.trajectory);
 
             for(int i=0; i<traj.frame_count(); ++i)
             {
