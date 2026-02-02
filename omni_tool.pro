@@ -18,6 +18,7 @@ HEADERS += \
     atom.h \
     bond.h \
     cell_list.h \
+    cluster_analysis.h \
     data.h \
     force_field.h \
     rng.h \
