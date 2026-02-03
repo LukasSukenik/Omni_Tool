@@ -23,13 +23,15 @@ private:
     int step;
     int release_step = numeric_limits<int>::max();
     float time;
-    matrix box;
+    matrix temp_box;
     float prec;
 
     int first_step;
     int status=exdrOK;
 
 public:   
+    vector<Tensor_xyz> box_traj;
+
     Trajectory() {}
 
     void load(string inName, int start=-1, int stop=-1)
@@ -46,13 +48,25 @@ public:
             {
                 rvec k[natoms];
 
-                status = read_xtc(xfp, natoms, &first_step, &time, box, k, &prec);
+                status = read_xtc(xfp, natoms, &first_step, &time, temp_box, k, &prec);
+
+                box_traj.push_back(Tensor_xyz(temp_box[0][0], temp_box[1][1], temp_box[2][2]));
+                this->push_back( vector<Tensor_xyz>() );
+                for(int i=0; i<natoms; ++i)
+                {
+                    this->back().resize(natoms);
+                    this->back()[i].x = k[i][0];
+                    this->back()[i].y = k[i][1];
+                    this->back()[i].z = k[i][2];
+                }
+
                 while(status == exdrOK && ( stop == -1 || step < first_step+stop) ) // Load frame
                 {
-                    status = read_xtc(xfp, natoms, &step, &time, box, k, &prec);
+                    status = read_xtc(xfp, natoms, &step, &time, temp_box, k, &prec);
 
                     if(step > start)// add frame
                     {
+                        box_traj.push_back(Tensor_xyz(temp_box[0][0], temp_box[1][1], temp_box[2][2]));
                         this->push_back( vector<Tensor_xyz>() );
                         for(int i=0; i<natoms; ++i)
                         {

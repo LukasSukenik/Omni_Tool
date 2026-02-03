@@ -48,6 +48,8 @@ public:
             }
 
         }
+        if(data.in.system_function.compare("Calc_Z_Dist") == 0) { calc_Z_Dist(data, mem); }
+        if(data.in.system_function.compare("Calc_Pore") == 0) { is_Pore(data, mem); }
     }
 
 
@@ -65,6 +67,86 @@ public:
     }
 
 private:
+    void calc_Z_Dist(Data& data, Atoms& mem)
+    {
+        cerr << endl;
+        cerr << "Calc Z Dist:" << endl;
+
+        //
+        // Calculate distance between 2 peaks of histogram in Z axis
+        //
+        // Histogram is an array of integers initialized to 0, use vector class
+        // - https://www.w3schools.com/cpp/cpp_arrays.asp
+        // - https://www.w3schools.com/cpp/cpp_for_loop.asp
+        // - https://www.w3schools.com/cpp/cpp_operators.asp
+        // - https://www.w3schools.com/cpp/cpp_vectors.asp
+        //
+        // The for loop over particles to determine their Z coordinate and increment the corresponding element in the histogram
+        //
+        // Based on the histogram, determine the distance of the 2 membranes - whether they have stalk or not
+        // - dont bother with periodic boundary conditions at first, use the pulling simulations which do not have moment across the periodic boundary
+        //
+        // Take advantage of LLM, chatGPT, Claude are great for this
+        // - but the most important skill here is learning algorithmic thinking and procedural decomposition
+        // -- i.e. thinking like a computer
+        // --- This will realy help later down the line when you will be analyzing your simulations
+        // ---- you don't want to be the guy who manually types in indexes for energy calculations in gromacs for every simulation
+        //
+        vector<int> histogram;
+        Trajectory traj;
+        traj.load(data.in.trajectory);
+
+        for(int i=0; i<traj.frame_count(); ++i) // looping over trajectory frames
+        {
+            mem.set_frame(traj[i]);
+        }
+        // or you can access the trajectory directly
+        cerr << "frame 0, particle 1: " << traj[0][1].x << endl;
+
+        int atom_id = 0;
+        cerr << "accessing atom z coordinate - pos = position: " << mem[atom_id].pos.z << endl;
+        cerr << "Total atom count: " << mem.size() << " or " << traj[atom_id].size() << endl;
+
+        //
+        // You need a binning function for that
+        // - convert continuous Z coordinate of floating point format to discrete integers value for histogram element index
+        // - look up floor function,
+        //
+        int a = (int) floor(0.57);
+        cerr << "a: " << a << endl;
+
+        //
+        // Now we just determine the distance based on the histogram
+        //
+
+        cerr << endl;
+    }
+
+
+
+
+    void is_Pore(Data& data, Atoms& mem)
+    {
+        //
+        // Calculate whether the stalk has pore
+        //
+        // Project lipid tails along Z axis to a boolean 2D array
+        // - when each element is set to true == there is a bead projected to the element
+        // - when the element is set to false == pore
+        //
+        // The boolean 2d Array is mapped to the simulation box in the z_normal plane
+        // - the size of each element - a square is set
+        //
+
+        // Accessing box size in trajectory
+        Trajectory traj;
+        traj.load(data.in.trajectory);
+        cerr << traj.box_traj[0].x << endl;
+
+        // This is similar to the histogram function in logic
+    }
+
+
     Lipids gen_flat_membrane(int num_lipids, int num_receptors, int mol_tag)
     {
         Lipids mem;
