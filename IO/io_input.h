@@ -236,6 +236,10 @@ public:
     Tensor_xyz ivx = Tensor_xyz(0.0, 0.0, 0.0);
     bool fit = false;
 
+    // cluster analysis
+    vector<int> cluster_types;
+    double cluster_cutoff=0.0;
+
     // Population data
     Population population;
 
@@ -326,6 +330,10 @@ public:
             if( what.compare("Seed:") == 0 )              { ss >> seed; rng.seed(seed); }
             if( what.compare("Lammps_offset:") == 0 )     { ss >> offset; }
 
+            // load cluster analysis
+            if( what.compare("Cluster_types:") == 0 )         { load_cluster_type(ss); }
+            if( what.compare("Cluster_cutoff:") == 0 )             { ss >> cluster_cutoff; }
+
             // Load the simulation box
             if( what.compare("Sim_box:") == 0 )           { ss >> sim_box; }
 
@@ -352,6 +360,15 @@ public:
         while( ss >> temp_type )
         {
             atom_type.push_back(temp_type);
+        }
+    }
+
+    void load_cluster_type(stringstream& ss)
+    {
+        int temp_type;
+        while( ss >> temp_type )
+        {
+            cluster_types.push_back(temp_type);
         }
     }
 
@@ -459,6 +476,9 @@ public:
         fit = false;
         mtag_1=-1;
         mtag_2=-1;
+
+        cluster_types.clear();
+        cluster_cutoff = 0.0;
 
         com_pos=Tensor_xyz(0.0, 0.0, 0.0);
 

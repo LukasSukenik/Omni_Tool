@@ -81,13 +81,13 @@ public:
             }
             else
             {
-                cerr << "XTC_Loader::load - File not opened:" << fileName << endl;
+                cout << "XTC_Loader::load - File not opened:" << fileName << endl;
             }
         }
         else
         {
-            cerr << "XTC_Loader::load read_xtc_natoms failure; return code " << status << endl;
-            cerr << "Filename: " << inName << endl;
+            cout << "XTC_Loader::load read_xtc_natoms failure; return code " << status << endl;
+            cout << "Filename: " << inName << endl;
         }
     }
 

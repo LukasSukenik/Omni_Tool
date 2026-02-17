@@ -32,19 +32,24 @@ public:
         if(data.in.system_function.compare("Cluster_Analysis") == 0)
         {
             cerr << endl;
-            cerr << "Cluster analysis:" << endl;
+            cerr << "Cluster analysis: types ";
 
-            double cutoff = 2.0;
-            Clusters clusters; // list of particle indexes
+            for(int type : data.in.cluster_types)
+            {
+                cerr << type << ", ";
+            }
+            cerr << " | cutoff: " << data.in.cluster_cutoff << endl;;
+
+            Clusters clusters(mem, data.in.cluster_types); // list of particle indexes
             Trajectory traj;
 
             traj.load(data.in.trajectory);
 
             for(int i=0; i<traj.frame_count(); ++i)
             {
-                clusters = Clusters();
                 mem.set_frame(traj[i]);
-                cout << i << " " << clusters.analyze(mem, cutoff) << endl;
+                cout << i << " " << clusters.analyze(mem, data.in.cluster_cutoff) << endl;
+                clusters.clear();
             }
 
         }

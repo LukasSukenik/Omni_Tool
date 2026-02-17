@@ -5,7 +5,7 @@ CONFIG -= qt
 
 INCLUDEPATH += xdrfile-1.1.4/include/ particles/ IO/ Systems/
 
-QMAKE_CXXFLAGS += -O2 -march=native -std=c++17 -Wno-unused-parameter -Wno-sign-compare
+QMAKE_CXXFLAGS += -O3 -march=native -flto -std=c++17 -Wno-unused-parameter -Wno-sign-compare
 
 SOURCES += main.cpp \
     xdrfile-1.1.4/src/xdrfile.c \

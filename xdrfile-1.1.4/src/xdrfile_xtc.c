@@ -96,7 +96,7 @@ int read_xtc_natoms(char *fn,int *natoms)
 	
 	xd = xdrfile_open(fn,"r");
     if (NULL == xd) {
-        printf("Failed to open, %s \n", fn);
+        printf("read_xtc_natoms::Failed to open, %s \n", fn);
 		return exdrFILENOTFOUND;
     }
 	result = xtc_header(xd,natoms,&step,&time,TRUE);

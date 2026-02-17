@@ -7,11 +7,14 @@
 
 
 
-
+/**
+ * @brief The Unassigned class - Helper class to class Clusters
+ * - keep track of atoms unassigned to a clusters
+ */
 class Unassigned : public vector<int>
 {
 public:
-    Unassigned(Atoms& a)
+    Unassigned(Atoms& a) // O(n) complexity, all types
     {
         unassigned_size = a.size();
         resize(a.size());
@@ -21,23 +24,24 @@ public:
         }
     }
 
-    Unassigned(Atoms& a, bool only_tails)
+    Unassigned(Atoms& a, vector<int> types) // O(n) complexity
     {
-        only_tails = true;
         Lipid test;
         resize(a.size());
 
         for(int i=0; i<a.size(); ++i)
         {
-            if( test.is_tail(a[i].type) )
+            for(int type : types)
             {
-                at(unassigned_size) = i;
-                ++unassigned_size;
+                if( type == a[i].type )
+                {
+                    at(unassigned_size) = i;
+                    ++unassigned_size;
+                }
             }
         }
     }
 
-    bool only_tails = false;
     int unassigned_size = 0;
 
     void remove(int index)
@@ -45,7 +49,24 @@ public:
         at(index) = at(unassigned_size-1); // move last id to front
         --unassigned_size; // decrease size by 1
     }
+
+    // Copy constructor
+    Unassigned(const Unassigned& o) : std::vector<int>(o), unassigned_size(o.unassigned_size) {}
+
+    // Copy assignment operator
+    Unassigned& operator=(const Unassigned& o)
+    {
+        if (this != &o)
+        {
+            std::vector<int>::operator=(o);
+            this->unassigned_size = o.unassigned_size;
+        }
+        return *this;
+    }
 };
+
+
+
 
 class Cluster : public vector<int>
 {
@@ -93,20 +114,22 @@ public:
 class Clusters : public vector< Cluster >
 {
 public:
-    Clusters(){}
+    Clusters(Atoms& a, vector<int> types) : un_id(Unassigned(a, types)) {}
+
+    Unassigned un_id; // list of particles not assigned to a cluster of a given type
 
     int analyze(Atoms& a, double cutoff)
     {
-        bool only_tails = true;
-        Unassigned un_id(a, only_tails); // list of particles not assigned to a cluster
         int safety = 10*1000;
         int count=0;
 
-        while(un_id.unassigned_size > 0 && count<safety )
+        Unassigned un_id_temp = un_id;
+
+        while(un_id_temp.unassigned_size > 0 && count<safety )
         {
-            push_back(Cluster( un_id.at(0) )); // add the first particle
-            un_id.remove(0);
-            back().fill_cluster(a, un_id, cutoff);
+            push_back(Cluster( un_id_temp.at(0) )); // add the first particle
+            un_id_temp.remove(0);
+            back().fill_cluster(a, un_id_temp, cutoff);
             count++;
         }
 
