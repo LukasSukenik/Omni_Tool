@@ -21,7 +21,7 @@ void do_analysis();
 class Version
 {
 public:
-    int v=5;
+    int v=6;
 
     Version()
     {

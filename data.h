@@ -249,6 +249,8 @@ public:
         }
         else
         {
+            cerr << "Data::report():" << endl;
+            cerr << "Generating output type: " << in.out.type << endl;
             cerr << all_beads.toString() << endl;
         }
     }

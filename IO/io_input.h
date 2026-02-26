@@ -237,8 +237,11 @@ public:
     bool fit = false;
 
     // cluster analysis
-    vector<int> cluster_types;
     double cluster_cutoff=0.0;
+
+    // Pore calculation - cell size
+    double cell_size=1.0;
+    double bead_size=1.12246204831;
 
     // Population data
     Population population;
@@ -331,8 +334,10 @@ public:
             if( what.compare("Lammps_offset:") == 0 )     { ss >> offset; }
 
             // load cluster analysis
-            if( what.compare("Cluster_types:") == 0 )         { load_cluster_type(ss); }
             if( what.compare("Cluster_cutoff:") == 0 )             { ss >> cluster_cutoff; }
+
+            // Load calc pore
+            if( what.compare("Cell_size:") == 0 )             { ss >> cell_size; }
 
             // Load the simulation box
             if( what.compare("Sim_box:") == 0 )           { ss >> sim_box; }
@@ -360,15 +365,6 @@ public:
         while( ss >> temp_type )
         {
             atom_type.push_back(temp_type);
-        }
-    }
-
-    void load_cluster_type(stringstream& ss)
-    {
-        int temp_type;
-        while( ss >> temp_type )
-        {
-            cluster_types.push_back(temp_type);
         }
     }
 
@@ -477,8 +473,8 @@ public:
         mtag_1=-1;
         mtag_2=-1;
 
-        cluster_types.clear();
         cluster_cutoff = 0.0;
+        cell_size = 1.0;
 
         com_pos=Tensor_xyz(0.0, 0.0, 0.0);
 
