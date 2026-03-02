@@ -240,7 +240,7 @@ public:
     double cluster_cutoff=0.0;
 
     // Pore calculation - cell size
-    double cell_size=1.0;
+    double cell_size=0.0;
     double bead_size=1.12246204831;
 
     // Population data
@@ -474,7 +474,7 @@ public:
         mtag_2=-1;
 
         cluster_cutoff = 0.0;
-        cell_size = 1.0;
+        cell_size = 0.0;
 
         com_pos=Tensor_xyz(0.0, 0.0, 0.0);
 

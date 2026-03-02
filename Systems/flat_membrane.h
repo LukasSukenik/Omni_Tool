@@ -148,12 +148,38 @@ private:
         return (index + count) % count; // index can be -1, or >count
     }
 
+    bool validate_pore_input(Data& data)
+    {
+        bool is_correct = true;
+        if(data.in.cell_size == 0.0)
+        {
+            cerr << "Cell_size set to 0.0 by default" << endl;
+            cerr << "add Cell_size: floating_point_value to input script, for example 0.15" << endl;
+            is_correct = false;
+        }
+
+        if(data.in.atom_type.empty())
+        {
+            cerr << "Atom_type empty" << endl;
+            cerr << "add Atom_type: integer_1 interger_2 ... to input script, for example Atom_type: 2 3" << endl;
+            is_correct = false;
+        }
+
+        if(!is_correct)
+        {
+            cerr << "Flat_Membrane::validate_pore_input exiting" << endl;
+            return -1;
+        }
+    }
+
     void is_Pore(Data& data, Atoms& mem)
     {
         cerr << endl;
         cerr << "Flat_Membrane::is_Pore" << endl;
         cerr << "- cell size = " << data.in.cell_size << endl;
         cerr << "- bead size = " << data.in.bead_size << endl;
+
+        validate_pore_input(data);
 
         int number_of_cells = (data.in.sim_box.xhi - data.in.sim_box.xlo) / data.in.cell_size;
         double cell_size = (data.in.sim_box.xhi - data.in.sim_box.xlo) / number_of_cells;
