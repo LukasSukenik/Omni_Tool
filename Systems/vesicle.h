@@ -18,7 +18,7 @@ public:
 
     void execute(Data& data)
     {
-        int sys_id = data.id_map[data.in.id];
+        int sys_id = data.id_map[ data.in.param_int["ID"] ];
         Atoms& ves = data.coll_beads[sys_id];
         vector<int> mol_tags = ves.get_Mol_Types();
 
@@ -85,6 +85,16 @@ public:
             cerr << "Vesicle::generate leaflet empty" << endl;
             exit(1);
         }
+    }
+
+    string help()
+    {
+        stringstream ss;
+
+        ss << "*********************************************************" << endl;
+        ss << "System_type: Vesicle" << endl;
+
+        return ss.str();
     }
 
 private:

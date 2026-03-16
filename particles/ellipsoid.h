@@ -342,8 +342,8 @@ public:
     {
         vector<Atom> ligand;
 
-        typeNano = data.in.atom_type[0];
-        typeLig = data.in.atom_type[0] + 1;
+        typeNano = data.in.param_vector_int["Atom_type"][0];
+        typeLig = data.in.param_vector_int["Atom_type"][0] + 1;
 
         int orientations = orientZ;
 

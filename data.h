@@ -75,19 +75,9 @@ public:
     ///
     /// Input methods
     ///
-    bool is_load_file()
-    {
-        return !in.file_structure.empty();
-    }
-
     bool is_particle_gen()
     {
         return !in.gen_structure_ID.empty();
-    }
-
-    bool is_system()
-    {
-        return !in.system_type.empty();
     }
 
     bool load_input(string input)
@@ -124,7 +114,7 @@ public:
             pdb.beads.clear();
         }
 
-        id_map[in.id] = coll_beads.size()-1;
+        id_map[ in.param_int["ID"] ] = coll_beads.size()-1;
 
         if(coll_beads.empty())
         {
@@ -138,11 +128,11 @@ public:
     ///
     void modify()
     {
-        coll_beads[ id_map[in.id] ].scale(in.scale);    // Rescale atom positions
-        coll_beads[ id_map[in.id] ].move(in.com_pos);   // Move entire system by vector
+        coll_beads[ id_map[ in.param_int["ID"] ] ].scale(in.scale);    // Rescale atom positions
+        coll_beads[ id_map[ in.param_int["ID"] ] ].move(in.com_pos);   // Move entire system by vector
 
         if(in.mol_tag > -1)
-            coll_beads[ id_map[in.id] ].set_mol_tag(in.mol_tag); // Change mol_tag of all particles to one set by input
+            coll_beads[ id_map[ in.param_int["ID"] ] ].set_mol_tag(in.mol_tag); // Change mol_tag of all particles to one set by input
 
         /*if(in.is_mtag_12())
             align(in.mtag_1, in.mtag_2); // align mol_tag particles in z axis and XY plane
@@ -152,7 +142,7 @@ public:
         //offset(all_beads.size());
 
         if( in.center )
-            coll_beads[ id_map[in.id] ].center();
+            coll_beads[ id_map[ in.param_int["ID"] ] ].center();
     }
 
 

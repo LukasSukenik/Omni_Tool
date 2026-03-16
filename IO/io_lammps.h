@@ -155,14 +155,14 @@ public:
         //
         cout << "\nMasses\n\n";
 
-        if(in.atom_mass.empty() && num_a_types != in.atom_type.size())
+        if(in.atom_mass.empty() && num_a_types != in.param_vector_int["Atom_type"].size())
         {
             for(int i=0; i<num_a_types; ++i )
                 cout << i+1 << " mass_" << i+1 << "\n";
         }
         else
         {
-            if(in.atom_type.size() == in.atom_mass.size()) // this is only implemented for single file generation, if 2 files are used then this will be broken, working for flat membrane
+            if(in.param_vector_int["Atom_type"].size() == in.atom_mass.size()) // this is only implemented for single file generation, if 2 files are used then this will be broken, working for flat membrane
             {
                 for(int i=0; i<in.atom_mass.size(); ++i)
                     cout << i+1 << " " << in.atom_mass[i] << "\n";

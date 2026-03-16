@@ -63,14 +63,13 @@ public:
 
     void helpMessage()
     {
-        cout << "Specify input files, run $ ./ico filename_1 filename_2 ...\n\n" << endl;
+        cout << "Specify input files, run $ ./omni_tool filename_1 filename_2 ...\n\n" << endl;
         cout << "Example input files:\n" << endl;
 
         for (auto& [key, val] : *this)
         {
             cout << (*val).help() << endl;
         }
-        exit(1);
     }
 };
 

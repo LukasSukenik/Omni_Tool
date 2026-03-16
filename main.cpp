@@ -21,7 +21,7 @@ void do_analysis();
 class Version
 {
 public:
-    int v=7;
+    int v=8;
 
     Version()
     {
@@ -55,6 +55,7 @@ int main(int argc, char* argv[])
     if( argc == 1 || strcmp(argv[1], "-h") == 0 )
     {
         particles.helpMessage();
+        exit(-1);
     }
 
     //
@@ -68,11 +69,10 @@ int main(int argc, char* argv[])
         //
         // Load a particle if specified
         //
-        if( data.is_load_file() )
+        if( data.in.param.contains("Load_file") )
         {
-            data.load_data(data.in.file_structure); // Load Data from infile
+            data.load_data(data.in.param["Load_file"]); // Load Data from infile
             data.modify();                  // Modify the loaded Data
-            // analyze
         }
 
         //
@@ -98,16 +98,16 @@ int main(int argc, char* argv[])
         //
         // execute a system-wide method if specified
         //
-        if( data.is_system() )
+        if( data.in.param.contains("System_type") )
         {
-            if(systems.count(data.in.system_type) > 0)
+            if(systems.contains(data.in.param["System_type"]))
             {
-                cerr << "Loading system: " << systems[ data.in.system_type ]->name << endl;
-                systems[ data.in.system_type ]->execute( data );
+                systems[ data.in.param["System_type"] ]->execute( data );
             }
             else
             {
-                cerr << "main.cpp system :keyword: not found " << data.in.system_type << endl;
+                cerr << "main.cpp System_Container::" << data.in.param["System_type"] << " keyword not listed" << endl;
+                systems.helpMessage();
                 exit(2);
             }
         }

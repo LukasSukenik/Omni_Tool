@@ -146,13 +146,13 @@ public:
 private: // Lipid Generation
     void set_input( Data& data )
     {
-        type_head_upper_leaf = data.in.atom_type[0];
-        type_tail_upper_leaf = data.in.atom_type[1];
-        type_tail_2_upper_leaf = data.in.atom_type[2];
-        type_head_lower_leaf = data.in.atom_type[3];
-        type_tail_lower_leaf = data.in.atom_type[4];
-        type_tail_2_lower_leaf = data.in.atom_type[5];
-        type_receptor = data.in.atom_type[6];
+        type_head_upper_leaf = data.in.param_vector_int["Atom_type"][0];
+        type_tail_upper_leaf = data.in.param_vector_int["Atom_type"][1];
+        type_tail_2_upper_leaf = data.in.param_vector_int["Atom_type"][2];
+        type_head_lower_leaf = data.in.param_vector_int["Atom_type"][3];
+        type_tail_lower_leaf = data.in.param_vector_int["Atom_type"][4];
+        type_tail_2_lower_leaf = data.in.param_vector_int["Atom_type"][5];
+        type_receptor = data.in.param_vector_int["Atom_type"][6];
     }
 
     void set_bond_types()

@@ -32,10 +32,10 @@ public:
 
     void execute( Data& data )
     {
-        if(data.in.id == 2)
+        if(data.in.param_int["ID"] == 2)
         {
             set_protomer(data.coll_beads[0]); // TODO: make it work with input file
-            set_capsid(data.coll_beads[data.id_map[data.in.id]]); // TODO: make it work with input file
+            set_capsid(data.coll_beads[data.id_map[ data.in.param_int["ID"] ]]); // TODO: make it work with input file
             calc_protomer_coms();
             calc_pentamers();
             calc_symmetry_axes();
@@ -48,12 +48,10 @@ public:
     {
         stringstream ss;
 
-        ss << "Load 2 files, first containing protomer, then full capsid" << endl;
-        ss << "System_type: Protomer\n";
-        ss << "Output_type: pdb # other keywords: xyz pdb lammps_full\n";
-
-        ss << "System_type: Virus_T=3*\n";
-        ss << "Output_type: pdb # other keywords: xyz pdb lammps_full\n";
+        ss << "*********************************************************" << endl;
+        ss << "For 'Virus_T=3*', Load 2 input files" << endl;
+        ss << "1st file -> System_type: Protomer\n";
+        ss << "2nd file -> System_type: Virus_T=3*" << endl;
 
         return ss.str();
     }

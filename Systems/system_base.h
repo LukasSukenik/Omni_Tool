@@ -31,11 +31,7 @@ public:
 
     virtual string help()
     {
-        stringstream ss;
-        ss << "Abstract class System\n";
-        ss << "Contains functions intended for inheritance\n";
-        ss << "Does not generate anything\n";
-        return ss.str();
+        return "";
     }
 };
 

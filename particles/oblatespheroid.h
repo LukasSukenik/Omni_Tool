@@ -25,8 +25,8 @@ public:
     {
         vector<Atom> ligand;
 
-        typeNano = data.in.atom_type[0];
-        typeLig = data.in.atom_type[0] + 1;
+        typeNano = data.in.param_vector_int["Atom_type"][0];
+        typeLig = data.in.param_vector_int["Atom_type"][0] + 1;
 
         int orientations = orientY;
         int num_beads = data.in.beads_per_area * surface(data.in.scale, data.in.scale*data.in.c);

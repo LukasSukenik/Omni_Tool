@@ -15,6 +15,16 @@ public:
 
     Lipid_Nanoparticle() : System_Base("Lipid_Nanoparticle") {}
 
+    string help()
+    {
+        stringstream ss;
+
+        ss << "*********************************************************" << endl;
+        ss << "System_type: Lipid_Nanoparticle" << endl;
+
+        return ss.str();
+    }
+
     void execute(Data& data)
     {
         if(data.in.system_function.compare("calc_water_content") == 0)
@@ -36,9 +46,9 @@ public:
 
             // trajectory load
             Trajectory traj;
-            traj.load(data.in.trajectory);
+            traj.load(data.in.param["Trajectory_file"]);
 
-            int sys_id = data.id_map[data.in.id];
+            int sys_id = data.id_map[ data.in.param_int["ID"] ];
             Atoms& last_frame = data.coll_beads[sys_id];
             last_frame.set_frame(traj[ traj.size()-1 ]);
             cerr << "Trajectory loaded" << endl;

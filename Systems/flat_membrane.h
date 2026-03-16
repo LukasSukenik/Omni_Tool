@@ -22,9 +22,23 @@ public:
 
     Flat_Membrane() : System_Base("Flat_Membrane"), Particle("Flat_Membrane")  {}
 
+    string help()
+    {
+        stringstream ss;
+
+        ss << "*********************************************************" << endl;
+        ss << "System_type: Flat_Membrane" << endl;;
+
+        return ss.str();
+    }
+
     void execute(Data& data)
     {
-        int sys_id = data.id_map[data.in.id];
+        cerr << "Flat_Membrane::execute" << endl;
+        validate_load_file(data);
+        validate_ID(data);
+
+        int sys_id = data.id_map[ data.in.param_int["ID"] ];
         Atoms& mem = data.coll_beads[sys_id];
         vector<int> mol_tags = mem.get_Mol_Types();
 
@@ -49,6 +63,64 @@ public:
     }
 
 private:
+    void validate_select_types(Data& data)
+    {
+        if(!data.in.param_vector_int.contains("Atom_type"))
+        {
+            cerr << "Missing keyword; Atom_type: 2 3" << endl;
+            exit(-1);
+        }
+        if(data.in.param_vector_int["Atom_type"].empty())
+        {
+            cerr << "Atom_type: empty; Atom_type: 2 3" << endl;
+            exit(-1);
+        }
+    }
+
+    void validate_cluster_cutoff(Data& data)
+    {
+        if(!data.in.param_float.contains("Cluster_cutoff"))
+        {
+            cerr << "Missing keyword; Cluster_cutoff: 2.6" << endl;
+            exit(-1);
+        }
+        if(data.in.param_float["Cluster_cutoff"] < 0.01 && data.in.param_float["Cluster_cutoff"] > 5.0)
+        {
+            cerr << "WARNING: Cluster_cutoff: is set to " << data.in.param_float["Cluster_cutoff"] << endl;
+        }
+    }
+
+    void validate_load_file(Data& data)
+    {
+        if(!data.in.param.contains("Load_file"))
+        {
+            cerr << "Missing keyword; Load_file: data.start" << endl;
+            exit(-1);
+        }
+    }
+
+    void validate_ID(Data& data)
+    {
+        if(!data.in.param_int.contains("ID"))
+        {
+            cerr << "Missing keyword; Load_file: data.start" << endl;
+            cerr << "potentially Missing keyword; ID: 0, set to 0 by default during Data::load_data()" << endl;
+            exit(-1);
+        }
+    }
+
+    void validate_trajectory(Data& data)
+    {
+        if(!data.in.param.contains("Trajectory_file"))
+        {
+            cerr << "Missing keyword; Trajectory_file: traj_1.xtc" << endl;
+            exit(-1);
+        }
+    }
+
+
+
+
     void calc_Z_Dist(Data& data, Atoms& mem)
     {
         cerr << endl;
@@ -76,7 +148,7 @@ private:
         //
         vector<int> histogram;
         Trajectory traj;
-        traj.load(data.in.trajectory);
+        traj.load(data.in.param["Trajectory_file"]);
 
         for(int i=0; i<traj.frame_count(); ++i) // looping over trajectory frames
         {
@@ -105,25 +177,45 @@ private:
     }
 
 
+
+
+    /**
+     * @brief cluster_analysis
+     * @param data
+     * @param mem
+     *
+     * System_type: Flat_Membrane       -- needed call method cluster_analysis
+     * System_execute: Cluster_Analysis -- needed call method cluster_analysis
+     * Select_types: 1             -> validate
+     * Cluster_cutoff: 2.6         -> validate
+     * Input_type: lammps_full     -- input type does not matter, except none
+     * Load_file: data.start       -- validated in Flat_Membrane::execute
+     * Trajectory_file: traj_1.xtc -> validate
+     * ID: 1                       -- validated in Flat_Membrane::execute
+     *
+     */
     void cluster_analysis(Data& data, Atoms& mem)
     {
-        cerr << endl;
-        cerr << "Flat_Membrane::cluster_analysis: types ";
+        cerr << "Flat_Membrane::cluster_analysis" << endl;
 
-        for(int type : data.in.atom_type)
+        validate_select_types(data);
+        validate_cluster_cutoff(data);
+        validate_trajectory(data);
+
+        for(int type : data.in.param_vector_int["Atom_type"])
         {
             cerr << type << ", ";
         }
-        cerr << " | cutoff: " << data.in.cluster_cutoff << endl;;
+        cerr << " | cutoff: " << data.in.param_float["Cluster_cutoff"] << endl;;
 
-        Clusters clusters(mem, data.in.atom_type); // list of particle indexes
+        Clusters clusters(mem, data.in.param_vector_int["Atom_type"]); // list of particle indexes
         Trajectory traj;
-        traj.load(data.in.trajectory);
+        traj.load(data.in.param["Trajectory_file"]);
 
         for(int i=0; i<traj.frame_count(); ++i)
         {
             mem.set_frame(traj[i]);
-            cout << i << " " << clusters.analyze(mem, data.in.cluster_cutoff) << endl;
+            cout << i << " " << clusters.analyze(mem, data.in.param_float["Cluster_cutoff"]) << endl;
             clusters.clear();
         }
     }
@@ -158,7 +250,7 @@ private:
             is_correct = false;
         }
 
-        if(data.in.atom_type.empty())
+        if(data.in.param_vector_int["Atom_type"].empty())
         {
             cerr << "Atom_type empty" << endl;
             cerr << "add Atom_type: integer_1 interger_2 ... to input script, for example Atom_type: 2 3" << endl;
@@ -195,7 +287,7 @@ private:
 
         Trajectory traj;
         Tensor_xyz box;
-        traj.load(data.in.trajectory);
+        traj.load(data.in.param["Trajectory_file"]);
 
         int cx=0, cy=0;
         int cell_ix=0, cell_iy=0;
@@ -212,7 +304,7 @@ private:
             std::memset(lattice, false, sizeof(lattice)); // set all elements of latice to false -> false == no particle in cell
             for(Atom a : mem)
             {
-                for(int type : data.in.atom_type)
+                for(int type : data.in.param_vector_int["Atom_type"])
                 {
                     if(a.type == type)
                     {

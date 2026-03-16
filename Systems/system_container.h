@@ -42,7 +42,8 @@ public:
 
     void helpMessage()
     {
-        cout << "Specify input files, run $ ./omni_tool filename_1 filename_2 ...\n\n" << endl;
+        cout << endl;
+        cout << "Specify input files, run $ ./omni_tool filename_1 filename_2 ..." << endl;
         cout << "Example input files:\n" << endl;
 
         for (auto& [key, val] : *this)

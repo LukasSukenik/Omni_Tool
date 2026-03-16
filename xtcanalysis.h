@@ -81,13 +81,20 @@ public:
             }
             else
             {
-                cout << "XTC_Loader::load - File not opened:" << fileName << endl;
+                cout << "Trajectory::load, File not opened: " << fileName << endl;
             }
         }
         else
         {
-            cout << "XTC_Loader::load read_xtc_natoms failure; return code " << status << endl;
-            cout << "Filename: " << inName << endl;
+            if(status == exdrFILENOTFOUND)
+            {
+                cout << "Trajectory::load, file " << inName << " not found" << endl;
+            }
+            else
+            {
+                cout << "Trajectory::load, file " << inName << " MASSIVE, yet mysterious, ERROR" << endl;
+            }
+            exit(-1);
         }
     }
 
