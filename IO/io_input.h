@@ -167,7 +167,13 @@ public:
 };
 
 
+template <typename T> class Param_Dictionary : public unordered_map<string, T>
+{
+public:
+    vector<string> valid_keys;
 
+    Param_Dictionary() {}
+};
 
 
 
