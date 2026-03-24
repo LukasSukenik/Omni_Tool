@@ -225,7 +225,14 @@ public:
         if( in.out.type == IO_Type::pdb)
         {
             pdb.beads = all_beads;
-            pdb.print();
+            if(in.in.type == IO_Type::lammps_full)
+            {
+                pdb.print_lammps_data(all_beads);
+            }
+            else
+            {
+                pdb.print();
+            }
         }
 
         report(all_beads);
