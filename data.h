@@ -59,6 +59,7 @@ public:
     IO_Lammps lammps;
     IO_PDB pdb;
     IO_XYZ xyz;
+    IO_GRO gro;
 
 
 
@@ -232,6 +233,13 @@ public:
             else
             {
                 pdb.print();
+            }
+        }
+        if( in.out.type == IO_Type::gro)
+        {
+            if(in.in.type == IO_Type::lammps_full)
+            {
+                gro.print_lammps_data(all_beads, in.sim_box.get_box());
             }
         }
 

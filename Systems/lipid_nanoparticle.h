@@ -27,65 +27,80 @@ public:
 
     void execute(Data& data)
     {
-        if(data.in.system_function.compare("calc_water_content") == 0)
-        {
-            cerr << "calc_water_content::begin" << endl;
+        if(data.in.system_function.compare("calc_water_content") == 0) { calc_water_content(data); }
+        if(data.in.system_function.compare("print_last_frame_as_gro") == 0) { print_last(data); }
+    }
 
-            // feeler atom
-            Atom feeler;
-            feeler.pos = Tensor_xyz(0.0, 0.0, 0.0);
-            feeler.type = 2; // lipid tail
+    void print_last(Data& data)
+    {
+        int sys_id = data.id_map[ data.in.param_int["ID"] ];
+        Atoms& mem = data.coll_beads[sys_id];
 
-            // set ff
-            ff.lj[1] = LJ(-0.8);
-            ff.lj[2] = LJ(2.8);
-            ff.lj[3] = LJ(2.8);
+        Trajectory traj;
+        traj.load(data.in.param["Trajectory_file"]);
+        mem.set_frame(  traj[traj.frame_count()-1]  );
 
-            // box boundaries
-            cerr << data.in.sim_box.xlo << " " << data.in.sim_box.xhi << endl;
+        data.gro.print_lammps_data(mem, data.in.sim_box.get_box());
+    }
 
-            // trajectory load
-            Trajectory traj;
-            traj.load(data.in.param["Trajectory_file"]);
+    void calc_water_content(Data& data)
+    {
+        cerr << "calc_water_content::begin" << endl;
 
-            int sys_id = data.id_map[ data.in.param_int["ID"] ];
-            Atoms& last_frame = data.coll_beads[sys_id];
-            last_frame.set_frame(traj[ traj.size()-1 ]);
-            cerr << "Trajectory loaded" << endl;
+        // feeler atom
+        Atom feeler;
+        feeler.pos = Tensor_xyz(0.0, 0.0, 0.0);
+        feeler.type = 2; // lipid tail
 
-            double step_size = 1.0;
-            int water_count = 0;
-            int membrane_count = 0;
+        // set ff
+        ff.lj[1] = LJ(-0.8);
+        ff.lj[2] = LJ(2.8);
+        ff.lj[3] = LJ(2.8);
 
-            double range = data.in.sim_box.xhi - data.in.sim_box.xlo;
-            for(double x=data.in.sim_box.xlo; x<data.in.sim_box.xhi; x+= step_size) {
-                cerr << "\r" << 100.0 * (x - data.in.sim_box.xlo) / range << " %         " << flush;
-                for (double y=data.in.sim_box.ylo; y<data.in.sim_box.yhi; y+=step_size) {
-                    for (double z=data.in.sim_box.zlo; z<data.in.sim_box.zhi; z+= step_size) {
-                        feeler.pos = Tensor_xyz(x, y, z);
-                        if( is_water(last_frame, feeler) )
-                        {
-                            water_count++;
-                        }
-                        else
-                        {
-                            membrane_count++;
-                        }
+        // box boundaries
+        cerr << data.in.sim_box.xlo << " " << data.in.sim_box.xhi << endl;
+
+        // trajectory load
+        Trajectory traj;
+        traj.load(data.in.param["Trajectory_file"]);
+
+        int sys_id = data.id_map[ data.in.param_int["ID"] ];
+        Atoms& last_frame = data.coll_beads[sys_id];
+        last_frame.set_frame(traj[ traj.size()-1 ]);
+        cerr << "Trajectory loaded" << endl;
+
+        double step_size = 1.0;
+        int water_count = 0;
+        int membrane_count = 0;
+
+        double range = data.in.sim_box.xhi - data.in.sim_box.xlo;
+        for(double x=data.in.sim_box.xlo; x<data.in.sim_box.xhi; x+= step_size) {
+            cerr << "\r" << 100.0 * (x - data.in.sim_box.xlo) / range << " %         " << flush;
+            for (double y=data.in.sim_box.ylo; y<data.in.sim_box.yhi; y+=step_size) {
+                for (double z=data.in.sim_box.zlo; z<data.in.sim_box.zhi; z+= step_size) {
+                    feeler.pos = Tensor_xyz(x, y, z);
+                    if( is_water(last_frame, feeler) )
+                    {
+                        water_count++;
+                    }
+                    else
+                    {
+                        membrane_count++;
                     }
                 }
             }
-
-            if (membrane_count != 0) {
-                double ratio = static_cast<double>(water_count) / membrane_count;
-                cout << "Water to Membrane ratio:" << ratio << endl;
-                cout << "Membrane %:" << 100.0 * membrane_count / (membrane_count + water_count) << endl;
-                cout << "step size:" << step_size << endl;
-            } else {
-                cerr << "Membrane count is zero, cannot compute ratio." << endl;
-            }
-
-            cerr << "calc_water_content::end" << endl;
         }
+
+        if (membrane_count != 0) {
+            double ratio = static_cast<double>(water_count) / membrane_count;
+            cout << "Water to Membrane ratio:" << ratio << endl;
+            cout << "Membrane %:" << 100.0 * membrane_count / (membrane_count + water_count) << endl;
+            cout << "step size:" << step_size << endl;
+        } else {
+            cerr << "Membrane count is zero, cannot compute ratio." << endl;
+        }
+
+        cerr << "calc_water_content::end" << endl;
     }
 
     bool is_water(Atoms& frame, Atom& feeler)

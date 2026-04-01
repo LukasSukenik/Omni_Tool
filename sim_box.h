@@ -18,6 +18,11 @@ public:
     myFloat zlo = 0.0;
     myFloat zhi = 0.0;
 
+    Tensor_xyz get_box()
+    {
+        return Tensor_xyz(xhi-xlo, yhi-ylo, zhi-zlo);
+    }
+
     bool empty()
     {
         if( ( xlo == 0.0 && xhi == 0.0 ) || ( ylo == 0.0 && yhi == 0.0 ) || ( zlo == 0.0 && zhi == 0.0 ) )

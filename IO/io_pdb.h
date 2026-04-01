@@ -105,7 +105,7 @@ public:
 
     void print_lammps_atom(Atom& atom)
     {
-        vector<string> type_to_name = {" H", " B", " C", " N", " O", " F", " P", " K"}; // atom.type -> atom_name
+        vector<string> type_to_name = {" H", " P", " C", " N", " O", " F", " B", " K"}; // atom.type -> atom_name
         vector<string> molTag_to_chainID = {"A", "B", "C", "D", "E", "F", "G", "H", "I", "J"};
         vector<string> type_to_resName = {"ALA", "CYS", "ASP", "GLU", "PHE", "GLY", "HIS", "ILE", "LYS", "LEU", "MET", "ASN", "PRO", "GLN", "ARG", "SER", "THR", "VAL", "TRP", "TYR"};
 
@@ -188,6 +188,43 @@ public:
             print_lammps_atom(atom);
         }
     }
+};
+
+class IO_GRO
+{
+public:
+    IO_GRO() {}
+
+    Atoms beads;
+
+    void print_lammps_data(Atoms& all_beads, Tensor_xyz box)
+    {
+        cout << "Omni_tool gro" << endl;
+        cout << all_beads.size() << endl;
+        for (Atom& atom : all_beads)
+        {
+            print_lammps_atom(atom);
+        }
+        cout << box << endl;
+    }
+
+private:
+    void print_lammps_atom(Atom& atom)
+    {
+        vector<string> type_to_name = {" H", " P", " C", " N", " O", " F", " B", " K"}; // atom.type -> atom_name
+        //vector<string> molTag_to_name = {"POPC"};
+        vector<string> type_to_resName = {"ALA", "CYS", "ASP", "GLU", "PHE", "GLY", "HIS", "ILE", "LYS", "LEU", "MET", "ASN", "PRO", "GLN", "ARG", "SER", "THR", "VAL", "TRP", "TYR"};
+
+        cout << std::setw(5) << std::right << atom.N                      // residue number (5 positions, integer)
+             << "POPC "                                                   // residue name (5 characters)
+             << std::setw(5) << std::right << type_to_name[atom.type]     // atom name (5 characters)
+             << std::setw(5) << std::right << atom.N                      // atom number (5 positions, integer)
+             << std::setw(8) << std::fixed << std::setprecision(3) << atom.pos.x // position (in nm, x y z in 3 columns, each 8 positions with 3 decimal places)
+             << std::setw(8) << std::fixed << std::setprecision(3) << atom.pos.y // position (in nm, x y z in 3 columns, each 8 positions with 3 decimal places)
+             << std::setw(8) << std::fixed << std::setprecision(3) << atom.pos.z // position (in nm, x y z in 3 columns, each 8 positions with 3 decimal places)
+             << "\n";
+    }
+
 };
 
 class IO_XYZ

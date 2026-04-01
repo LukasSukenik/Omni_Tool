@@ -26,11 +26,13 @@
 using namespace std;
 
 
-enum class IO_Type { none, xyz, pdb, lammps_full };
+enum class IO_Type { none, xyz, pdb, gro, lammps_full };
 
 std::ostream& operator<<(std::ostream& os, const IO_Type out)
 {
     switch (out) {
+        case IO_Type::gro:
+          os << "gro"; return os;
         case IO_Type::xyz:
           os << "xyz"; return os;
         case IO_Type::pdb:
@@ -68,6 +70,10 @@ public:
         if (str == "xyz")
         {
             out.type = IO_Type::xyz;
+        }
+        if (str == "gro")
+        {
+            out.type = IO_Type::gro;
         }
         if (str == "pdb")
         {
