@@ -5,6 +5,54 @@
 #include "atom.h"
 #include "xtcanalysis.h"
 
+class Histogram
+{
+public:
+    vector<int> hist;
+    double min, max;
+
+    Histogram(int size, double minn, double maxx)
+    {
+        this->min = minn;
+        this->max = maxx;
+        hist = vector<int>(size, 0);
+    }
+
+    void add(double value)
+    {
+        value = value - min;
+        int index = (int) ( value * hist.size() / (max-min) + 1e-9 ); // max would be out-of-bound
+        hist[index]++;
+    }
+
+    int size()
+    {
+        return hist.size();
+    }
+};
+
+class Histogram_Radial : public Histogram
+{
+public:
+    Histogram_Radial(int size) : Histogram(size, -3.141592653589793, 3.141592653589793) {}
+
+    void add(Tensor_xyz dir, Tensor_xyz axis)
+    {
+        double theta = 0.0; // -pi to pi
+        if(dir.x >  0.0) theta = atan(dir.y/dir.x);
+        if(dir.x <  0.0 && dir.y >= 0.0) theta = atan(dir.y/dir.x) + 3.141592653589793;
+        if(dir.x <  0.0 && dir.y <  0.0) theta = atan(dir.y/dir.x) - 3.141592653589793;
+        if(dir.x == 0.0 && dir.y >  0.0) theta =  3.141592653589793 * 0.5;
+        if(dir.x == 0.0 && dir.y <  0.0) theta = -3.141592653589793 * 0.5;
+        if(dir.x == 0.0 && dir.y == 0.0)
+        {
+            cerr << "Histogram_Radial::Impossible" << endl;
+            exit(-1);
+        }
+        Histogram::add(theta);
+    }
+};
+
 class Lipid_Nanoparticle : public System_Base
 {
 public:
@@ -29,6 +77,45 @@ public:
     {
         if(data.in.system_function.compare("calc_water_content") == 0) { calc_water_content(data); }
         if(data.in.system_function.compare("print_last_frame_as_gro") == 0) { print_last(data); }
+        if(data.in.system_function.compare("analyze_phase") == 0) { analyze_phase(data); }
+    }
+
+    void analyze_phase(Data& data)
+    {
+        int sys_id = data.id_map[ data.in.param_int["ID"] ];
+        Atoms& mem = data.coll_beads[sys_id];
+
+        Trajectory traj;
+        traj.load(data.in.param["Trajectory_file"]);
+        mem.set_frame(  traj[traj.frame_count()-1]  );
+
+        vector<Tensor_xyz> dirs;
+        dirs.resize(mem.size() / 4);
+
+        for(int i=0; i<mem.size(); i+=4)
+        {
+            dirs[i/4] = (mem[i].pos - mem[i+3].pos);
+            dirs[i/4].normalise();
+        }
+
+        Histogram_Radial h_x(360);
+        Histogram_Radial h_y(360);
+        Histogram_Radial h_z(360);
+
+        for(Tensor_xyz a : dirs)
+        {
+            h_x.add(Tensor_xyz(a.z, a.y, a.x), Tensor_xyz(1.0, 0.0, 0.0));
+            h_y.add(Tensor_xyz(a.x, a.z, a.y), Tensor_xyz(0.0, 1.0, 0.0));
+            h_z.add(Tensor_xyz(a.x, a.y, a.z), Tensor_xyz(0.0, 0.0, 1.0));
+        }
+
+        for(int i=0; i<h_x.size(); ++i)
+        {
+            cout << i << " " << h_x.hist[i] << " " << h_y.hist[i] << " " << h_z.hist[i] << endl;
+        }
+
+
+        exit(1);
     }
 
     void print_last(Data& data)
