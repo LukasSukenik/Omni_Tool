@@ -62,21 +62,21 @@ public:
     {
         test_input(data);
 
-        double outer_leaflet_radius = data.in.radius+4.0;
-        double inner_leaflet_area = pow(data.in.radius, 2);
+        double outer_leaflet_radius = data.in.param_float["Radius"]+4.0;
+        double inner_leaflet_area = pow(data.in.param_float["Radius"], 2);
         double outer_leaflet_area = pow(outer_leaflet_radius, 2);
         double sphere_surface_relative_increase = outer_leaflet_area / (inner_leaflet_area);
 
 
-        int lower_leaflet_lipid_count = data.in.num_lipids * 1.0 / (1.0 + sphere_surface_relative_increase);
-        int lower_leaflet_receptor_count = data.in.num_rec * 1.0/ (1.0 + sphere_surface_relative_increase);
-        int upper_leaflet_lipid_count = data.in.num_lipids * sphere_surface_relative_increase / (1.0 + sphere_surface_relative_increase);
-        int upper_leaflet_receptor_count = data.in.num_rec * sphere_surface_relative_increase / (1.0 + sphere_surface_relative_increase);
+        int lower_leaflet_lipid_count = data.in.param_int["Num_lipids"] * 1.0 / (1.0 + sphere_surface_relative_increase);
+        int lower_leaflet_receptor_count = data.in.param_int["Number_of_receptors"] * 1.0/ (1.0 + sphere_surface_relative_increase);
+        int upper_leaflet_lipid_count = data.in.param_int["Num_lipids"] * sphere_surface_relative_increase / (1.0 + sphere_surface_relative_increase);
+        int upper_leaflet_receptor_count = data.in.param_int["Number_of_receptors"] * sphere_surface_relative_increase / (1.0 + sphere_surface_relative_increase);
 
-        Lipids lower_leaflet = gen_lower_leaflet(lower_leaflet_lipid_count, data.in.mol_tag, data.in.radius);
+        Lipids lower_leaflet = gen_lower_leaflet(lower_leaflet_lipid_count, data.in.param_int["Mol_tag"], data.in.param_float["Radius"]);
         lower_leaflet.convert_receptors(lower_leaflet_receptor_count);
 
-        Lipids upper_leaflet = gen_upper_leaflet(upper_leaflet_lipid_count, data.in.mol_tag, outer_leaflet_radius, lower_leaflet_lipid_count);
+        Lipids upper_leaflet = gen_upper_leaflet(upper_leaflet_lipid_count, data.in.param_int["Mol_tag"], outer_leaflet_radius, lower_leaflet_lipid_count);
         upper_leaflet.convert_receptors(upper_leaflet_receptor_count);
 
         for(Lipid& lip : lower_leaflet)
@@ -352,9 +352,9 @@ private:
 
     void test_input(Data& data)
     {
-        if(data.in.num_rec > data.in.num_lipids)
+        if(data.in.param_int["Number_of_receptors"] > data.in.param_int["Num_lipids"])
         {
-            cerr << "Number of receptors " << data.in.num_rec << " cannot be larger than number of lipids " << data.in.num_lipids << endl;
+            cerr << "Number of receptors " << data.in.param_int["Number_of_receptors"] << " cannot be larger than number of lipids " << data.in.param_int["Num_lipids"] << endl;
             exit(1);
         }
     }

@@ -47,7 +47,7 @@ public:
         int nano_end = beads.size();
         for(auto& atom : ligand)
         {
-        	atom.mol_tag = data.in.mol_tag;
+            atom.mol_tag = data.in.param_int["Mol_tag"];
         }
     }
 

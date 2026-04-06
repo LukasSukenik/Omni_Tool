@@ -102,7 +102,7 @@ public:
     void generate( Data& data )
     {
         set_input(data);
-        gen_lipid(Tensor_xyz(0,0,0), Tensor_xyz(0,0,1), 0, data.in.mol_tag);
+        gen_lipid(Tensor_xyz(0,0,0), Tensor_xyz(0,0,1), 0, data.in.param_int["Mol_tag"]);
 
         beads.insert(beads.end(), part.begin(), part.end());
         bonds.insert(bonds.end(), bond.begin(), bond.end());
@@ -315,7 +315,7 @@ public:
 
             Tensor_xyz random_pos;
             Tensor_xyz random_dir;
-            int mol_tag = data.in.mol_tag;
+            int mol_tag = data.in.param_int["Mol_tag"];
             int existing_lipid_count = get_lipid_count(data);
 
             cell_list.init(data);

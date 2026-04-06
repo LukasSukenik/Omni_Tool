@@ -196,26 +196,24 @@ public:
      * Load_file: data.start # name of configuration file in format lammps, pdb, or xyz
      * Trajectory_file: traj_1.xtc # name of trajectory file in format xtc, typically file.xtc or traj_[integer].xtc
      * System_type: Flat_Membrane # nane of system: {Flat_Membrane, Lipid_Nanoparticle, Vesicle}
+     * Particle_type: particle identifier::keyword identifying the structure class
      *
      */
-    vector<string> param_valid_key_list = {"Load_file:", "Trajectory_file:", "System_type:"};
+    vector<string> param_valid_key_list = {"Load_file:", "Trajectory_file:", "System_type:", "Particle_type:"};
     unordered_map<string, string> param;
 
-    vector<string> param_int_valid_key_list = {"ID:"};
+    vector<string> param_int_valid_key_list = {"ID:", "Mol_tag:", "Num_lipids:", "Number_of_receptors:"};
     unordered_map<string, int> param_int;
 
-    vector<string> param_float_valid_key_list = {"Cluster_cutoff:"};
+    vector<string> param_float_valid_key_list = {"Cluster_cutoff:", "Radius:"};
     unordered_map<string, double> param_float;
 
-    vector<string> param_vector_int_valid_key_list = {"Atom_type:"};
+    vector<string> param_vector_int_valid_key_list = {"Atom_type:", "Atom_mass:"};
     unordered_map<string, vector<int>> param_vector_int;
 
     // IO
     IO out; /// Output type - none, pdb, lammps_full, xyz
     IO in;  /// Input type  - none, pdb, lammps_full
-
-    // particle identifier
-    string gen_structure_ID; /// keyword identifying the structure class
 
     // system identifier
     string system_function;
@@ -233,20 +231,13 @@ public:
 
     // from gen_membrane
     int op=-1;
-    double radius;
     double trim;
-    int num_lipids;
     int multiple;
-    int num_rec;
 
     // atom types
     int chain_type=-1;
 
-    // atom type mass
-    vector<int> atom_mass;
-
     // molecule types
-    int mol_tag=-1;
     int mtag_1=-1;
     int mtag_2=-1;
 
@@ -363,9 +354,7 @@ public:
             if(  is_key_valid(key) )            { ss >> value; param[key.substr(0, key.find(':'))] = value; }
             if(  is_key_valid_int(key) )        { ss >> value_int; param_int[key.substr(0, key.find(':'))] = value_int; }
             if(  is_key_valid_float(key) )      { ss >> value_float; param_float[key.substr(0, key.find(':'))] = value_float; }
-            if(  is_key_valid_vector_int(key) ) { param_vector_int[key.substr(0, key.find(':'))] = load_atom_type(ss); }
-
-            if( key.compare("Particle_type:") == 0 )     { ss >> gen_structure_ID; }
+            if(  is_key_valid_vector_int(key) ) { param_vector_int[key.substr(0, key.find(':'))] = load_int_array(ss); }
 
             // Mixed Params
             if( key.compare("System_execute:") == 0 )    { ss >> system_function >> system_var_a >> system_var_b; }
@@ -385,16 +374,10 @@ public:
 
             // from gen_membrane
             if( key.compare("Operation_type:") == 0 )      { ss >> op; }
-            if( key.compare("Radius:") == 0 )              { ss >> radius; }
             if( key.compare("Trim:") == 0 )                { ss >> trim; }
-            if( key.compare("Num_lipids:") == 0 )          { ss >> num_lipids; }
             if( key.compare("Multiple:") == 0 )            { ss >> multiple; }
-            if( key.compare("Number_of_receptors:") == 0 ) { ss >> num_rec; }
 
             // Load atom and molecule types
-
-            if( key.compare("Atom_mass:") == 0 )         { load_atom_mass(ss); }
-            if( key.compare("Mol_tag:") == 0 ) 		     { ss >> mol_tag; }
             if( key.compare("Chain_type:") == 0 ) 		 { ss >> chain_type; }
 
             // Load particle properties: aspect ration, patches
@@ -434,24 +417,15 @@ public:
         return true;
     }
 
-    vector<int> load_atom_type(stringstream& ss)
+    vector<int> load_int_array(stringstream& ss)
     {
-        vector<int> atom_type;
-        int temp_type;
-        while( ss >> temp_type )
+        vector<int> int_array;
+        int temp;
+        while( ss >> temp )
         {
-            atom_type.push_back(temp_type);
+            int_array.push_back(temp);
         }
-        return atom_type;
-    }
-
-    void load_atom_mass(stringstream& ss)
-    {
-        int temp_mass;
-        while( ss >> temp_mass )
-        {
-            atom_mass.push_back(temp_mass);
-        }
+        return int_array;
     }
 
     string toString()
@@ -465,13 +439,9 @@ public:
         // Loading a file
         ss << "Input_type:" << in << endl;
 
-        // Generating structure
-        if( !gen_structure_ID.empty() )
-            ss << "Particle_type: " << gen_structure_ID << endl;
-
         ss << "Output_type: " << out << endl;
 
-        if( !gen_structure_ID.empty() )
+        if( param.contains("Particle_type") )
         {
             ss << "Beads_per_area: " << beads_per_area << endl;
             ss << "Ligands_per_area: " << ligs_per_area << endl;
@@ -520,7 +490,6 @@ public:
         param_float.clear();
         param_vector_int.clear();
 
-        gen_structure_ID.clear();
         in.clear();
         system_function.clear();
         system_var_a=0.0;
@@ -539,9 +508,7 @@ public:
         b=0;
         c=0;
 
-        atom_mass.clear();
         chain_type=-1;
-        mol_tag=-1;
 
         center=false;
         fit = false;

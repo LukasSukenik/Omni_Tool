@@ -52,7 +52,7 @@ public:
 
     void generate( Data& data )
     {
-        Lipids membrane = gen_flat_membrane(data.in.num_lipids, data.in.num_rec, data.in.mol_tag);
+        Lipids membrane = gen_flat_membrane(data.in.param_int["Num_lipids"], data.in.param_int["Number_of_receptors"], data.in.param_int["Mol_tag"]);
 
         for(Lipid& lip : membrane)
         {
@@ -60,7 +60,7 @@ public:
             bonds.insert(bonds.end(), lip.bond.begin(), lip.bond.end());
         }
 
-        cerr << "suggesting box size: " << - 0.5*(sqrt(data.in.num_lipids/2)+1) << " to " << 0.5*(sqrt(data.in.num_lipids/2)+1) << endl;
+        cerr << "suggesting box size: " << - 0.5*(sqrt(data.in.param_int["Num_lipids"]/2)+1) << " to " << 0.5*(sqrt(data.in.param_int["Num_lipids"]/2)+1) << endl;
     }
 
 private:
@@ -263,6 +263,7 @@ private:
             cerr << "Flat_Membrane::validate_pore_input exiting" << endl;
             return -1;
         }
+        return is_correct;
     }
 
     void is_Pore(Data& data, Atoms& mem)
@@ -429,7 +430,7 @@ private:
         membrane_1.move( Tensor_xyz(0.0, 0.0, data.in.system_var_a) );
         membrane_2.move( Tensor_xyz(0.0, 0.0, data.in.system_var_a*-1.0) );
 
-        for(int i=0; i<mem.size()/4; ++i)
+        for(size_t i=0; i<mem.size()/4; ++i)
         {
             mem[4*i +0] = membrane_1[i].part[0];
             mem[4*i +1] = membrane_1[i].part[1];
@@ -452,7 +453,7 @@ private:
     int get_first_tail_bead(Atoms& a)
     {
         Lipid test;
-        for(int i=0; i<a.size(); ++i)
+        for(size_t i=0; i<a.size(); ++i)
         {
             if(test.is_tail(a[i].type))
             {

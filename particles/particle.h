@@ -245,7 +245,7 @@ public:
 
     void generate( Data& data )
     {
-        beads.push_back(Atom(0,0,0,data.in.param_vector_int["Atom_type"][0],data.in.mol_tag));
+        beads.push_back( Atom(0.0, 0.0, 0.0, data.in.param_vector_int["Atom_type"][0], data.in.param_int["Mol_tag"]) );
     }
 
     string help()

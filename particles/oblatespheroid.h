@@ -50,7 +50,7 @@ public:
         int i=0;
         for(auto& item : beads)
         {
-            item.mol_tag = data.in.mol_tag;
+            item.mol_tag = data.in.param_int["Mol_tag"];
             item.N = i+1+data.in.offset+data.get_bead_count();
             ++i;
         }

@@ -79,20 +79,20 @@ int main(int argc, char* argv[])
         //
         // generate a particle if specified
         //
-        if( data.is_particle_gen() )
+        if( data.in.param.contains("Particle_type") )
         {
-            if(particles.count(data.in.gen_structure_ID) > 0)
+            if( particles.contains( data.in.param["Particle_type"] ) )
             {
-                cerr << "Generating particle: " << particles[ data.in.gen_structure_ID ]->name << endl;
-                particles[ data.in.gen_structure_ID ]->generate( data );
-                particles[ data.in.gen_structure_ID ]->modify( data );
-                particles[ data.in.gen_structure_ID ]->populate( data );
-                particles[ data.in.gen_structure_ID ]->make_persistent(data); // particle data
+                cerr << "Generating particle: " << particles[ data.in.param["Particle_type"] ]->name << endl;
+                particles[ data.in.param["Particle_type"] ]->generate( data );
+                particles[ data.in.param["Particle_type"] ]->modify( data );
+                particles[ data.in.param["Particle_type"] ]->populate( data );
+                particles[ data.in.param["Particle_type"] ]->make_persistent(data); // particle data
             }
             else
             {
-                cerr << "main.cpp :: " << data.in.gen_structure_ID << " keyword not found in particle_container" << endl;
-            	exit(2);
+                cerr << "main.cpp :: " << data.in.param["Particle_type"] << " keyword not found in particle_container" << endl;
+                exit(2);
             }
         }
 

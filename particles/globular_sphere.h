@@ -13,7 +13,7 @@ public:
 
     bool test_icosphere_input( Data& data )
     {
-        if(data.in.subdiv_beads > 0 && data.in.subdiv_lig > 0 && data.in.ff.lj.count(1) == 1 && data.in.ff.lj[1].type > 0 && data.in.mol_tag > 0)
+        if(data.in.subdiv_beads > 0 && data.in.subdiv_lig > 0 && data.in.ff.lj.count(1) == 1 && data.in.ff.lj[1].type > 0 && data.in.param_int["Mol_tag"] > 0)
         {
             return true;
         }
@@ -22,7 +22,7 @@ public:
 
     bool test_fibonacci_input( Data& data )
     {
-        if(data.in.num_of_beads > 0 && data.in.num_lig > 0 && data.in.ff.lj.count(1) == 1 && data.in.ff.lj[1].type > 0 && data.in.mol_tag > 0)
+        if(data.in.num_of_beads > 0 && data.in.num_lig > 0 && data.in.ff.lj.count(1) == 1 && data.in.ff.lj[1].type > 0 && data.in.param_int["Mol_tag"] > 0)
         {
             return true;
         }
@@ -64,15 +64,15 @@ public:
         //
         if( test_icosphere_input(data) )
         {
-        	base_sphere = icosphere(data.in.subdiv_beads, data.in.ff.lj[1].type, data.in.mol_tag);
-            patch_sphere = icosphere(data.in.subdiv_lig, 0, data.in.mol_tag);
+            base_sphere = icosphere(data.in.subdiv_beads, data.in.ff.lj[1].type, data.in.param_int["Mol_tag"]);
+            patch_sphere = icosphere(data.in.subdiv_lig, 0, data.in.param_int["Mol_tag"]);
       	}
         else
         {
             if( test_fibonacci_input(data) )
             {
-                fibonacci_sphere( base_sphere, data.in.num_of_beads, data.in.ff.lj[1].type, data.in.mol_tag);
-                fibonacci_sphere( patch_sphere, data.in.num_lig, -1, data.in.mol_tag);
+                fibonacci_sphere( base_sphere, data.in.num_of_beads, data.in.ff.lj[1].type, data.in.param_int["Mol_tag"]);
+                fibonacci_sphere( patch_sphere, data.in.num_lig, -1, data.in.param_int["Mol_tag"]);
             }
         }
 

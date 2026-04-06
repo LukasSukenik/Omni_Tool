@@ -81,8 +81,8 @@ private:
         {
             cout << "not planar" << endl;
         }
-        h_sp.print();
-        h_sp.print_ordered_cumulative();
+        h_sp.print("histogram_2D_dirs");
+        h_sp.print_ordered_cumulative("histogram_cumulative");
 
         /*Histogram_Spherical h_rot(20,40);
         Tensor_xyz dir_highest = h_sp.get_highest();
