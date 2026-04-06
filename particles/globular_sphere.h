@@ -43,6 +43,13 @@ public:
         }
     }
 
+    string help()
+    {
+        stringstream ss;
+        ss << "Particle_type: Globular_Sphere\n";
+        return ss.str();
+    }
+
     void generate( Data& data )
     {
         Atoms base_sphere;
@@ -121,6 +128,8 @@ public:
         }
         beads.insert(beads.end(), full_sphere.begin(), full_sphere.end());
     }
+
+
 
 protected:
 

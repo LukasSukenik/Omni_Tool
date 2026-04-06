@@ -14,6 +14,20 @@ public:
     Sphere() : Particle("sphere") {}
     Sphere(string str) : Particle(str) {}
 
+    string help()
+    {
+        stringstream ss;
+
+        ss << "Particle_type: sphere\n";
+        ss << "Output_type: pdb # other keywords: xyz pdb lammps_full\n";
+        ss << "Num_of_beads: 500\n";
+        ss << "Scale: 5.0\n";
+        ss << "Number_of_ligands: 50\n";
+        ss << "Mol_tag: 2\n";
+
+        return ss.str();
+    }
+
     void generate( Data& data )
     {
         vector<Atom> ligand;
@@ -78,19 +92,7 @@ public:
             item *= rescale;
     }
 
-    string help()
-    {
-    	stringstream ss;
 
-    	ss << "Particle_type: sphere\n";
-    	ss << "Output_type: pdb # other keywords: xyz pdb lammps_full\n";
-		ss << "Num_of_beads: 500\n";
-		ss << "Scale: 5.0\n";
-		ss << "Number_of_ligands: 50\n";
-        ss << "Mol_tag: 2\n";
-
-    	return ss.str();
-    }
 
 protected:    
     void gen_ligands( Data& data, vector<Atom>& ligand, Atom patch, int type_from, int type_temp=-1)
@@ -199,6 +201,13 @@ public:
 
     SphereJanus() : Sphere("sphere_janus") {}
 
+    string help()
+    {
+        stringstream ss;
+        ss << "Particle_type: sphere_janus\n";
+        return ss.str();
+    }
+
     void generate( Data& data ) {
 
         // generate nano
@@ -236,6 +245,9 @@ public:
             beads[i].mol_tag = 3;
         }*/
     }
+
+
+
 };
 
 #endif // SPHERE_H

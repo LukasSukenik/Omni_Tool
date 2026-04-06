@@ -55,6 +55,7 @@ int main(int argc, char* argv[])
     if( argc == 1 || strcmp(argv[1], "-h") == 0 )
     {
         particles.helpMessage();
+        systems.helpMessage();
         exit(-1);
     }
 

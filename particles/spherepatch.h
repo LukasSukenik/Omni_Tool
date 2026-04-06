@@ -12,6 +12,14 @@ public:
 
     SpherePatch() : Sphere("sphere_patch") {}
 
+
+    string help()
+    {
+        stringstream ss;
+        ss << "Particle_type: sphere_patch\n";
+        return ss.str();
+    }
+
     void generate( Data& data )
     {
         Atoms ligand;
@@ -78,6 +86,7 @@ public:
             beads.push_back(start);
         }
     }
+
 };
 
 #endif // SPHEREPATCH_H

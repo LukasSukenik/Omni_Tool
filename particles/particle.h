@@ -107,11 +107,7 @@ public:
 
     virtual string help()
     {
-        stringstream ss;
-        ss << "Abstract class Particle\n";
-        ss << "Contains functions intended for inheritance\n";
-        ss << "Does not generate anything\n";
-        return ss.str();
+        return "";
     }
 
     void printSigma()

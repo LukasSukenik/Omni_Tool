@@ -125,9 +125,6 @@ public:
         return 4*PI*pow(value, 1.0/1.6075); // aproximate, error 1%
     }
 
-
-
-
 private:
 
     void generate_const_surf_distrib()
@@ -334,6 +331,13 @@ public:
 
     const double PI = 3.141592653589793;
 
+    string help()
+    {
+        stringstream ss;
+        ss << "Particle_type: Ellipsoid\n";
+        return ss.str();
+    }
+
     /**
      * @brief generate (x^2+y^2)/(a^2) + (z^2/c^2) = 1, c > 1 prolate, a>1 oblate
      * @param size
@@ -388,6 +392,8 @@ public:
             ++i;
         }
     }
+
+
 
 protected:
 

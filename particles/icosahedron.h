@@ -53,7 +53,12 @@ public:
 
 
 
-
+    string help()
+    {
+        stringstream ss;
+        ss << "Particle_type: icosahedron\n";
+        return ss.str();
+    }
 
     virtual void generate( Data& data )
     {

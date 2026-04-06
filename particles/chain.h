@@ -32,6 +32,13 @@ public:
     enum chain_type: unsigned short { BASIC=0, SOLID_CORE=1, INTERACTIVE_N=2 };
     chain_type chain_type = BASIC;
 
+    string help()
+    {
+        stringstream ss;
+        ss << "Particle_type: chain\n";
+        return ss.str();
+    }
+
     void generate( Data& data )
     {
         load_params(data);
@@ -147,6 +154,11 @@ public:
             }
         }
     }
+
+
+
+
+private:
 
     void load_params( Data& data )
     {

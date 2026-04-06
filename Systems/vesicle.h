@@ -16,6 +16,17 @@ public:
 
     Vesicle() : System_Base("Vesicle"), Sphere("Vesicle") {}
 
+    string help()
+    {
+        stringstream ss;
+
+        ss << "*********************************************************" << endl;
+        ss << "Particle_type: Vesicle\n";
+        ss << "System_type: Vesicle" << endl;
+
+        return ss.str();
+    }
+
     void execute(Data& data)
     {
         int sys_id = data.id_map[ data.in.param_int["ID"] ];
@@ -87,15 +98,7 @@ public:
         }
     }
 
-    string help()
-    {
-        stringstream ss;
 
-        ss << "*********************************************************" << endl;
-        ss << "System_type: Vesicle" << endl;
-
-        return ss.str();
-    }
 
 private:
 

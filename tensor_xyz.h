@@ -84,7 +84,7 @@ public:
      * @param B
      * @return
      */
-    inline Tensor_xyz cross(const Tensor_xyz& B) const {
+    inline Tensor_xyz cross(const Tensor_xyz B) const {
         return Tensor_xyz(y*B.z - z*B.y, -x*B.z + z*B.x, x*B.y - y*B.x);
     }
 
@@ -100,7 +100,7 @@ public:
         return x<size && x>-size && y<size && y>-size && z<size && z>-size;
     }
 
-    inline void rotate(Tensor_xyz& axis, myFloat angle) {
+    inline void rotate(Tensor_xyz axis, myFloat angle) {
         angle*=0.5;
         double cosAngle = cos(angle);
         double sinAngle = sin(angle);

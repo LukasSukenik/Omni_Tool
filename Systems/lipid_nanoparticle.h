@@ -4,54 +4,10 @@
 #include "system_base.h"
 #include "atom.h"
 #include "xtcanalysis.h"
+#include "histogram.h"
 
-class Histogram
-{
-public:
-    vector<int> hist;
-    double min, max;
 
-    Histogram(int size, double minn, double maxx)
-    {
-        this->min = minn;
-        this->max = maxx;
-        hist = vector<int>(size, 0);
-    }
 
-    void add(double value)
-    {
-        value = value - min;
-        int index = (int) ( value * hist.size() / (max-min) + 1e-9 ); // max would be out-of-bound
-        hist[index]++;
-    }
-
-    int size()
-    {
-        return hist.size();
-    }
-};
-
-class Histogram_Radial : public Histogram
-{
-public:
-    Histogram_Radial(int size) : Histogram(size, -3.141592653589793, 3.141592653589793) {}
-
-    void add(Tensor_xyz dir, Tensor_xyz axis)
-    {
-        double theta = 0.0; // -pi to pi
-        if(dir.x >  0.0) theta = atan(dir.y/dir.x);
-        if(dir.x <  0.0 && dir.y >= 0.0) theta = atan(dir.y/dir.x) + 3.141592653589793;
-        if(dir.x <  0.0 && dir.y <  0.0) theta = atan(dir.y/dir.x) - 3.141592653589793;
-        if(dir.x == 0.0 && dir.y >  0.0) theta =  3.141592653589793 * 0.5;
-        if(dir.x == 0.0 && dir.y <  0.0) theta = -3.141592653589793 * 0.5;
-        if(dir.x == 0.0 && dir.y == 0.0)
-        {
-            cerr << "Histogram_Radial::Impossible" << endl;
-            exit(-1);
-        }
-        Histogram::add(theta);
-    }
-};
 
 class Lipid_Nanoparticle : public System_Base
 {
@@ -66,10 +22,9 @@ public:
     string help()
     {
         stringstream ss;
-
-        ss << "*********************************************************" << endl;
-        ss << "System_type: Lipid_Nanoparticle" << endl;
-
+        ss << help_calc_water_content() << endl;
+        ss << help_print_last_frame_as_gro() << endl;
+        ss << help_analyze_phase() << endl;
         return ss.str();
     }
 
@@ -80,6 +35,26 @@ public:
         if(data.in.system_function.compare("analyze_phase") == 0) { analyze_phase(data); }
     }
 
+private:
+
+    ///
+    /// Analyze Phase
+    ///
+    string help_analyze_phase()
+    {
+        stringstream ss;
+
+        ss << "*********************************************************" << endl;
+        ss << "System_type: Lipid_Nanoparticle" << endl;
+        ss << "System_execute: analyze_phase" << endl;
+        ss << "Input_type: lammps_full" << endl;
+        ss << "Load_file: data.start" << endl;
+        ss << "Trajectory_file: traj_1.xtc" << endl;
+        ss << "ID: 1" << endl;
+
+        return ss.str();
+    }
+
     void analyze_phase(Data& data)
     {
         int sys_id = data.id_map[ data.in.param_int["ID"] ];
@@ -87,35 +62,59 @@ public:
 
         Trajectory traj;
         traj.load(data.in.param["Trajectory_file"]);
-        mem.set_frame(  traj[traj.frame_count()-1]  );
 
-        vector<Tensor_xyz> dirs;
-        dirs.resize(mem.size() / 4);
+        vector<Tensor_xyz> dirs(mem.size() / 4, Tensor_xyz(0.0, 0.0, 0.0));
+        get_frame_averaged_dirs(data, dirs, mem, traj);
 
-        for(int i=0; i<mem.size(); i+=4)
-        {
-            dirs[i/4] = (mem[i].pos - mem[i+3].pos);
-            dirs[i/4].normalise();
-        }
+        Histogram_Spherical h_sp(20,40);
 
-        Histogram_Radial h_x(360);
-        Histogram_Radial h_y(360);
-        Histogram_Radial h_z(360);
 
         for(Tensor_xyz a : dirs)
         {
-            h_x.add(Tensor_xyz(a.z, a.y, a.x), Tensor_xyz(1.0, 0.0, 0.0));
-            h_y.add(Tensor_xyz(a.x, a.z, a.y), Tensor_xyz(0.0, 1.0, 0.0));
-            h_z.add(Tensor_xyz(a.x, a.y, a.z), Tensor_xyz(0.0, 0.0, 1.0));
+            h_sp.add(a, Tensor_xyz(0.0,0.0,1.0), 0.0);
         }
-
-        for(int i=0; i<h_x.size(); ++i)
+        if( h_sp.is_planar(dirs.size()) )
         {
-            cout << i << " " << h_x.hist[i] << " " << h_y.hist[i] << " " << h_z.hist[i] << endl;
+            cout << "is planar" << endl;
         }
+        else
+        {
+            cout << "not planar" << endl;
+        }
+        h_sp.print();
+        h_sp.print_ordered_cumulative();
 
+        /*Histogram_Spherical h_rot(20,40);
+        Tensor_xyz dir_highest = h_sp.get_highest();
+        Tensor_xyz axis;
+        double angle;
+        if(dir_highest.x != 1.0)
+        {
+            axis = dir_highest.cross(Tensor_xyz(0.0, 1.0, 0.0));
+            angle = asin( axis.size() );
+            axis.normalise();
+            for(Tensor_xyz a : dirs)
+            {
+                h_rot.add(a, axis, angle*rad_to_deg);
+            }
 
-        exit(1);
+        }
+        h_rot.print();
+        h_rot.print_ordered();*/
+    }
+
+    ///
+    /// Print Last Frame
+    ///
+
+    string help_print_last_frame_as_gro()
+    {
+        stringstream ss;
+
+        ss << "*********************************************************" << endl;
+        ss << "System_type: Lipid_Nanoparticle" << endl;
+
+        return ss.str();
     }
 
     void print_last(Data& data)
@@ -128,6 +127,20 @@ public:
         mem.set_frame(  traj[traj.frame_count()-1]  );
 
         data.gro.print_lammps_data(mem, data.in.sim_box.get_box());
+    }
+
+    ///
+    /// Calc Water Content
+    ///
+
+    string help_calc_water_content()
+    {
+        stringstream ss;
+
+        ss << "*********************************************************" << endl;
+        ss << "System_type: Lipid_Nanoparticle" << endl;
+
+        return ss.str();
     }
 
     void calc_water_content(Data& data)
@@ -193,6 +206,45 @@ public:
     bool is_water(Atoms& frame, Atom& feeler)
     {
         return !frame.is_overlap(feeler, 1.0);
+    }
+
+    void get_dirs(Data& data, Atoms& frame, vector<Tensor_xyz>& dirs)
+    {
+        Tensor_xyz periodic = Tensor_xyz(data.in.sim_box.xhi - data.in.sim_box.xlo, data.in.sim_box.yhi - data.in.sim_box.ylo, data.in.sim_box.zhi - data.in.sim_box.zlo);
+        for(size_t i=0; i<frame.size(); i+=4)
+        {
+            dirs[i/4] = (frame[i].pos - frame[i+3].pos);
+
+            // fix for periodic box
+            if(dirs[i/4].x >  0.5*periodic.x) { dirs[i/4].x -= periodic.x; }
+            if(dirs[i/4].x < -0.5*periodic.x) { dirs[i/4].x += periodic.x; }
+            if(dirs[i/4].y >  0.5*periodic.y) { dirs[i/4].y -= periodic.y; }
+            if(dirs[i/4].y < -0.5*periodic.y) { dirs[i/4].y += periodic.y; }
+            if(dirs[i/4].z >  0.5*periodic.z) { dirs[i/4].z -= periodic.z; }
+            if(dirs[i/4].z < -0.5*periodic.z) { dirs[i/4].z += periodic.z; }
+
+            dirs[i/4].normalise();
+        }
+    }
+
+    void get_frame_averaged_dirs(Data& data, vector<Tensor_xyz>& dirs, Atoms& mem, Trajectory& traj)
+    {
+        vector<Tensor_xyz> dirs_temp(dirs.size(), Tensor_xyz(0.0, 0.0, 0.0));
+        int size=10;
+
+        for(int i=0; i<size; ++i)
+        {
+            mem.set_frame(  traj[traj.frame_count()-(1+i)]  );
+            get_dirs(data, mem, dirs_temp);
+            for(size_t j=0; j<dirs_temp.size(); ++j)
+            {
+                dirs[j] = dirs[j] + dirs_temp[j];
+            }
+        }
+        for(size_t j=0; j<dirs.size(); ++j)
+        {
+            dirs[j] = dirs[j]*(1.0/size);
+        }
     }
 };
 

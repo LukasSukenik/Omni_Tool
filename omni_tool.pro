@@ -21,6 +21,7 @@ HEADERS += \
     cluster_analysis.h \
     data.h \
     force_field.h \
+    histogram.h \
     rng.h \
     sim_box.h \
     types.h \

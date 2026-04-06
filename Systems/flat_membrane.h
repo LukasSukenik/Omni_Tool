@@ -27,7 +27,8 @@ public:
         stringstream ss;
 
         ss << "*********************************************************" << endl;
-        ss << "System_type: Flat_Membrane" << endl;;
+        ss << "Particle_type: Flat_Membrane\n";
+        ss << "System_type: Flat_Membrane" << endl;
 
         return ss.str();
     }

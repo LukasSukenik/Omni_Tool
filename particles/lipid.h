@@ -78,6 +78,13 @@ public:
         gen_lipid(pos, dir, mol_N, mol_tag); set_bead_type(leaf, is_receptor);
     }
 
+    string help()
+    {
+        stringstream ss;
+        ss << "Particle_type: lipid\n";
+        return ss.str();
+    }
+
     /**
      * @brief generate
      * @param data

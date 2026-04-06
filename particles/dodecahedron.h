@@ -32,8 +32,14 @@ public:
     interface interface_type = UNIFORM;
 
 
+    string help()
+    {
+        stringstream ss;
+        ss << "Particle_type: dodecahedron\n";
+        return ss.str();
+    }
 
-    virtual void generate( Data& data ) override
+    void generate( Data& data )
     {
         // LOAD DATA
         this->size = data.in.num_of_beads;

@@ -15,6 +15,13 @@ public:
 
     TennisBall() : Sphere("tennisball") {}
 
+    string help()
+    {
+        stringstream ss;
+        ss << "Particle_type: tennisball\n";
+        return ss.str();
+    }
+
     void generate( Data& data )
     {
         vector<Atom> ligand;
@@ -27,6 +34,8 @@ public:
 
         beads.erase(beads.begin()+data.in.num_of_beads, beads.end()); // erase second fib sphere
     }
+
+
 
 protected:
     /**
@@ -81,6 +90,13 @@ public:
     inline static const string name = "tennis_ball_2";
 
     TennisBall2() : Sphere() {}
+
+    string help()
+    {
+        stringstream ss;
+        ss << "Particle_type: tennis_ball_2\n";
+        return ss.str();
+    }
 
     void generate( Data data )
     {

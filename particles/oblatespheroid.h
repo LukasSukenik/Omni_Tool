@@ -17,6 +17,13 @@ public:
 
     OblateSpheroid() : Sphere("oblate_spheroid") {}
 
+    string help()
+    {
+        stringstream ss;
+        ss << "Particle_type: oblate_spheroid\n";
+        return ss.str();
+    }
+
     /**
      * @brief generate (x^2+y^2)/(a^2) + (z^2/c^2) = 1, c > 1 prolate, a>1 oblate
      * @param size
@@ -103,6 +110,8 @@ public:
             }
         }
     }
+
+
 
 protected:
     void fibonacci_spheroid(vector<Atom>& container, int samples, double c, const int type, int orientation)

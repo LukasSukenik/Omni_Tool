@@ -50,7 +50,6 @@ public:
         {
             cout << (*val).help() << endl;
         }
-        exit(1);
     }
 };
 

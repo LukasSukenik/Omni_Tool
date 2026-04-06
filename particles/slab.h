@@ -12,6 +12,13 @@ public:
 
     Slab1D() : Particle() {}
 
+    string help()
+    {
+        stringstream ss;
+        ss << "Particle_type: slab1D\n";
+        return ss.str();
+    }
+
     void generate( Data& data )
     {
         int row = sqrt(data.in.num_of_beads);
@@ -39,6 +46,13 @@ public:
     const string name = "slab";
 
     Slab() : Particle("slab") {}
+
+    string help()
+    {
+        stringstream ss;
+        ss << "Particle_type: slab\n";
+        return ss.str();
+    }
 
     void generate( Data& data )
     {
@@ -103,6 +117,13 @@ public:
 
 
     NettedSlab() : Particle("netted_slab") {}
+
+    string help()
+    {
+        stringstream ss;
+        ss << "Particle_type: netted_slab\n";
+        return ss.str();
+    }
 
     void generate( Data& data )
     {
