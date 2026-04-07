@@ -62,17 +62,27 @@ public:
 
     virtual void generate( Data& data )
     {
+        validate_inputs(data);
         //bparam.push_back();
         molTag_offset = data.get_Max_Mol_Tag();
         offset = data.get_bead_count();
         this->types = data.in.ff.types;
         ligandModulo = data.in.num_lig;
 
-        this->icoFrame( data.in.num_of_beads, data.in.scale, data.in.com_pos); // generate icosahedron
+        this->icoFrame( data.in.num_of_beads, data.in.param_float["Scale"], data.in.com_pos); // generate icosahedron
         setUnitSize();
     }
 
 protected:
+    void validate_inputs( Data& data )
+    {
+        if( !data.in.param_float.contains("Scale") )
+        {
+            cerr << "Missing keyword; Scale: 1.0" << endl;
+            exit(-1);
+        }
+    }
+
     void setUnitSize()
     {
         double len = edge[0].size();

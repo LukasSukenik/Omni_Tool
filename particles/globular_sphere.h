@@ -52,6 +52,8 @@ public:
 
     void generate( Data& data )
     {
+        validate_inputs(data);
+
         Atoms base_sphere;
         Atoms patch_sphere;
         Atoms full_sphere;
@@ -77,14 +79,14 @@ public:
         }
 
     	// scale patch_sphere by 1.0 + 1st sphere pseudoatom sigma - patch pseudoatom sigma
-    	patch_sphere.scale(1.0 + (data.in.ff.lj[1].sigma - data.in.ff.lj[2].sigma) / data.in.scale);
+        patch_sphere.scale(1.0 + (data.in.ff.lj[1].sigma - data.in.ff.lj[2].sigma) / data.in.param_float["Scale"]);
 
     	// create the final particle based on defined patches
     	for(auto& atom : patch_sphere)
     	{
     		for(auto& patch : data.in.patches)
     	    {
-    			if( (patch.pos.x*(atom.pos.x - patch.vel.x)) + (patch.pos.y*(atom.pos.y - patch.vel.y)) + (patch.pos.z*(atom.pos.z - patch.vel.z)) > 0 + (data.in.ff.lj[1].sigma - data.in.ff.lj[2].sigma) / data.in.scale )
+                if( (patch.pos.x*(atom.pos.x - patch.vel.x)) + (patch.pos.y*(atom.pos.y - patch.vel.y)) + (patch.pos.z*(atom.pos.z - patch.vel.z)) > 0 + (data.in.ff.lj[1].sigma - data.in.ff.lj[2].sigma) / data.in.param_float["Scale"] )
     	        {
     				atom.type=patch.type;
     	        	full_sphere.push_back(atom);
@@ -132,6 +134,10 @@ public:
 
 
 protected:
+    void validate_inputs( Data& data )
+    {
+        if( !data.in.param_float.contains("Scale") ) { cerr << "Missing keyword; Scale: 1.0" << endl; exit(-1); }
+    }
 
     Atoms icosahedron(int type, int mol_tag)
     {

@@ -41,16 +41,18 @@ public:
 
     void generate( Data& data )
     {
+        validate_inputs(data);
+
         // LOAD DATA
         this->size = data.in.num_of_beads;
-        this->c = data.in.c;
+        this->c = data.in.param_float["c"];
         this->box = data.in.sim_box;
         this->offset = data.get_bead_count();
 
         init(size);// set shift, fscale
         info();
 
-        this->scale = data.in.scale;
+        this->scale = data.in.param_float["Scale"];
         this->com_pos = data.in.com_pos;
 
         //
@@ -102,6 +104,12 @@ public:
 
 private:
     myFloat separation_same, separation_other, separation_other_shifted, separation_same_shifted;
+
+    void validate_inputs( Data& data )
+    {
+        if( !data.in.param_float.contains("Scale") ) { cerr << "Missing keyword; Scale: 1.0" << endl; exit(-1); }
+        if( !data.in.param_float.contains("c") )     { cerr << "Missing keyword; c: 0.5" << endl; exit(-1); }
+    }
 
     void mixing_rules() {
         for(int i = 0; i< sigma_size; ++i) {

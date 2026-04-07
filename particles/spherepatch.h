@@ -22,6 +22,7 @@ public:
 
     void generate( Data& data )
     {
+        validate_inputs(data);
         Atoms ligand;
 
         // generate nano
@@ -33,7 +34,7 @@ public:
         fibonacci_sphere(ligand, data.in.num_lig, typeTemp); // second fib. sphere
 
         // Erase part of ligand placement
-        int num_lig2 = createPatch(nano_end, data.in.c, typeTemp);
+        int num_lig2 = createPatch(nano_end, data.in.param_float["c"], typeTemp);
 
         // change type nano to type lig based on placement of type temp
         Atom patch = Atom(1,1,1,typeLig);
@@ -43,7 +44,22 @@ public:
 
         for(int i=nano_start; i<nano_end; ++i) {
             if(beads[i].type == typeLig)
-                gen_polymer(6,beads[i], data.in.scale);
+                gen_polymer(6,beads[i], data.in.param_float["Scale"]);
+        }
+    }
+
+private:
+    void validate_inputs( Data& data )
+    {
+        if( !data.in.param_float.contains("Scale") )
+        {
+            cerr << "Missing keyword; Scale: 1.0" << endl;
+            exit(-1);
+        }
+        if( !data.in.param_float.contains("c") )
+        {
+            cerr << "Missing keyword; c: 0.5" << endl;
+            exit(-1);
         }
     }
 

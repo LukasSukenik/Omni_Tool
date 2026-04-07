@@ -21,8 +21,9 @@ public:
 
     void generate( Data& data )
     {
+        validate_inputs(data);
         int row = sqrt(data.in.num_of_beads);
-        int bead_size = data.in.scale;
+        int bead_size = data.in.param_float["Scale"];
         double factor = 1.0; // length were we generate beads
 
 
@@ -36,6 +37,16 @@ public:
 
         sigma_size = 1;
         sigma[0][0] = bead_size*1.0;
+    }
+
+private:
+    void validate_inputs( Data& data )
+    {
+        if( !data.in.param_float.contains("Scale") )
+        {
+            cerr << "Missing keyword; Scale: 1.0" << endl;
+            exit(-1);
+        }
     }
 };
 
@@ -56,7 +67,8 @@ public:
 
     void generate( Data& data )
     {
-        double factor = data.in.scale;
+        validate_inputs(data);
+        double factor = data.in.param_float["Scale"];
 
         sigma[0][0] = 5*factor;
         sigma[0][1] = 3*factor;
@@ -83,6 +95,15 @@ public:
     }
 
 private:
+    void validate_inputs( Data& data )
+    {
+        if( !data.in.param_float.contains("Scale") )
+        {
+            cerr << "Missing keyword; Scale: 1.0" << endl;
+            exit(-1);
+        }
+    }
+
     void gen_bonds(int row) {
         int actual;
         for(int i=0; i<row; ++i) {
@@ -127,8 +148,10 @@ public:
 
     void generate( Data& data )
     {
+        validate_inputs(data);
+
         int row = sqrt(data.in.num_of_beads);
-        int bead_size = data.in.scale;
+        int bead_size = data.in.param_float["Scale"];
         double factor = 1.0; // length were we generate beads
 
 
@@ -157,9 +180,9 @@ public:
             Atom next;
             bool clash=true;
             while(clash) {
-                double x = ((0.20+ran()/10*6)*data.in.sim_box.xhi - data.in.com_pos.x) / data.in.scale;
-                double y = ( (0.20+ran()/4) *data.in.sim_box.yhi - data.in.com_pos.y) / data.in.scale;
-                double z = ((0.20+ran()/10*6)*data.in.sim_box.zhi - data.in.com_pos.z) / data.in.scale;
+                double x = ((0.20+ran()/10*6)*data.in.sim_box.xhi - data.in.com_pos.x) / data.in.param_float["Scale"];
+                double y = ( (0.20+ran()/4) *data.in.sim_box.yhi - data.in.com_pos.y) / data.in.param_float["Scale"];
+                double z = ((0.20+ran()/10*6)*data.in.sim_box.zhi - data.in.com_pos.z) / data.in.param_float["Scale"];
 
                 next = Atom(x,y,z,2);
 
@@ -181,7 +204,7 @@ public:
                 clash=false;
 
                 for(int j=0; j<beads.size(); ++j) {
-                    if(beads[j].dist(next) < data.in.c ) {
+                    if(beads[j].dist(next) < data.in.param_float["c"] ) {
                         clash = true;
                     }
                 }
@@ -202,6 +225,20 @@ public:
     }
 
 private:
+    void validate_inputs( Data& data )
+    {
+        if( !data.in.param_float.contains("Scale") )
+        {
+            cerr << "Missing keyword; Scale: 1.0" << endl;
+            exit(-1);
+        }
+        if( !data.in.param_float.contains("c") )
+        {
+            cerr << "Missing keyword; c: 0.5" << endl;
+            exit(-1);
+        }
+    }
+
     void mixing_rules() {
         for(int i = 0; i< sigma_size; ++i) {
             for(int j = 0; j< sigma_size; ++j) {

@@ -30,21 +30,22 @@ public:
      */
     void generate( Data& data )
     {
+        validate_inputs(data);
         vector<Atom> ligand;
 
         typeNano = data.in.param_vector_int["Atom_type"][0];
         typeLig = data.in.param_vector_int["Atom_type"][0] + 1;
 
         int orientations = orientY;
-        int num_beads = data.in.beads_per_area * surface(data.in.scale, data.in.scale*data.in.c);
-        int num_ligs = data.in.ligs_per_area * surface(data.in.scale, data.in.scale*data.in.c);
+        int num_beads = data.in.beads_per_area * surface(data.in.param_float["Scale"], data.in.param_float["Scale"]*data.in.param_float["c"]);
+        int num_ligs = data.in.ligs_per_area * surface(data.in.param_float["Scale"], data.in.param_float["Scale"]*data.in.param_float["c"]);
 
-        fibonacci_spheroid(beads, num_beads, data.in.c, typeNano, orientations);
-        fibonacci_spheroid(ligand, num_ligs, data.in.c, typeTemp, orientations);
+        fibonacci_spheroid(beads, num_beads, data.in.param_float["c"], typeNano, orientations);
+        fibonacci_spheroid(ligand, num_ligs, data.in.param_float["c"], typeTemp, orientations);
         gen_ligands( data, ligand, data.in.patch_1, typeNano, typeTemp);
         gen_ligands( data, ligand, data.in.patch_2, typeNano, typeTemp);
 
-        gen_TMD(data.in.c, data.in.scale, data.in.tmd.size, data.in.tmd.proximal_n, data.in.tmd.distal_n, orientations);
+        gen_TMD(data.in.param_float["c"], data.in.param_float["Scale"], data.in.tmd.size, data.in.tmd.proximal_n, data.in.tmd.distal_n, orientations);
 
         // add to existing data
         int i=0;
@@ -69,6 +70,21 @@ public:
         }
 
         cerr << "Oblate beads size " << beads.size() << endl;
+    }
+
+private:
+    void validate_inputs( Data& data )
+    {
+        if( !data.in.param_float.contains("Scale") )
+        {
+            cerr << "Missing keyword; Scale: 1.0" << endl;
+            exit(-1);
+        }
+        if( !data.in.param_float.contains("c") )
+        {
+            cerr << "Missing keyword; c: 0.5" << endl;
+            exit(-1);
+        }
     }
 
 

@@ -37,6 +37,33 @@ public:
     {
         return "";
     }
+
+    void validate_keyword(unordered_map<string, string>& param, string keyword, string default_value)
+    {
+        if( !param.contains(keyword) )
+        {
+            cerr << "Missing keyword; " << keyword << " " << default_value << endl;
+            exit(-1);
+        }
+    }
+
+    void validate_keyword(unordered_map<string, int>& param, string keyword, string default_value)
+    {
+        if( !param.contains(keyword) )
+        {
+            cerr << "Missing keyword; " << keyword << " " << default_value << endl;
+            exit(-1);
+        }
+    }
+
+    void validate_keyword(unordered_map<string, vector<int>>& param, string keyword, string default_value)
+    {
+        if( !param.contains(keyword) )
+        {
+            cerr << "Missing keyword; " << keyword << " " << default_value << endl;
+            exit(-1);
+        }
+    }
 };
 
 #endif // SYSTEM_BASE_H

@@ -50,57 +50,38 @@ private:
         ss << "Input_type: lammps_full" << endl;
         ss << "Load_file: data.start" << endl;
         ss << "Trajectory_file: traj_1.xtc" << endl;
+        ss << "Histo_2D_dirs_outfile: dirs_distrib_2D" << endl;
+        ss << "Histo_1D_dirs_outfile: dirs_distrib_1D" << endl;
+        ss << "Histo_2D_settings: 20 40" << endl;
+        ss << "Averaged_frame_count: 10" << endl;
         ss << "ID: 1" << endl;
+        ss << "Histo 1D is a cumulative ordered version of histo_2D" << endl;
 
         return ss.str();
     }
 
+    void validate_analyze_phase_inputs( Data& data )
+    {
+        validate_keyword(data.in.param, "Load_file",             "data.start");
+        validate_keyword(data.in.param, "Trajectory_file",       "traj_1.xtc");
+        validate_keyword(data.in.param, "Histo_2D_dirs_outfile", "dirs_distrib_2D");
+        validate_keyword(data.in.param, "Histo_1D_dirs_outfile", "dirs_distrib_1D");
+        validate_keyword(data.in.param_vector_int, "Histo_2D_settings",     "20 40");
+        validate_keyword(data.in.param_int, "Averaged_frame_count",     "10");
+    }
+
     void analyze_phase(Data& data)
     {
+        validate_analyze_phase_inputs(data);
         int sys_id = data.id_map[ data.in.param_int["ID"] ];
-        Atoms& mem = data.coll_beads[sys_id];
+        Atoms& topo = data.coll_beads[sys_id];
 
         Trajectory traj;
         traj.load(data.in.param["Trajectory_file"]);
+        string phase = "";
 
-        vector<Tensor_xyz> dirs(mem.size() / 4, Tensor_xyz(0.0, 0.0, 0.0));
-        get_frame_averaged_dirs(data, dirs, mem, traj);
-
-        Histogram_Spherical h_sp(20,40);
-
-
-        for(Tensor_xyz a : dirs)
-        {
-            h_sp.add(a, Tensor_xyz(0.0,0.0,1.0), 0.0);
-        }
-        if( h_sp.is_planar(dirs.size()) )
-        {
-            cout << "is planar" << endl;
-        }
-        else
-        {
-            cout << "not planar" << endl;
-        }
-        h_sp.print("histogram_2D_dirs");
-        h_sp.print_ordered_cumulative("histogram_cumulative");
-
-        /*Histogram_Spherical h_rot(20,40);
-        Tensor_xyz dir_highest = h_sp.get_highest();
-        Tensor_xyz axis;
-        double angle;
-        if(dir_highest.x != 1.0)
-        {
-            axis = dir_highest.cross(Tensor_xyz(0.0, 1.0, 0.0));
-            angle = asin( axis.size() );
-            axis.normalise();
-            for(Tensor_xyz a : dirs)
-            {
-                h_rot.add(a, axis, angle*rad_to_deg);
-            }
-
-        }
-        h_rot.print();
-        h_rot.print_ordered();*/
+        phase.append( analyze_dirs(data, topo, traj, 10) ); // Dirs analysis identifies planar membrane
+        cout << phase << endl;
     }
 
     ///
@@ -208,6 +189,10 @@ private:
         return !frame.is_overlap(feeler, 1.0);
     }
 
+    //
+    // Other
+    //
+
     void get_dirs(Data& data, Atoms& frame, vector<Tensor_xyz>& dirs)
     {
         Tensor_xyz periodic = Tensor_xyz(data.in.sim_box.xhi - data.in.sim_box.xlo, data.in.sim_box.yhi - data.in.sim_box.ylo, data.in.sim_box.zhi - data.in.sim_box.zlo);
@@ -227,12 +212,11 @@ private:
         }
     }
 
-    void get_frame_averaged_dirs(Data& data, vector<Tensor_xyz>& dirs, Atoms& mem, Trajectory& traj)
+    void get_frame_averaged_dirs(Data& data, vector<Tensor_xyz>& dirs, Atoms& mem, Trajectory& traj, int number_of_averaged_frames)
     {
         vector<Tensor_xyz> dirs_temp(dirs.size(), Tensor_xyz(0.0, 0.0, 0.0));
-        int size=10;
 
-        for(int i=0; i<size; ++i)
+        for(int i=0; i<number_of_averaged_frames; ++i)
         {
             mem.set_frame(  traj[traj.frame_count()-(1+i)]  );
             get_dirs(data, mem, dirs_temp);
@@ -243,8 +227,49 @@ private:
         }
         for(size_t j=0; j<dirs.size(); ++j)
         {
-            dirs[j] = dirs[j]*(1.0/size);
+            dirs[j] = dirs[j]*(1.0/number_of_averaged_frames);
         }
+    }
+
+    string analyze_dirs(Data& data, Atoms& topo, Trajectory& traj, int number_of_averaged_frames)
+    {
+        vector<Tensor_xyz> dirs(topo.size() / 4, Tensor_xyz(0.0, 0.0, 0.0));
+        get_frame_averaged_dirs(data, dirs, topo, traj, number_of_averaged_frames);
+
+        Histogram_Spherical h_sp(data.in.param_vector_int["Histo_2D_settings"][0], data.in.param_vector_int["Histo_2D_settings"][1]);
+
+        for(Tensor_xyz a : dirs)
+        {
+            h_sp.add(a, Tensor_xyz(0.0,0.0,1.0), 0.0);
+        }
+        h_sp.print(data.in.param["Histo_2D_dirs_outfile"]);
+        h_sp.print_ordered_cumulative(data.in.param["Histo_1D_dirs_outfile"]);
+
+        if( h_sp.is_planar(dirs.size()) )
+        {
+            return "planar";
+        }
+        else
+        {
+            return "UNK";
+        }
+
+        /*Histogram_Spherical h_rot(20,40);
+        Tensor_xyz dir_highest = h_sp.get_highest();
+        Tensor_xyz axis;
+        double angle;
+        if(dir_highest.x != 1.0)
+        {
+            axis = dir_highest.cross(Tensor_xyz(0.0, 1.0, 0.0));
+            angle = asin( axis.size() );
+            axis.normalise();
+            for(Tensor_xyz a : dirs)
+            {
+                h_rot.add(a, axis, angle*rad_to_deg);
+            }
+        }
+        h_rot.print();
+        h_rot.print_ordered();*/
     }
 };
 

@@ -3,20 +3,12 @@
 
 #include <iostream>
 #include <fstream>
-#include <iomanip>
 #include <cmath>
-#include <limits>
-
 #include <unordered_map>
-#include <variant>
-
 #include <cstdlib>
 #include <algorithm>
 #include <random>
 #include <sstream>
-#include <string.h>
-
-#include <array>
 
 #include "sim_box.h"
 #include "atom.h"
@@ -199,16 +191,16 @@ public:
      * Particle_type: particle identifier::keyword identifying the structure class
      *
      */
-    vector<string> param_valid_key_list = {"Load_file:", "Trajectory_file:", "System_type:", "Particle_type:"};
+    vector<string> param_valid_key_list = {"Load_file:", "Trajectory_file:", "System_type:", "Particle_type:", "Histo_2D_dirs_outfile:", "Histo_1D_dirs_outfile:"};
     unordered_map<string, string> param;
 
-    vector<string> param_int_valid_key_list = {"ID:", "Mol_tag:", "Num_lipids:", "Number_of_receptors:"};
+    vector<string> param_int_valid_key_list = {"ID:", "Mol_tag:", "Num_lipids:", "Number_of_receptors:", "Chain_type:", "Seed:", "Averaged_frame_count:"};
     unordered_map<string, int> param_int;
 
-    vector<string> param_float_valid_key_list = {"Cluster_cutoff:", "Radius:"};
+    vector<string> param_float_valid_key_list = {"Cluster_cutoff:", "Radius:", "Scale:", "c:"};
     unordered_map<string, double> param_float;
 
-    vector<string> param_vector_int_valid_key_list = {"Atom_type:", "Atom_mass:"};
+    vector<string> param_vector_int_valid_key_list = {"Atom_type:", "Atom_mass:", "Histo_2D_settings:"};
     unordered_map<string, vector<int>> param_vector_int;
 
     // IO
@@ -234,9 +226,6 @@ public:
     double trim;
     int multiple;
 
-    // atom types
-    int chain_type=-1;
-
     // molecule types
     int mtag_1=-1;
     int mtag_2=-1;
@@ -248,13 +237,10 @@ public:
 
     // Ellipsoid, oblate spheroid
     myFloat b=0.0;
-    myFloat c=0.0;
 
     // System data
-    myFloat scale = 1.0;
     bool center=false;
     Tensor_xyz com_pos = Tensor_xyz(0.0, 0.0, 0.0);
-    int seed=0;
     Tensor_xyz ivx = Tensor_xyz(0.0, 0.0, 0.0);
     bool fit = false;
 
@@ -377,21 +363,15 @@ public:
             if( key.compare("Trim:") == 0 )                { ss >> trim; }
             if( key.compare("Multiple:") == 0 )            { ss >> multiple; }
 
-            // Load atom and molecule types
-            if( key.compare("Chain_type:") == 0 ) 		 { ss >> chain_type; }
-
             // Load particle properties: aspect ration, patches
             if( key.compare("b:") == 0 )                 { ss >> b; }
-            if( key.compare("c:") == 0 )                 { ss >> c; }
             if( key.compare("Patch:") == 0 )             { Atom a; ss >> a; patches.push_back(a); }
             if( key.compare("Patch_1:") == 0 )           { ss >> patch_1; }
             if( key.compare("Patch_2:") == 0 )           { ss >> patch_2; }
 
             // Load system
-            if( key.compare("Scale:") == 0 )             { ss >> scale; }
             if( key.compare("Center") == 0 )             { center=true; }
             if( key.compare("Position_shift:") == 0 )    { ss >> com_pos.x >> com_pos.y >> com_pos.z; }
-            if( key.compare("Seed:") == 0 )              { ss >> seed; rng.seed(seed); }
             if( key.compare("Lammps_offset:") == 0 )     { ss >> offset; }
 
             // Load calc pore
@@ -414,6 +394,11 @@ public:
         }
         fs.close();
 
+        if(param_int.contains("Seed"))
+        {
+            rng.seed(param_int["Seed"]);
+        }
+
         return true;
     }
 
@@ -435,6 +420,21 @@ public:
         for (const auto& [key, value] : param) {
             ss << key << ": " << value << '\n';
         }
+        for (const auto& [key, value] : param_int) {
+            ss << key << ": " << value << '\n';
+        }
+        for (const auto& [key, value] : param_float) {
+            ss << key << ": " << value << '\n';
+        }
+        for (const auto& [key, values] : param_vector_int) {
+            ss << key << ": ";
+            for(const auto& val : values)
+            {
+                ss << val << ' ';
+            }
+            ss << '\n';
+        }
+
 
         // Loading a file
         ss << "Input_type:" << in << endl;
@@ -449,7 +449,6 @@ public:
             ss << "Number of ligands: " << num_lig << endl;
             ss << "Subdiv of beads: " << subdiv_beads << endl;
             ss << "Subdiv of ligands: " << subdiv_lig << endl;
-            ss << "c: " << c << endl;
             ss << "Patch_1: (" << patch_1.pos.x << "-" << patch_1.vel.x << ", " << patch_1.pos.y << "-" << patch_1.vel.y << ", " << patch_1.pos.z << "-" << patch_1.vel.z << ", " << patch_1.type << ")" << endl;
             ss << "Patch_2: (" << patch_2.pos.x << ", " << patch_2.pos.y << ", " << patch_2.pos.z << ", " << patch_2.type << ")" << endl;
             ss << "Trans_membrane_domain: (" << tmd.size << ", " << tmd.proximal_n << ", " << tmd.distal_n << ")" << endl;
@@ -458,7 +457,6 @@ public:
         if(!sim_box.empty())
             ss << "Box: ( " << sim_box << " )" << endl;
 
-        ss << "Scale: " << scale << endl;
         ss << "Offset: " << offset << endl;
         ss << "Position: (" << com_pos.x << ", " << com_pos.y << ", " << com_pos.z << ")" << endl;
 
@@ -503,12 +501,8 @@ public:
         subdiv_lig=-1;
         tmd.clear();
 
-        scale=1.0;
         offset=0;
         b=0;
-        c=0;
-
-        chain_type=-1;
 
         center=false;
         fit = false;
@@ -529,45 +523,6 @@ public:
         population.clear();
         bparam.clear();
         cparam.clear();
-    }
-
-    void help()
-    {
-	    cout << "Lammps_offset: integer" << endl;
-	    cout << " - offset the generated structure for manual insertion into another lammps structure file" << endl;
-	    cout << "Load_file: filename" << endl;
-
-
-	    cout << "Num_of_beads: integer" << endl;
-	    cout << " - Particle_type: 1,6,7 = number of beads per edge" << endl;
-	    cout << " - other Particle_type = number of beads for entire nanoparticle/structure" << endl;
-	    cout << "Scale: floating_point_number - nanoparticle radius" << endl;
-	    cout << "c: float " << endl;
-	    cout << " - Particle_type: 4 = oblate spheroid < 1, prolate spheroid > 1, 1.0 - ERROR, not defined" << endl;
-	    cout << " - Particle_type: 3 = width of patch (0.0 to 2.0)" << endl;
-	    cout << "Number_of_ligands: integer" << endl;
-	    cout << "Mol_tag: integer" << endl;
-	    cout << " - change mol_tag of generated/loaded structure " << endl;
-	    cout << "Atom_type: integer" << endl;
-	    cout << " - Atom_type of generated structure, if structure has more atom_types they are incremented from provided value " << endl;
-	    cout << "Janus: float float float" << endl;
-
-	    cout << "\nPosition/Box properties category:" << endl;
-	    cout << "Box: float float float float float float" << endl;
-	    cout << "position_shift: float float float" << endl;
-	    cout << "Center = centers particles at 0.0" << endl;
-	    cout << "Align: mol_tag_1 mol_tag_2 integer" << endl;
-	    cout << " - align mol_tag_1 with x-axis" << endl;
-	    cout << " - center mol_tag_2 around z axis" << endl;
-	    cout << "Impact_vector: float float float" << endl;
-	    cout << "Fit" << endl;
-	    cout << " - positions the loaded/generated structure next to previosly generated/loadedd structure" << endl;
-	    cout << " - used for ideal collision position of two liposomes and a nanoparticle" << endl;
-
-	    cout << "\nForce-Field category:" << endl;
-	    cout << "Beads_lj/cut:" << endl;
-
-	    cout << "\nSeed: integer = random generator" << endl;
     }
 };
 

@@ -76,9 +76,21 @@ public:
      */
     virtual void generate( Data& data )=0;
 
+    void validate_keyword(unordered_map<string, string>& param, string keyword, string default_value)
+    {
+        if( !param.contains(keyword) )
+        {
+            cerr << "Missing keyword; " << keyword << " " << default_value << endl;
+            exit(-1);
+        }
+    }
+
     void modify( Data& data )
     {
-        scale( data.in.scale );
+        if( data.in.param_float.contains("Scale") )
+        {
+            scale( data.in.param_float["Scale"] );
+        }
         move( data.in.com_pos );
     }
 

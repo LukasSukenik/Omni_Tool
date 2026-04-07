@@ -344,6 +344,7 @@ public:
      */
     void generate( Data& data )
     {
+        validate_inputs(data); // "c",
         vector<Atom> ligand;
 
         typeNano = data.in.param_vector_int["Atom_type"][0];
@@ -354,12 +355,12 @@ public:
         //
         // construct base shape
         //
-        fibonacci_tri_axial_spheroid(beads, data.in.num_of_beads, data.in.b, data.in.c, typeNano, orientations);
+        fibonacci_tri_axial_spheroid(beads, data.in.num_of_beads, data.in.b, data.in.param_float["c"], typeNano, orientations);
 
         //
         // construct ligand shape for selection purposes
         //
-        fibonacci_tri_axial_spheroid(ligand, data.in.num_lig, data.in.b, data.in.c, typeTemp, orientations);
+        fibonacci_tri_axial_spheroid(ligand, data.in.num_lig, data.in.b, data.in.param_float["c"], typeTemp, orientations);
 
         //
         // Validation
@@ -396,6 +397,10 @@ public:
 
 
 protected:
+    void validate_inputs( Data& data )
+    {
+        if( !data.in.param_float.contains("c") ) { cerr << "Missing keyword; c: 0.5" << endl; exit(-1); }
+    }
 
     inline double linear_Z(int i, int samples, double c)
     {

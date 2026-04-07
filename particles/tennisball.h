@@ -24,10 +24,11 @@ public:
 
     void generate( Data& data )
     {
+        validate_inputs(data);
         vector<Atom> ligand;
         fibonacci_sphere(beads, data.in.num_of_beads, typeNano);
-        fibonacci_sphere_z_distrib_linear(ligand, data.in.num_lig, data.in.c, typeTemp); // second fib. sphere
-        int lig_actual = spherical_wedge(data.in.num_lig, typeTemp, angle, data.in.c);
+        fibonacci_sphere_z_distrib_linear(ligand, data.in.num_lig, data.in.param_float["c"], typeTemp); // second fib. sphere
+        int lig_actual = spherical_wedge(data.in.num_lig, typeTemp, angle, data.in.param_float["c"]);
 
         Atom patch = Atom(1,1,1,typeLig);
         gen_ligands(data, ligand, patch, typeNano); // find closest spheres on first fib. sphere and change their type
@@ -38,6 +39,15 @@ public:
 
 
 protected:
+    void validate_inputs( Data& data )
+    {
+        if( !data.in.param_float.contains("c") )
+        {
+            cerr << "Missing keyword; c: 0.5" << endl;
+            exit(-1);
+        }
+    }
+
     /**
      * @brief spherical_wedge
      * @param num_beads
@@ -100,11 +110,12 @@ public:
 
     void generate( Data data )
     {
+        validate_inputs(data);
         Atoms ligand;
 
         fibonacci_sphere(beads, data.in.num_of_beads, typeNano);
         fibonacci_sphere(ligand, data.in.num_lig, typeTemp); // second fib. sphere
-        gen_tennisball(data.in.c, typeTemp); // turn beads on sphere to type to look like tennis ball -> half of first sphere is now type_temp
+        gen_tennisball(data.in.param_float["c"], typeTemp); // turn beads on sphere to type to look like tennis ball -> half of first sphere is now type_temp
         Atom patch = Atom(1,1,1,typeLig);
         gen_ligands(data, ligand, patch, typeTemp); // last num_lig beads (second sphere) -> find closest beads on first sphere of type_temp and turn them type_lig
 
@@ -117,6 +128,14 @@ public:
     }
 
 private:
+    void validate_inputs( Data& data )
+    {
+        if( !data.in.param_float.contains("c") )
+        {
+            cerr << "Missing keyword; c: 0.5" << endl;
+            exit(-1);
+        }
+    }
     void gen_tennisball(double S, int type){
         double tolerance = 0.005;
         for(unsigned int i=0; i<beads.size(); ++i) {

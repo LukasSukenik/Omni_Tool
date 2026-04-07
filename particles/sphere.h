@@ -32,10 +32,10 @@ public:
     {
         vector<Atom> ligand;
         int nano_start = beads.size();
-        data.in.c=1.0;
+        data.in.param_float["c"] = 1.0;
 
         fibonacci_sphere( beads, data.in.num_of_beads, typeNano);
-        fibonacci_sphere_z_distrib_linear( ligand, data.in.num_lig, data.in.c, typeTemp); // second fib.
+        fibonacci_sphere_z_distrib_linear( ligand, data.in.num_lig, data.in.param_float["c"], typeTemp); // second fib.
 
         for(auto& patch : data.in.patches)
         {
@@ -100,7 +100,7 @@ protected:
         for(auto& lig : ligand)
         {
             if(lig.pos.x > patch.pos.x && lig.pos.x < patch.vel.x &&
-                lig.pos.y > patch.pos.y*data.in.c && lig.pos.y < patch.vel.y*data.in.c &&
+                lig.pos.y > patch.pos.y*data.in.param_float["c"] && lig.pos.y < patch.vel.y*data.in.param_float["c"] &&
                lig.pos.z > patch.pos.z && lig.pos.z < patch.vel.z)
             {
                 Atom* select = &beads[0]; // Stupid C++, for some reason reference dont work
@@ -208,8 +208,9 @@ public:
         return ss.str();
     }
 
-    void generate( Data& data ) {
-
+    void generate( Data& data )
+    {
+        validate_inputs(data);
         // generate nano
         int nano_start = beads.size();
         fibonacci_sphere(beads, data.in.num_of_beads, typeNano);
@@ -223,7 +224,7 @@ public:
         }
 
         for(int i=nano_start; i<nano_end; ++i) {
-            beads[i] = ((beads[i]*data.in.scale) + data.in.com_pos);
+            beads[i] = ((beads[i]*data.in.param_float["Scale"]) + data.in.com_pos);
             beads[i].mol_tag = 2;
         }
 
@@ -246,8 +247,15 @@ public:
         }*/
     }
 
-
-
+private:
+    void validate_inputs( Data& data )
+    {
+        if( !data.in.param_float.contains("Scale") )
+        {
+            cerr << "Missing keyword; Scale: 1.0" << endl;
+            exit(-1);
+        }
+    }
 };
 
 #endif // SPHERE_H
