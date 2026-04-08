@@ -136,9 +136,6 @@ public:
         {
             sum += array[i];
         }
-
-        cout << total_size << " " << sum << endl;
-
         return sum < lipid_fraction*total_size;
     }
 
@@ -187,7 +184,7 @@ public:
                 {
                     for(size_t j=0; j<size_2; ++j)
                     {
-                        fs << (200.0/size_1)*i << " " << (360.0/size_2)*j << " " << h_2D.hist[i][j] << endl;
+                        fs << (200.0/size_1)*i -100.0 << " " << (360.0/size_2)*j << " " << h_2D.hist[i][j] << endl;
                     }
                 }
             }
