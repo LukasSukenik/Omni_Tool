@@ -56,6 +56,15 @@ public:
         }
     }
 
+    void validate_keyword(unordered_map<string, double>& param, string keyword, string default_value)
+    {
+        if( !param.contains(keyword) )
+        {
+            cerr << "Missing keyword; " << keyword << " " << default_value << endl;
+            exit(-1);
+        }
+    }
+
     void validate_keyword(unordered_map<string, vector<int>>& param, string keyword, string default_value)
     {
         if( !param.contains(keyword) )

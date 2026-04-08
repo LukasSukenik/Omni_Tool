@@ -87,7 +87,7 @@ public:
         std::sort(beads.begin(), beads.end(), sortN);
         cerr << "Testing index duplicity" << endl;
         for(int i=0; i<beads.size(); i++) {
-            if(i%1000 == 0)
+            if(i%(beads.size()/10) == 0)
             {
                 cerr << i << " : " << beads.size() << endl;
             }

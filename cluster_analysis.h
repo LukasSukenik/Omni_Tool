@@ -13,6 +13,8 @@
  */
 class Unassigned : public vector<int>
 {
+private:
+    int unassigned_size = 0;
 public:
     Unassigned(Atoms& a) // O(n) complexity, all types
     {
@@ -42,7 +44,12 @@ public:
         }
     }
 
-    int unassigned_size = 0;
+
+
+    int unassigned_count()
+    {
+        return unassigned_size;
+    }
 
     void remove(int index)
     {
@@ -79,31 +86,18 @@ public:
 
     bool is_filled = false;
 
-    void fill_cluster(Atoms& a, Unassigned& id, double cutoff)
+    void fill_cluster(Atoms& topo, Unassigned& unassigner_id, double cutoff)
     {
-        int particle_ID = 0;
-        bool added=false;
-        for(int i=0; i<size(); ++i) // cluster.size() dynamically evaluated each time
+        int cluster_part_ID = 0;
+        for(int i=0; i<size(); ++i) // Loop over cluster particles, cluster.size() dynamically evaluated
         {
-            particle_ID = at(i);
-            for(int j=0; j<id.unassigned_size; ++j) // unassigned particles
+            cluster_part_ID = at(i);
+            for(int j=0; j<unassigner_id.unassigned_count(); ++j) // Loop over remaining un-assigned particles
             {
-                if(a[particle_ID].distSQ( a[id.at(j)] ) < cutoff*cutoff)
+                if(topo[cluster_part_ID].distSQ( topo[ unassigner_id[j] ] ) < cutoff*cutoff)
                 {
-                    added = false;
-                    for(int k=0; k<size(); ++k)
-                    {
-                        if(at(k) == id.at(j))
-                        {
-                            added = true;
-                        }
-                    }
-                    if(!added)
-                    {
-                        push_back(id.at(j));
-                        id.remove(j);
-                        //cerr << "Push " << particle_ID << "::" << j << " " << mem[particle_ID].dist(mem[j]) << endl;
-                    }
+                    push_back(unassigner_id.at(j));
+                    unassigner_id.remove(j);
                 }
             }
         }
@@ -111,42 +105,33 @@ public:
     }
 };
 
+
+
+
 class Clusters : public vector< Cluster >
 {
 public:
     Clusters(Atoms& a, vector<int> types) : un_id(Unassigned(a, types)) {}
 
-    Unassigned un_id; // list of particles not assigned to a cluster of a given type
+    const Unassigned un_id; // list of all particles, algorithm requires them not assigned to a cluster
 
-    int analyze(Atoms& a, double cutoff)
+    size_t cluster_count()
     {
-        int safety = 10*1000;
-        int count=0;
+        return size();
+    }
 
+    int analyze(Atoms& topo, double cutoff)
+    {
+        size_t max_cluster_count = 10*1000;
         Unassigned un_id_temp = un_id;
 
-        while(un_id_temp.unassigned_size > 0 && count<safety )
+        while(un_id_temp.unassigned_count() > 0 && cluster_count()<max_cluster_count ) // loop over clusters
         {
-            push_back(Cluster( un_id_temp.at(0) )); // add the first particle
-            un_id_temp.remove(0);
-            back().fill_cluster(a, un_id_temp, cutoff);
-            count++;
+            push_back(Cluster( un_id_temp.at(0) )); // new cluster with 1 unassigned particle
+            un_id_temp.remove(0); // remove unassined particle
+            back().fill_cluster(topo, un_id_temp, cutoff); // back() is the new cluster, fill is O(N^3)
         }
-
-        int total_particle_count = 0;
-        int cluster_count = size();
-
-        for(int i=0; i<size(); ++i)
-        {
-            total_particle_count += at(i).size();
-        }
-
-        /*if(a.size() != total_particle_count) // does not take into account tail selection
-        {
-            cerr << "Total particle count = " << a.size() << " != particle count in clusters " << total_particle_count << endl;
-        }*/
-
-        return cluster_count;
+        return cluster_count();
     }
 };
 

@@ -187,7 +187,7 @@ private:
      *
      * System_type: Flat_Membrane       -- needed call method cluster_analysis
      * System_execute: Cluster_Analysis -- needed call method cluster_analysis
-     * Select_types: 1             -> validate
+     * Atom_type: 1             -> validate
      * Cluster_cutoff: 2.6         -> validate
      * Input_type: lammps_full     -- input type does not matter, except none
      * Load_file: data.start       -- validated in Flat_Membrane::execute

@@ -5,7 +5,7 @@
 #include "atom.h"
 #include "xtcanalysis.h"
 #include "histogram.h"
-
+#include "cluster_analysis.h"
 
 
 
@@ -25,6 +25,7 @@ public:
         ss << help_calc_water_content() << endl;
         ss << help_print_last_frame_as_gro() << endl;
         ss << help_analyze_phase() << endl;
+        ss << help_cluster_analysis() << endl;
         return ss.str();
     }
 
@@ -33,9 +34,58 @@ public:
         if(data.in.system_function.compare("calc_water_content") == 0) { calc_water_content(data); }
         if(data.in.system_function.compare("print_last_frame_as_gro") == 0) { print_last(data); }
         if(data.in.system_function.compare("analyze_phase") == 0) { analyze_phase(data); }
+        if(data.in.system_function.compare("cluster_analysis") == 0) { cluster_analysis(data); }
     }
 
 private:
+
+    ///
+    /// Cluster analysis
+    ///
+    string help_cluster_analysis()
+    {
+        stringstream ss;
+
+        ss << "*********************************************************" << endl;
+        ss << "System_type: Lipid_Nanoparticle" << endl;
+        ss << "System_execute: Cluster_Analysis" << endl;
+        ss << "Input_type: lammps_full" << endl;
+        ss << "Load_file: data.start" << endl;
+        ss << "Trajectory_file: traj_1.xtc" << endl;
+        ss << "Atom_type: 1 2 3 4 5 6" << endl;
+        ss << "Cluster_cutoff: 2.6" << endl;
+        ss << "ID: 1" << endl;
+
+        return ss.str();
+    }
+
+    void validate_cluster_analysis_inputs( Data& data )
+    {
+        validate_keyword(data.in.param, "Load_file",             "data.start");
+        validate_keyword(data.in.param, "Trajectory_file",       "traj_1.xtc");
+        validate_keyword(data.in.param_vector_int, "Atom_type",     "1 2 3 4 5 6");
+        validate_keyword(data.in.param_float, "Cluster_cutoff",     "2.6");
+    }
+
+    void cluster_analysis(Data& data)
+    {
+        validate_cluster_analysis_inputs(data);
+        cerr << "Lipid_Nanoparticle::cluster_analysis" << endl;
+
+        int sys_id = data.id_map[ data.in.param_int["ID"] ];
+        Atoms& topo = data.coll_beads[sys_id];
+
+        Clusters clusters(topo, data.in.param_vector_int["Atom_type"]); // list of particle indexes
+        Trajectory traj;
+        traj.load(data.in.param["Trajectory_file"]);
+
+        for(int i=0; i<traj.frame_count(); ++i)
+        {
+            topo.set_frame(traj[i]);
+            cout << i << " " << clusters.analyze(topo, data.in.param_float["Cluster_cutoff"]) << endl;
+            clusters.clear();
+        }
+    }
 
     ///
     /// Analyze Phase

@@ -318,12 +318,12 @@ public:
             int mol_tag = data.in.param_int["Mol_tag"];
             int existing_lipid_count = get_lipid_count(data);
 
-            cell_list.init(data);
-            coll_cell_list.init(data);
+            cell_list.init(data); // currently generated data
+            coll_cell_list.init(data); // already existing data
 
             if(!data.coll_beads.empty())
             {
-                coll_cell_list.add(data.coll_beads[0]);
+                coll_cell_list.add(data.coll_beads[0]); // this should use system ID
             }
 
             //

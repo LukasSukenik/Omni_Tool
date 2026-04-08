@@ -15,6 +15,20 @@ public:
     int x,y,z;
 };
 
+/**
+ * @brief The Cell_List class
+ * Usage example in Lipid::populate()
+ *
+ * cell_list.init( data ); // allocate memory
+ * coll_cell_list.add( Atoms ); // populate the cell list
+ *
+ * // calculate particle distance
+ * cell_list.set_neighbors( part.get_center_of_mass().pos ); // setup particle for distance calc
+ * cell_list.neighbors; //  is now the neighbor list of particle part
+ *
+ * cell_list.delete_all();
+ *
+ */
 class Cell_List : public vector<vector<vector< vector<int >* >>> // 3D spatial indices + list of index to coll_beads
 {
 public:
@@ -43,6 +57,9 @@ public:
     }
 
 
+    /**
+     * @brief init - allocate cell list memory
+     */
     void init(Data& data)
     {
         xlo = data.in.sim_box.xlo;
@@ -101,21 +118,6 @@ public:
         delete empty_list;
     }
 
-    int get_spatial_X(Tensor_xyz pos)
-    {
-        return floor(floor(pos.x - xlo) / cell_size.x);
-    }
-
-    int get_spatial_Y(Tensor_xyz pos)
-    {
-        return floor(floor(pos.y - ylo) / cell_size.y);
-    }
-
-    int get_spatial_Z(Tensor_xyz pos)
-    {
-        return floor(floor(pos.z - zlo) / cell_size.z);
-    }
-
     void add(Atoms& coll, int offset=0)
     {
         if(!coll.empty())
@@ -130,7 +132,7 @@ public:
         }
     }
 
-    void set_neighbors(Tensor_xyz pos)
+    void set_neighbors(Tensor_xyz pos) // No PBC version
     {
         //cerr << "Cell_List::set_neighbors start" << endl;
         int x = get_spatial_X(pos);
@@ -197,6 +199,22 @@ public:
             }
         }
         return true;
+    }
+
+private:
+    int get_spatial_X(Tensor_xyz pos)
+    {
+        return floor(floor(pos.x - xlo) / cell_size.x);
+    }
+
+    int get_spatial_Y(Tensor_xyz pos)
+    {
+        return floor(floor(pos.y - ylo) / cell_size.y);
+    }
+
+    int get_spatial_Z(Tensor_xyz pos)
+    {
+        return floor(floor(pos.z - zlo) / cell_size.z);
     }
 };
 
