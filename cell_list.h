@@ -4,7 +4,7 @@
 #include <vector>
 
 #include "atom.h"
-#include "data.h"
+#include "sim_box.h"
 
 using namespace std;
 
@@ -36,6 +36,8 @@ public:
 
     Tensor_xyz_integer number_of_cells;
     Tensor_xyz cell_size; // for lipids at leat 4.0
+    Tensor_xyz pbc;
+    Tensor_xyz pbc_inv;
 
     double xlo = 0.0; // for spatial indices
     double xhi = 0.0;
@@ -60,14 +62,22 @@ public:
     /**
      * @brief init - allocate cell list memory
      */
-    void init(Data& data)
+    void init(Simulation_Box& sim_box)
     {
-        xlo = data.in.sim_box.xlo;
-        xhi = data.in.sim_box.xhi;
-        ylo = data.in.sim_box.ylo;
-        yhi = data.in.sim_box.yhi;
-        zlo = data.in.sim_box.zlo;
-        zhi = data.in.sim_box.zhi;
+        xlo = sim_box.xlo;
+        xhi = sim_box.xhi;
+        ylo = sim_box.ylo;
+        yhi = sim_box.yhi;
+        zlo = sim_box.zlo;
+        zhi = sim_box.zhi;
+
+        pbc.x = xhi - xlo;
+        pbc.x = yhi - ylo;
+        pbc.x = zhi - zlo;
+
+        pbc_inv.x = 1.0 / pbc.x;
+        pbc_inv.y = 1.0 / pbc.y;
+        pbc_inv.z = 1.0 / pbc.z;
 
         number_of_cells.x = floor( (xhi - xlo)/4.0 );
         number_of_cells.y = floor( (yhi - ylo)/4.0 );
@@ -98,8 +108,8 @@ public:
                 }
             }
         }
-        cerr << "Cell_List::init_cell_list" << endl;
-        show();
+        //cerr << "Cell_List::init_cell_list" << endl;
+        //show();
     }
 
     void delete_all()
@@ -130,6 +140,31 @@ public:
                 //cerr << "Cell_List::add_lipid_cell_list [" << get_spatial_index(part[0].pos.x) << ", " << get_spatial_index(part[0].pos.y) << ", " << get_spatial_index(part[0].pos.z) << "] = " << beads.size() + i << endl;
             }
         }
+    }
+
+    void set_neighbors_pbc(Tensor_xyz pos) // No PBC version
+    {
+        //cerr << "Cell_List::set_neighbors start" << endl;
+        int x = get_spatial_X(pos);
+        int y = get_spatial_Y(pos);
+        int z = get_spatial_Z(pos);
+        int ii, jj, kk;
+        for(int i=0; i<3; ++i) // keep 0,1,2 because of the neighbors index
+        {
+            for(int j=0; j<3; ++j)
+            {
+                for(int k=0; k<3; ++k)
+                {
+                    ii = (i-1 + x + number_of_cells.x) % number_of_cells.x;
+                    jj = (j-1 + y + number_of_cells.y) % number_of_cells.y;
+                    kk = (k-1 + z + number_of_cells.z) % number_of_cells.z;
+
+                    neighbors[(i*9) +(j*3) + k] = (*this)[ii][jj][kk];
+                }
+            }
+        }
+        //cerr << "Cell_List::set_neighbors end" << endl;
+        //show_neighbors();
     }
 
     void set_neighbors(Tensor_xyz pos) // No PBC version

@@ -318,8 +318,8 @@ public:
             int mol_tag = data.in.param_int["Mol_tag"];
             int existing_lipid_count = get_lipid_count(data);
 
-            cell_list.init(data); // currently generated data
-            coll_cell_list.init(data); // already existing data
+            cell_list.init(data.in.sim_box); // currently generated data
+            coll_cell_list.init(data.in.sim_box); // already existing data
 
             if(!data.coll_beads.empty())
             {

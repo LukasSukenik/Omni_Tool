@@ -34,7 +34,7 @@ public:
         if(data.in.system_function.compare("calc_water_content") == 0) { calc_water_content(data); }
         if(data.in.system_function.compare("print_last_frame_as_gro") == 0) { print_last(data); }
         if(data.in.system_function.compare("analyze_phase") == 0) { analyze_phase(data); }
-        if(data.in.system_function.compare("cluster_analysis") == 0) { cluster_analysis(data); }
+        if(data.in.system_function.compare("Cluster_Analysis") == 0) { cluster_analysis(data); }
     }
 
 private:
@@ -82,7 +82,13 @@ private:
         for(int i=0; i<traj.frame_count(); ++i)
         {
             topo.set_frame(traj[i]);
-            cout << i << " " << clusters.analyze(topo, data.in.param_float["Cluster_cutoff"]) << endl;
+            clusters.analyze(topo, data.in.sim_box, data.in.param_float["Cluster_cutoff"]);
+            cout << i << " ";
+            for(Cluster& cluster : clusters)
+            {
+                cout << cluster.size()/3 << " "; // dividing by 3 to get the lipid count, assumes we analyze tails only, deserno 4 bead types model
+            }
+            cout << endl;
             clusters.clear();
         }
     }

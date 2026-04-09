@@ -73,19 +73,24 @@ public:
     //
     // Geometric funstions
     //
-    double size() const
+    inline double size() const
     {
         return pos.size();
     }
 
-    double dist(const Atom& o) const
+    inline double dist(const Atom& o) const
     {
         return pos.dist(o.pos);
     }
 
-    double distSQ(const Atom& o) const
+    inline double distSQ(const Atom& o) const
     {
         return pos.distSQ(o.pos);
+    }
+
+    inline double distSQ_pbc(const Atom& o, Tensor_xyz& pbc, Tensor_xyz& pbc_inv) const
+    {
+        return pos.distSQ_pbc(o.pos, pbc, pbc_inv);
     }
 
     bool isAproxSame(const Atom& o, myFloat approx = 0.000001) const

@@ -216,7 +216,7 @@ private:
         for(int i=0; i<traj.frame_count(); ++i)
         {
             mem.set_frame(traj[i]);
-            cout << i << " " << clusters.analyze(mem, data.in.param_float["Cluster_cutoff"]) << endl;
+            cout << i << " " << clusters.analyze(mem, data.in.sim_box, data.in.param_float["Cluster_cutoff"]) << endl;
             clusters.clear();
         }
     }

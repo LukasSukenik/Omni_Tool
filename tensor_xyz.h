@@ -96,6 +96,20 @@ public:
         return (this->x-o.x)*(this->x-o.x) + (this->y-o.y)*(this->y-o.y) + (this->z-o.z)*(this->z-o.z);
     }
 
+    inline double min_dist(double dist, double box_length, double box_L_inv) const
+    {
+        return dist - box_length*round(dist*box_L_inv);
+    }
+
+    inline double distSQ_pbc(const Tensor_xyz& o, Tensor_xyz& pbc, Tensor_xyz& pbc_inv) const
+    {
+        double x_dist = min_dist(this->x-o.x, pbc.x, pbc_inv.x);
+        double y_dist = min_dist(this->y-o.y, pbc.x, pbc_inv.x);
+        double z_dist = min_dist(this->z-o.z, pbc.x, pbc_inv.x);
+
+        return x_dist*x_dist + y_dist*y_dist + z_dist*z_dist;
+    }
+
     inline bool checkBox(myFloat size) {
         return x<size && x>-size && y<size && y>-size && z<size && z>-size;
     }
