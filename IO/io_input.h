@@ -279,6 +279,7 @@ public:
             ss >> key; // first stuff,
 
             if(  param.is_key_valid(key) )     { ss >> value;       param[key.substr(0, key.find(':'))] = value; }
+            if(  p_bool.is_key_valid(key) )    {                    p_int[key.substr(0, key.find(':'))] = true; }
             if(  p_int.is_key_valid(key) )     { ss >> value_int;   p_int[key.substr(0, key.find(':'))] = value_int; }
             if(  p_float.is_key_valid(key) )   { ss >> value_float; p_float[key.substr(0, key.find(':'))] = value_float; }
             if(  p_vec_int.is_key_valid(key) ) { p_vec_int[key.substr(0, key.find(':'))] = load_int_array(ss); }
@@ -347,6 +348,9 @@ public:
         for (const auto& [key, value] : param) {
             ss << key << ": " << value << '\n';
         }
+        for (const auto& [key, value] : p_bool) {
+            ss << key << ": true" << '\n';
+        }
         for (const auto& [key, value] : p_int) {
             ss << key << ": " << value << '\n';
         }
@@ -405,6 +409,7 @@ public:
         // ff;
 
         param.clear();
+        p_bool.clear();
         p_int.clear();
         p_float.clear();
         p_vec_int.clear();
