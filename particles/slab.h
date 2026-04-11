@@ -22,7 +22,7 @@ public:
     void generate( Data& data )
     {
         validate_inputs(data);
-        int row = sqrt(data.in.num_of_beads);
+        int row = sqrt(data.in.p_int["Number_of_beads"]);
         int bead_size = data.in.p_float["Scale"];
         double factor = 1.0; // length were we generate beads
 
@@ -77,7 +77,7 @@ public:
         factor /= 4.0;
 
         vector<Atom> bVec;
-        int size = data.in.num_of_beads;
+        int size = data.in.p_int["Number_of_beads"];
         for(int a=0; a<size; ++a) {
             for(int b=0; b<size; ++b) {
                 for(int c=0; c<size; ++c) {
@@ -150,7 +150,7 @@ public:
     {
         validate_inputs(data);
 
-        int row = sqrt(data.in.num_of_beads);
+        int row = sqrt(data.in.p_int["Number_of_beads"]);
         int bead_size = data.in.p_float["Scale"];
         double factor = 1.0; // length were we generate beads
 
@@ -175,7 +175,7 @@ public:
 
 
 
-        for(int i=0; i<data.in.num_lig; ++i) {
+        for(int i=0; i<data.in.p_int["Number_of_ligands"]; ++i) {
 
             Atom next;
             bool clash=true;

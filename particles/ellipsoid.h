@@ -355,12 +355,12 @@ public:
         //
         // construct base shape
         //
-        fibonacci_tri_axial_spheroid(beads, data.in.num_of_beads, data.in.b, data.in.p_float["c"], typeNano, orientations);
+        fibonacci_tri_axial_spheroid(beads, data.in.p_int["Number_of_beads"], data.in.p_float["b"], data.in.p_float["c"], typeNano, orientations);
 
         //
         // construct ligand shape for selection purposes
         //
-        fibonacci_tri_axial_spheroid(ligand, data.in.num_lig, data.in.b, data.in.p_float["c"], typeTemp, orientations);
+        fibonacci_tri_axial_spheroid(ligand, data.in.p_int["Number_of_ligands"], data.in.p_float["b"], data.in.p_float["c"], typeTemp, orientations);
 
         //
         // Validation
@@ -399,6 +399,7 @@ public:
 protected:
     void validate_inputs( Data& data )
     {
+        data.in.p_int.validate_keyword("Number_of_beads", "7");
         data.in.p_float.validate_keyword("c", "0.5");
     }
 

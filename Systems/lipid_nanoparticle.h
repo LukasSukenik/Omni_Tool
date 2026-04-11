@@ -31,10 +31,11 @@ public:
 
     void execute(Data& data)
     {
-        if(data.in.system_function.compare("calc_water_content") == 0) { calc_water_content(data); }
-        if(data.in.system_function.compare("print_last_frame_as_gro") == 0) { print_last(data); }
-        if(data.in.system_function.compare("analyze_phase") == 0) { analyze_phase(data); }
-        if(data.in.system_function.compare("Cluster_Analysis") == 0) { cluster_analysis(data); }
+        data.in.param.validate_keyword("System_execute", "calc_water_content | print_last_frame_as_gro | analyze_phase | Cluster_Analysis");
+        if(data.in.param["System_execute"].compare("calc_water_content") == 0) { calc_water_content(data); }
+        if(data.in.param["System_execute"].compare("print_last_frame_as_gro") == 0) { print_last(data); }
+        if(data.in.param["System_execute"].compare("analyze_phase") == 0) { analyze_phase(data); }
+        if(data.in.param["System_execute"].compare("Cluster_Analysis") == 0) { cluster_analysis(data); }
     }
 
 private:

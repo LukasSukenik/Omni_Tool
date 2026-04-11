@@ -37,8 +37,8 @@ public:
         typeLig = data.in.p_vec_int["Atom_type"][0] + 1;
 
         int orientations = orientY;
-        int num_beads = data.in.beads_per_area * surface(data.in.p_float["Scale"], data.in.p_float["Scale"]*data.in.p_float["c"]);
-        int num_ligs = data.in.ligs_per_area * surface(data.in.p_float["Scale"], data.in.p_float["Scale"]*data.in.p_float["c"]);
+        int num_beads = data.in.p_float["Beads_per_area"] * surface(data.in.p_float["Scale"], data.in.p_float["Scale"]*data.in.p_float["c"]);
+        int num_ligs = data.in.p_float["Ligands_per_area"] * surface(data.in.p_float["Scale"], data.in.p_float["Scale"]*data.in.p_float["c"]);
 
         fibonacci_spheroid(beads, num_beads, data.in.p_float["c"], typeNano, orientations);
         fibonacci_spheroid(ligand, num_ligs, data.in.p_float["c"], typeTemp, orientations);

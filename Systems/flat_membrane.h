@@ -26,8 +26,8 @@ public:
     {
         stringstream ss;
 
-        ss << help_calc_Z_Dist() << endl;
         ss << help_cluster_analysis() << endl;
+        ss << help_calc_Z_Dist() << endl;
         ss << help_is_Pore() << endl;
 
         return ss.str();
@@ -35,10 +35,11 @@ public:
 
     void execute(Data& data)
     {
-        if(data.in.system_function.compare("Copy_Z") == 0)           { copy_Z(data); }
-        if(data.in.system_function.compare("Cluster_Analysis") == 0) { cluster_analysis(data); }
-        if(data.in.system_function.compare("Calc_Z_Dist") == 0)      { calc_Z_Dist(data); }
-        if(data.in.system_function.compare("Calc_Pore") == 0)        { is_Pore(data); }
+        data.in.param.validate_keyword("System_execute", "Copy_Z | Calc_Z_Dist | Calc_Pore | Cluster_Analysis");
+        if(data.in.param["System_execute"].compare("Copy_Z") == 0)           { copy_Z(data); }
+        if(data.in.param["System_execute"].compare("Cluster_Analysis") == 0) { cluster_analysis(data); }
+        if(data.in.param["System_execute"].compare("Calc_Z_Dist") == 0)      { calc_Z_Dist(data); }
+        if(data.in.param["System_execute"].compare("Calc_Pore") == 0)        { is_Pore(data); }
     }
 
 

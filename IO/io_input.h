@@ -90,7 +90,6 @@ public:
 
 
 
-
 class TMD
 {
 public:
@@ -166,7 +165,15 @@ public:
 };
 
 
-template <typename T> class Param_Dictionary : public unordered_map<string, T>
+template <typename T>
+unordered_set<T> operator+(unordered_set<T> a, unordered_set<T>& b)
+{
+    a.merge(b);
+    return a;
+}
+
+template <typename T>
+class Param_Dictionary : public unordered_map<string, T>
 {
 public:
     unordered_set<string> valid_keys;
@@ -186,6 +193,7 @@ public:
 
 
 
+
 /**
  * @brief The Input class - Parameters for particle generation
  */
@@ -202,68 +210,50 @@ public:
      * Particle_type: particle identifier::keyword identifying the structure class
      *
      */
-    Param_Dictionary<string> param = Param_Dictionary<string>({"Load_file:", "Trajectory_file:", "System_type:", "Particle_type:", "Histo_2D_dirs_outfile:", "Histo_1D_dirs_outfile:"});
-    Param_Dictionary<int> p_int = Param_Dictionary<int>({"ID:", "Mol_tag:", "Num_lipids:", "Number_of_receptors:", "Chain_type:", "Seed:", "Averaged_frame_count:"});
-    Param_Dictionary<double> p_float = Param_Dictionary<double>({"Cluster_cutoff:", "Radius:", "Scale:", "c:", "Cell_size:"});
+    unordered_set<string> keys = {"System_type:", "Particle_type:", "System_execute:"};
+    unordered_set<string> files = {"Load_file:", "Trajectory_file:", "Histo_2D_dirs_outfile:", "Histo_1D_dirs_outfile:"};
+    Param_Dictionary<string> param = Param_Dictionary<string>(keys + files);
+
+    unordered_set<string> counts = {"Number_of_beads:", "Number_of_ligands:", "Num_lipids:", "Number_of_receptors:", "Averaged_frame_count:", "Subdiv_of_beads:", "Subdiv_of_ligands:"};
+    unordered_set<string> types = {"Mol_tag:", "Chain_type:"};
+    unordered_set<string> other = {"ID:", "Seed:"};
+    Param_Dictionary<int> p_int = Param_Dictionary<int>(counts + types + other);
+
+    Param_Dictionary<double> p_float = Param_Dictionary<double>({"Cluster_cutoff:", "Radius:", "Scale:", "b:", "c:", "Cell_size:", "Beads_per_area:", "Ligands_per_area:"});
     Param_Dictionary<vector<int>> p_vec_int = Param_Dictionary<vector<int>>({"Atom_type:", "Atom_mass:", "Histo_2D_settings:"});
 
-    // IO
     IO out; /// Output type - none, pdb, lammps_full, xyz
     IO in;  /// Input type  - none, pdb, lammps_full
-
-    // system identifier
-    string system_function;
-    double system_var_a = 0.0;
-    double system_var_b = 0.0;
-
-    // bead counts
-    int num_of_beads=-1; // chain, dodecahedron, ellipsoid, globular_sphere, icosahedron, oblatespheroid, pentamer, slab, sphere, spherepatch, tennisball
-    int num_lig=-1;
-    double beads_per_area=0.0;
-    double ligs_per_area=0.0;
-    int subdiv_beads=-1;
-    int subdiv_lig=-1;
     TMD tmd; // transmembrane domain
-
-    // from gen_membrane
-    int op=-1;
-    double trim;
-    int multiple;
-
-    // molecule types
-    int mtag_1=-1;
-    int mtag_2=-1;
-
-    // patches
-    vector<Atom> patches;
-    Atom patch_1 = Atom(0,0,0,0);
-    Atom patch_2 = Atom(0,0,0,0);
-
-    // Ellipsoid, oblate spheroid
-    myFloat b=0.0;
-
-    // System data
-    bool center=false;
-    Tensor_xyz com_pos = Tensor_xyz(0.0, 0.0, 0.0);
-    Tensor_xyz ivx = Tensor_xyz(0.0, 0.0, 0.0);
-    bool fit = false;
-
-    // Pore calculation - cell size
-    double bead_size=1.12246204831;
-
-    // Population data
-    Population population;
-
-    // simulation box
-    Simulation_Box sim_box;
-
-    // Force-Field
+    Population population; // Population data
+    Simulation_Box sim_box; // simulation box
     vector<LJ> bparam;
     vector<CosSQ> cparam;
     Force_Field ff;
 
-    // Deprecated
+    // Align
+    int mtag_1=-1;
+    int mtag_2=-1;
+
+    double system_var_a = 0.0;
+    double system_var_b = 0.0;
+    double bead_size=1.12246204831;
+
     int offset = 0;
+
+    bool center=false;
+    bool fit = false;
+
+    Tensor_xyz com_pos = Tensor_xyz(0.0, 0.0, 0.0);
+    Tensor_xyz ivx = Tensor_xyz(0.0, 0.0, 0.0);
+    Atom patch_1 = Atom(0,0,0,0);
+    Atom patch_2 = Atom(0,0,0,0);
+    vector<Atom> patches;
+
+    // Deprecated - used only within in_input.h
+    int op=-1;
+    double trim;
+    int multiple;
 
     bool loadInput(string input)
     {
@@ -289,25 +279,16 @@ public:
 
             ss >> key; // first stuff,
 
-            if(  param.is_key_valid(key) )            { ss >> value;       param[key.substr(0, key.find(':'))] = value; }
-            if(  p_int.is_key_valid(key) )        { ss >> value_int;   p_int[key.substr(0, key.find(':'))] = value_int; }
-            if(  p_float.is_key_valid(key) )      { ss >> value_float; p_float[key.substr(0, key.find(':'))] = value_float; }
+            if(  param.is_key_valid(key) )     { ss >> value;       param[key.substr(0, key.find(':'))] = value; }
+            if(  p_int.is_key_valid(key) )     { ss >> value_int;   p_int[key.substr(0, key.find(':'))] = value_int; }
+            if(  p_float.is_key_valid(key) )   { ss >> value_float; p_float[key.substr(0, key.find(':'))] = value_float; }
             if(  p_vec_int.is_key_valid(key) ) { p_vec_int[key.substr(0, key.find(':'))] = load_int_array(ss); }
-
-            // Mixed Params
-            if( key.compare("System_execute:") == 0 )    { ss >> system_function >> system_var_a >> system_var_b; }
 
             // Load io
             if( key.compare("Output_type:") == 0 )       { ss >> out; }
             if( key.compare("Input_type:") == 0 )        { ss >> in; }
 
             // Load particle atom counts
-            if( key.compare("Beads_per_area:") == 0 )   { ss >> beads_per_area; }
-            if( key.compare("Ligands_per_area:") == 0 ) { ss >> ligs_per_area; }
-            if( key.compare("Number_of_beads:") == 0 )   { ss >> num_of_beads; }
-            if( key.compare("Number_of_ligands:") == 0 ) { ss >> num_lig; }
-            if( key.compare("Subdiv_of_beads:") == 0 )   { ss >> subdiv_beads; }
-            if( key.compare("Subdiv_of_ligands:") == 0 ) { ss >> subdiv_lig; }
             if( key.compare("Trans_membrane_domain:") == 0 ) { ss >> tmd.size; ss >> tmd.proximal_n; ss >> tmd.distal_n; }
 
             // from gen_membrane
@@ -316,17 +297,17 @@ public:
             if( key.compare("Multiple:") == 0 )            { ss >> multiple; }
 
             // Load particle properties: aspect ration, patches
-            if( key.compare("b:") == 0 )                 { ss >> b; }
             if( key.compare("Patch:") == 0 )             { Atom a; ss >> a; patches.push_back(a); }
+
             if( key.compare("Patch_1:") == 0 )           { ss >> patch_1; }
             if( key.compare("Patch_2:") == 0 )           { ss >> patch_2; }
+            if( key.compare("Impact_vector:") == 0 )   { ss >> ivx.x >> ivx.y >> ivx.z; }
+            if( key.compare("Position_shift:") == 0 )    { ss >> com_pos.x >> com_pos.y >> com_pos.z; }
 
             // Load system
             if( key.compare("Center") == 0 )             { center=true; }
-            if( key.compare("Position_shift:") == 0 )    { ss >> com_pos.x >> com_pos.y >> com_pos.z; }
+
             if( key.compare("Lammps_offset:") == 0 )     { ss >> offset; }
-
-
 
             // Load the simulation box
             if( key.compare("Sim_box:") == 0 )           { ss >> sim_box; }
@@ -341,7 +322,7 @@ public:
             // Load stuff for nanoparticle orientation and position
             if( key.compare("Align:") == 0 )  			{ ss >> mtag_1 >> mtag_2; }
             if( key.compare("Fit") == 0 )              { fit=true; }
-            if( key.compare("Impact_vector:") == 0 )   { ss >> ivx.x >> ivx.y >> ivx.z; }
+
         }
         fs.close();
 
@@ -394,12 +375,6 @@ public:
 
         if( param.contains("Particle_type") )
         {
-            ss << "Beads_per_area: " << beads_per_area << endl;
-            ss << "Ligands_per_area: " << ligs_per_area << endl;
-            ss << "Number of beads: " << num_of_beads << endl;
-            ss << "Number of ligands: " << num_lig << endl;
-            ss << "Subdiv of beads: " << subdiv_beads << endl;
-            ss << "Subdiv of ligands: " << subdiv_lig << endl;
             ss << "Patch_1: (" << patch_1.pos.x << "-" << patch_1.vel.x << ", " << patch_1.pos.y << "-" << patch_1.vel.y << ", " << patch_1.pos.z << "-" << patch_1.vel.z << ", " << patch_1.type << ")" << endl;
             ss << "Patch_2: (" << patch_2.pos.x << ", " << patch_2.pos.y << ", " << patch_2.pos.z << ", " << patch_2.type << ")" << endl;
             ss << "Trans_membrane_domain: (" << tmd.size << ", " << tmd.proximal_n << ", " << tmd.distal_n << ")" << endl;
@@ -440,20 +415,12 @@ public:
         p_vec_int.clear();
 
         in.clear();
-        system_function.clear();
         system_var_a=0.0;
         system_var_b=0.0;
 
-        beads_per_area=0.0;
-        ligs_per_area=0.0;
-        num_of_beads=-1;
-        num_lig=-1;
-        subdiv_beads=-1;
-        subdiv_lig=-1;
         tmd.clear();
 
         offset=0;
-        b=0;
 
         center=false;
         fit = false;

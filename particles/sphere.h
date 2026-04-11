@@ -28,21 +28,29 @@ public:
         return ss.str();
     }
 
+    void validate_inputs( Data& data )
+    {
+        data.in.p_int.validate_keyword("Number_of_ligands", "3");
+        data.in.p_int.validate_keyword("Number_of_beads", "7");
+    }
+
     void generate( Data& data )
     {
+        validate_inputs(data);
+
         vector<Atom> ligand;
         int nano_start = beads.size();
         data.in.p_float["c"] = 1.0;
 
-        fibonacci_sphere( beads, data.in.num_of_beads, typeNano);
-        fibonacci_sphere_z_distrib_linear( ligand, data.in.num_lig, data.in.p_float["c"], typeTemp); // second fib.
+        fibonacci_sphere( beads, data.in.p_int["Number_of_beads"], typeNano);
+        fibonacci_sphere_z_distrib_linear( ligand, data.in.p_int["Number_of_ligands"], data.in.p_float["c"], typeTemp); // second fib.
 
         for(auto& patch : data.in.patches)
         {
             gen_ligands_2( data, ligand, patch, typeNano); // find closest spheres on first fib. sphere and change their type
         }
 
-        beads.erase(beads.begin()+data.in.num_of_beads, beads.end()); // erase second fib sphere
+        beads.erase(beads.begin()+data.in.p_int["Number_of_beads"], beads.end()); // erase second fib sphere
 
         int nano_end = beads.size();
         for(auto& atom : ligand)
@@ -213,7 +221,7 @@ public:
         validate_inputs(data);
         // generate nano
         int nano_start = beads.size();
-        fibonacci_sphere(beads, data.in.num_of_beads, typeNano);
+        fibonacci_sphere(beads, data.in.p_int["Number_of_beads"], typeNano);
         int nano_end = beads.size();
 
         // change type nano to type lig based on placement
@@ -251,6 +259,7 @@ private:
     void validate_inputs( Data& data )
     {
         data.in.p_float.validate_keyword("Scale", "1.0");
+        data.in.p_int.validate_keyword("Number_of_beads", "7");
     }
 };
 

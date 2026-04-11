@@ -162,9 +162,9 @@ private:
 
     void load_params( Data& data )
     {
-        chain_size = data.in.num_of_beads;
-        core_size = data.in.num_lig;
-        chain_N = data.in.num_lig;
+        chain_size = data.in.p_int["Number_of_beads"];
+        core_size = data.in.p_int["Number_of_ligands"];
+        chain_N = data.in.p_int["Number_of_ligands"];
         if(data.in.p_int["Chain_type"] == 0)
             chain_type = BASIC;
         if(data.in.p_int["Chain_type"] == 1)

@@ -27,11 +27,11 @@ public:
 
         // generate nano
         int nano_start = beads.size();
-        fibonacci_sphere(beads, data.in.num_of_beads, typeNano);
+        fibonacci_sphere(beads, data.in.p_int["Number_of_beads"], typeNano);
         int nano_end = beads.size();
 
         // generate temporary ideal ligand placement
-        fibonacci_sphere(ligand, data.in.num_lig, typeTemp); // second fib. sphere
+        fibonacci_sphere(ligand, data.in.p_int["Number_of_ligands"], typeTemp); // second fib. sphere
 
         // Erase part of ligand placement
         int num_lig2 = createPatch(nano_end, data.in.p_float["c"], typeTemp);

@@ -29,11 +29,13 @@ public:
 
     void execute(Data& data)
     {
+        data.in.param.validate_keyword("System_execute", "is_Single_Vesicle, rdf | Make_2_Vesicle_System | Rotate_System | Make_Ves_Nano_Ves_System | Analyze_Fusion");
+
         int sys_id = data.id_map[ data.in.p_int["ID"] ];
         Atoms& ves = data.coll_beads[sys_id];
         vector<int> mol_tags = ves.get_Mol_Types();
 
-        if(data.in.system_function.compare("is_Single_Vesicle") == 0)
+        if(data.in.param["System_execute"].compare("is_Single_Vesicle") == 0)
         {
             const Atoms& ves_1 = ves.get_molecule(mol_tags[0]);
             const Atoms& ves_2 = ves.get_molecule(mol_tags[1]);
@@ -42,11 +44,11 @@ public:
 
             exit(0);
         }
-        if(data.in.system_function.compare("rdf") == 0) { radial_distribution_histogram(ves, data.in.system_var_a, data.in.system_var_b); }
-        if(data.in.system_function.compare("Make_2_Vesicle_System") == 0) { make_2_Vesicle_System(data, sys_id); }
-        if(data.in.system_function.compare("Rotate_System") == 0) { rotate(ves, data, sys_id); }
-        if(data.in.system_function.compare("Make_Ves_Nano_Ves_System") == 0) { make_sys(ves, data, sys_id); }
-        if(data.in.system_function.compare("Analyze_Fusion") == 0)
+        if(data.in.param["System_execute"].compare("rdf") == 0) { radial_distribution_histogram(ves, data.in.system_var_a, data.in.system_var_b); }
+        if(data.in.param["System_execute"].compare("Make_2_Vesicle_System") == 0) { make_2_Vesicle_System(data, sys_id); }
+        if(data.in.param["System_execute"].compare("Rotate_System") == 0) { rotate(ves, data, sys_id); }
+        if(data.in.param["System_execute"].compare("Make_Ves_Nano_Ves_System") == 0) { make_sys(ves, data, sys_id); }
+        if(data.in.param["System_execute"].compare("Analyze_Fusion") == 0)
         {
             const Atoms& ves_1 = ves.get_molecule(mol_tags[0]);
             const Atoms& ves_2 = ves.get_molecule(mol_tags[1]);

@@ -16,16 +16,23 @@ public:
     using Icosahedron<Surface>::beads;
     using Icosahedron<Surface>::bonds;
 
+    void validate_inputs( Data& data )
+    {
+        data.in.p_int.validate_keyword("Number_of_beads", "7");
+    }
+
     virtual void generate( Data& data ) override
     {
+        validate_inputs(data);
+
         double len = edge[0].size();
-        double limit = 1.0 / (data.in.num_of_beads-1);
-        this->icoFrame(data.in.num_of_beads);
+        double limit = 1.0 / (data.in.p_int["Number_of_beads"]-1);
+        this->icoFrame(data.in.p_int["Number_of_beads"]);
         for(int i=0; i<beads.size(); ++i) {
             beads[i] *= 1.0/len;
         }
         int start = beads.size();
-        this->icoFrame(data.in.num_of_beads);
+        this->icoFrame(data.in.p_int["Number_of_beads"]);
         for(int i=start; i<beads.size(); ++i) {
             beads[i] *= 1.143/len;
         }

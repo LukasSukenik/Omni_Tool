@@ -44,7 +44,7 @@ public:
         validate_inputs(data);
 
         // LOAD DATA
-        this->size = data.in.num_of_beads;
+        this->size = data.in.p_int["Number_of_beads"];
         this->c = data.in.p_float["c"];
         this->box = data.in.sim_box;
         this->offset = data.get_bead_count();
@@ -107,6 +107,7 @@ private:
 
     void validate_inputs( Data& data )
     {
+        data.in.p_int.validate_keyword("Number_of_beads", "7");
         data.in.p_float.validate_keyword("Scale", "1.0");
         data.in.p_float.validate_keyword("c", "0.5");
     }
@@ -554,11 +555,11 @@ private:
     {
         myFloat limit = scale * separation_other / fscale;
 
-        for(int i=0; i<particles.size(); ++i)
+        for(size_t i=0; i<particles.size(); ++i)
         {
             if( particles[i].type == 10 || particles[i].type == 11 )
             {
-                for(int j=0; j<particles.size(); ++j)
+                for(size_t j=0; j<particles.size(); ++j)
                 {
                     if( ( particles[j].type == 1 || particles[j].type == 5 ) && particles[i].dist(particles[j]) < limit*0.9 ) {
                         bonds.push_back( Bond(bonds.size()+1, bonds.size()+1, i+offset+1, j+offset+1, particles[i].dist(particles[j]), "coeff_bond_special" ) );
@@ -567,7 +568,7 @@ private:
             }
             if( particles[i].type == 9 )
             {
-                for(int j=0; j<particles.size(); ++j)
+                for(size_t j=0; j<particles.size(); ++j)
                 {
                     if( ( particles[j].type == 1 || particles[j].type == 5 )
                             && particles[i].dist(particles[j]) < limit*1.1
