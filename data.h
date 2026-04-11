@@ -110,7 +110,7 @@ public:
             pdb.beads.clear();
         }
 
-        id_map[ in.param_int["ID"] ] = coll_beads.size()-1;
+        id_map[ in.p_int["ID"] ] = coll_beads.size()-1;
 
         if(coll_beads.empty())
         {
@@ -124,16 +124,16 @@ public:
     ///
     void modify()
     {
-        if (in.param_float.contains("Scale") )
+        if (in.p_float.contains("Scale") )
         {
-            coll_beads[ id_map[ in.param_int["ID"] ] ].scale( in.param_float["Scale"] );    // Rescale atom positions
+            coll_beads[ id_map[ in.p_int["ID"] ] ].scale( in.p_float["Scale"] );    // Rescale atom positions
         }
 
-        coll_beads[ id_map[ in.param_int["ID"] ] ].move(in.com_pos);   // Move entire system by vector
+        coll_beads[ id_map[ in.p_int["ID"] ] ].move(in.com_pos);   // Move entire system by vector
 
-        if( in.param_int.contains("Mol_tag") )
+        if( in.p_int.contains("Mol_tag") )
         {
-            coll_beads[ id_map[ in.param_int["ID"] ] ].set_mol_tag( in.param_int["Mol_tag"] ); // Change mol_tag of all particles to one set by input
+            coll_beads[ id_map[ in.p_int["ID"] ] ].set_mol_tag( in.p_int["Mol_tag"] ); // Change mol_tag of all particles to one set by input
         }
 
         /*if(in.is_mtag_12())
@@ -144,7 +144,7 @@ public:
         //offset(all_beads.size());
 
         if( in.center )
-            coll_beads[ id_map[ in.param_int["ID"] ] ].center();
+            coll_beads[ id_map[ in.p_int["ID"] ] ].center();
     }
 
 

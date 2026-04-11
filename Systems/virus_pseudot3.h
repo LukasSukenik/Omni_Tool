@@ -32,10 +32,10 @@ public:
 
     void execute( Data& data )
     {
-        if(data.in.param_int["ID"] == 2)
+        if(data.in.p_int["ID"] == 2)
         {
             set_protomer(data.coll_beads[0]); // TODO: make it work with input file
-            set_capsid(data.coll_beads[data.id_map[ data.in.param_int["ID"] ]]); // TODO: make it work with input file
+            set_capsid(data.coll_beads[data.id_map[ data.in.p_int["ID"] ]]); // TODO: make it work with input file
             calc_protomer_coms();
             calc_pentamers();
             calc_symmetry_axes();

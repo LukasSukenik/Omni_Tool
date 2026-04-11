@@ -32,7 +32,11 @@ private:
 public:   
     vector<Tensor_xyz> box_traj;
 
-    Trajectory() {}
+    Trajectory(){}
+    Trajectory(string inName, int start=-1, int stop=-1)
+    {
+        load(inName, start, stop);
+    }
 
     void load(string inName, int start=-1, int stop=-1)
     {

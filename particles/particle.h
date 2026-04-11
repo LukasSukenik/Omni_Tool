@@ -76,20 +76,11 @@ public:
      */
     virtual void generate( Data& data )=0;
 
-    void validate_keyword(unordered_map<string, string>& param, string keyword, string default_value)
-    {
-        if( !param.contains(keyword) )
-        {
-            cerr << "Missing keyword; " << keyword << " " << default_value << endl;
-            exit(-1);
-        }
-    }
-
     void modify( Data& data )
     {
-        if( data.in.param_float.contains("Scale") )
+        if( data.in.p_float.contains("Scale") )
         {
-            scale( data.in.param_float["Scale"] );
+            scale( data.in.p_float["Scale"] );
         }
         move( data.in.com_pos );
     }
@@ -257,7 +248,7 @@ public:
 
     void generate( Data& data )
     {
-        beads.push_back( Atom(0.0, 0.0, 0.0, data.in.param_vector_int["Atom_type"][0], data.in.param_int["Mol_tag"]) );
+        beads.push_back( Atom(0.0, 0.0, 0.0, data.in.p_vec_int["Atom_type"][0], data.in.p_int["Mol_tag"]) );
     }
 
     string help()

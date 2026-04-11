@@ -347,20 +347,20 @@ public:
         validate_inputs(data); // "c",
         vector<Atom> ligand;
 
-        typeNano = data.in.param_vector_int["Atom_type"][0];
-        typeLig = data.in.param_vector_int["Atom_type"][0] + 1;
+        typeNano = data.in.p_vec_int["Atom_type"][0];
+        typeLig = data.in.p_vec_int["Atom_type"][0] + 1;
 
         int orientations = orientZ;
 
         //
         // construct base shape
         //
-        fibonacci_tri_axial_spheroid(beads, data.in.num_of_beads, data.in.b, data.in.param_float["c"], typeNano, orientations);
+        fibonacci_tri_axial_spheroid(beads, data.in.num_of_beads, data.in.b, data.in.p_float["c"], typeNano, orientations);
 
         //
         // construct ligand shape for selection purposes
         //
-        fibonacci_tri_axial_spheroid(ligand, data.in.num_lig, data.in.b, data.in.param_float["c"], typeTemp, orientations);
+        fibonacci_tri_axial_spheroid(ligand, data.in.num_lig, data.in.b, data.in.p_float["c"], typeTemp, orientations);
 
         //
         // Validation
@@ -388,7 +388,7 @@ public:
         int i=0;
         for(auto& item : beads)
         {
-            item.mol_tag = data.in.param_int["Mol_tag"];
+            item.mol_tag = data.in.p_int["Mol_tag"];
             item.N = i+1+data.in.offset+data.get_bead_count();
             ++i;
         }
@@ -399,7 +399,7 @@ public:
 protected:
     void validate_inputs( Data& data )
     {
-        if( !data.in.param_float.contains("c") ) { cerr << "Missing keyword; c: 0.5" << endl; exit(-1); }
+        data.in.p_float.validate_keyword("c", "0.5");
     }
 
     inline double linear_Z(int i, int samples, double c)

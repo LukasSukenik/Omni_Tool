@@ -165,11 +165,11 @@ private:
         chain_size = data.in.num_of_beads;
         core_size = data.in.num_lig;
         chain_N = data.in.num_lig;
-        if(data.in.param_int["Chain_type"] == 0)
+        if(data.in.p_int["Chain_type"] == 0)
             chain_type = BASIC;
-        if(data.in.param_int["Chain_type"] == 1)
+        if(data.in.p_int["Chain_type"] == 1)
             chain_type = SOLID_CORE;
-        if(data.in.param_int["Chain_type"] == 2)
+        if(data.in.p_int["Chain_type"] == 2)
             chain_type = INTERACTIVE_N;
     }
 

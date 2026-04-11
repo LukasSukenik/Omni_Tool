@@ -13,7 +13,7 @@ public:
 
     bool test_icosphere_input( Data& data )
     {
-        if(data.in.subdiv_beads > 0 && data.in.subdiv_lig > 0 && data.in.ff.lj.count(1) == 1 && data.in.ff.lj[1].type > 0 && data.in.param_int["Mol_tag"] > 0)
+        if(data.in.subdiv_beads > 0 && data.in.subdiv_lig > 0 && data.in.ff.lj.count(1) == 1 && data.in.ff.lj[1].type > 0 && data.in.p_int["Mol_tag"] > 0)
         {
             return true;
         }
@@ -22,7 +22,7 @@ public:
 
     bool test_fibonacci_input( Data& data )
     {
-        if(data.in.num_of_beads > 0 && data.in.num_lig > 0 && data.in.ff.lj.count(1) == 1 && data.in.ff.lj[1].type > 0 && data.in.param_int["Mol_tag"] > 0)
+        if(data.in.num_of_beads > 0 && data.in.num_lig > 0 && data.in.ff.lj.count(1) == 1 && data.in.ff.lj[1].type > 0 && data.in.p_int["Mol_tag"] > 0)
         {
             return true;
         }
@@ -66,27 +66,27 @@ public:
         //
         if( test_icosphere_input(data) )
         {
-            base_sphere = icosphere(data.in.subdiv_beads, data.in.ff.lj[1].type, data.in.param_int["Mol_tag"]);
-            patch_sphere = icosphere(data.in.subdiv_lig, 0, data.in.param_int["Mol_tag"]);
+            base_sphere = icosphere(data.in.subdiv_beads, data.in.ff.lj[1].type, data.in.p_int["Mol_tag"]);
+            patch_sphere = icosphere(data.in.subdiv_lig, 0, data.in.p_int["Mol_tag"]);
       	}
         else
         {
             if( test_fibonacci_input(data) )
             {
-                fibonacci_sphere( base_sphere, data.in.num_of_beads, data.in.ff.lj[1].type, data.in.param_int["Mol_tag"]);
-                fibonacci_sphere( patch_sphere, data.in.num_lig, -1, data.in.param_int["Mol_tag"]);
+                fibonacci_sphere( base_sphere, data.in.num_of_beads, data.in.ff.lj[1].type, data.in.p_int["Mol_tag"]);
+                fibonacci_sphere( patch_sphere, data.in.num_lig, -1, data.in.p_int["Mol_tag"]);
             }
         }
 
     	// scale patch_sphere by 1.0 + 1st sphere pseudoatom sigma - patch pseudoatom sigma
-        patch_sphere.scale(1.0 + (data.in.ff.lj[1].sigma - data.in.ff.lj[2].sigma) / data.in.param_float["Scale"]);
+        patch_sphere.scale(1.0 + (data.in.ff.lj[1].sigma - data.in.ff.lj[2].sigma) / data.in.p_float["Scale"]);
 
     	// create the final particle based on defined patches
     	for(auto& atom : patch_sphere)
     	{
     		for(auto& patch : data.in.patches)
     	    {
-                if( (patch.pos.x*(atom.pos.x - patch.vel.x)) + (patch.pos.y*(atom.pos.y - patch.vel.y)) + (patch.pos.z*(atom.pos.z - patch.vel.z)) > 0 + (data.in.ff.lj[1].sigma - data.in.ff.lj[2].sigma) / data.in.param_float["Scale"] )
+                if( (patch.pos.x*(atom.pos.x - patch.vel.x)) + (patch.pos.y*(atom.pos.y - patch.vel.y)) + (patch.pos.z*(atom.pos.z - patch.vel.z)) > 0 + (data.in.ff.lj[1].sigma - data.in.ff.lj[2].sigma) / data.in.p_float["Scale"] )
     	        {
     				atom.type=patch.type;
     	        	full_sphere.push_back(atom);
@@ -136,7 +136,7 @@ public:
 protected:
     void validate_inputs( Data& data )
     {
-        if( !data.in.param_float.contains("Scale") ) { cerr << "Missing keyword; Scale: 1.0" << endl; exit(-1); }
+        data.in.p_float.validate_keyword("Scale", "1.0");
     }
 
     Atoms icosahedron(int type, int mol_tag)

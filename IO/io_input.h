@@ -5,6 +5,7 @@
 #include <fstream>
 #include <cmath>
 #include <unordered_map>
+#include <unordered_set>
 #include <cstdlib>
 #include <algorithm>
 #include <random>
@@ -168,9 +169,19 @@ public:
 template <typename T> class Param_Dictionary : public unordered_map<string, T>
 {
 public:
-    vector<string> valid_keys;
+    unordered_set<string> valid_keys;
 
-    Param_Dictionary() {}
+    Param_Dictionary(unordered_set<string> valid_key_list) : valid_keys(valid_key_list) {}
+
+    bool is_key_valid(string key) { return valid_keys.contains(key); }
+    void validate_keyword(string keyword, string default_value)
+    {
+        if( !this->contains(keyword) )
+        {
+            cerr << "Missing keyword; " << keyword << ": " << default_value << endl;
+            exit(-1);
+        }
+    }
 };
 
 
@@ -191,17 +202,10 @@ public:
      * Particle_type: particle identifier::keyword identifying the structure class
      *
      */
-    vector<string> param_valid_key_list = {"Load_file:", "Trajectory_file:", "System_type:", "Particle_type:", "Histo_2D_dirs_outfile:", "Histo_1D_dirs_outfile:"};
-    unordered_map<string, string> param;
-
-    vector<string> param_int_valid_key_list = {"ID:", "Mol_tag:", "Num_lipids:", "Number_of_receptors:", "Chain_type:", "Seed:", "Averaged_frame_count:"};
-    unordered_map<string, int> param_int;
-
-    vector<string> param_float_valid_key_list = {"Cluster_cutoff:", "Radius:", "Scale:", "c:"};
-    unordered_map<string, double> param_float;
-
-    vector<string> param_vector_int_valid_key_list = {"Atom_type:", "Atom_mass:", "Histo_2D_settings:"};
-    unordered_map<string, vector<int>> param_vector_int;
+    Param_Dictionary<string> param = Param_Dictionary<string>({"Load_file:", "Trajectory_file:", "System_type:", "Particle_type:", "Histo_2D_dirs_outfile:", "Histo_1D_dirs_outfile:"});
+    Param_Dictionary<int> p_int = Param_Dictionary<int>({"ID:", "Mol_tag:", "Num_lipids:", "Number_of_receptors:", "Chain_type:", "Seed:", "Averaged_frame_count:"});
+    Param_Dictionary<double> p_float = Param_Dictionary<double>({"Cluster_cutoff:", "Radius:", "Scale:", "c:", "Cell_size:"});
+    Param_Dictionary<vector<int>> p_vec_int = Param_Dictionary<vector<int>>({"Atom_type:", "Atom_mass:", "Histo_2D_settings:"});
 
     // IO
     IO out; /// Output type - none, pdb, lammps_full, xyz
@@ -245,7 +249,6 @@ public:
     bool fit = false;
 
     // Pore calculation - cell size
-    double cell_size=0.0;
     double bead_size=1.12246204831;
 
     // Population data
@@ -262,55 +265,6 @@ public:
     // Deprecated
     int offset = 0;
 
-    bool is_key_valid(string key)
-    {
-        for(string valid_key : param_valid_key_list)
-        {
-            if(key.compare(valid_key) == 0)
-            {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    bool is_key_valid_int(string key)
-    {
-        for(string valid_key : param_int_valid_key_list)
-        {
-            if(key.compare(valid_key) == 0)
-            {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    bool is_key_valid_float(string key)
-    {
-        for(string valid_key : param_float_valid_key_list)
-        {
-            if(key.compare(valid_key) == 0)
-            {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    bool is_key_valid_vector_int(string key)
-    {
-        for(string valid_key : param_vector_int_valid_key_list)
-        {
-            if(key.compare(valid_key) == 0)
-            {
-                return true;
-            }
-        }
-        return false;
-    }
-
-
     bool loadInput(string input)
     {
         std::fstream fs( input, std::fstream::in );
@@ -324,7 +278,6 @@ public:
         int value_int;
         double value_float;
         stringstream ss;
-        int len=0;
 
         while( !fs.eof() ) // Lines in input
         {
@@ -335,12 +288,11 @@ public:
             ss.str(line);
 
             ss >> key; // first stuff,
-            is_key_valid(key);
 
-            if(  is_key_valid(key) )            { ss >> value; param[key.substr(0, key.find(':'))] = value; }
-            if(  is_key_valid_int(key) )        { ss >> value_int; param_int[key.substr(0, key.find(':'))] = value_int; }
-            if(  is_key_valid_float(key) )      { ss >> value_float; param_float[key.substr(0, key.find(':'))] = value_float; }
-            if(  is_key_valid_vector_int(key) ) { param_vector_int[key.substr(0, key.find(':'))] = load_int_array(ss); }
+            if(  param.is_key_valid(key) )            { ss >> value;       param[key.substr(0, key.find(':'))] = value; }
+            if(  p_int.is_key_valid(key) )        { ss >> value_int;   p_int[key.substr(0, key.find(':'))] = value_int; }
+            if(  p_float.is_key_valid(key) )      { ss >> value_float; p_float[key.substr(0, key.find(':'))] = value_float; }
+            if(  p_vec_int.is_key_valid(key) ) { p_vec_int[key.substr(0, key.find(':'))] = load_int_array(ss); }
 
             // Mixed Params
             if( key.compare("System_execute:") == 0 )    { ss >> system_function >> system_var_a >> system_var_b; }
@@ -374,8 +326,7 @@ public:
             if( key.compare("Position_shift:") == 0 )    { ss >> com_pos.x >> com_pos.y >> com_pos.z; }
             if( key.compare("Lammps_offset:") == 0 )     { ss >> offset; }
 
-            // Load calc pore
-            if( key.compare("Cell_size:") == 0 )             { ss >> cell_size; }
+
 
             // Load the simulation box
             if( key.compare("Sim_box:") == 0 )           { ss >> sim_box; }
@@ -394,9 +345,9 @@ public:
         }
         fs.close();
 
-        if(param_int.contains("Seed"))
+        if(p_int.contains("Seed"))
         {
-            rng.seed(param_int["Seed"]);
+            rng.seed(p_int["Seed"]);
         }
 
         return true;
@@ -420,13 +371,13 @@ public:
         for (const auto& [key, value] : param) {
             ss << key << ": " << value << '\n';
         }
-        for (const auto& [key, value] : param_int) {
+        for (const auto& [key, value] : p_int) {
             ss << key << ": " << value << '\n';
         }
-        for (const auto& [key, value] : param_float) {
+        for (const auto& [key, value] : p_float) {
             ss << key << ": " << value << '\n';
         }
-        for (const auto& [key, values] : param_vector_int) {
+        for (const auto& [key, values] : p_vec_int) {
             ss << key << ": ";
             for(const auto& val : values)
             {
@@ -484,9 +435,9 @@ public:
         // ff;
 
         param.clear();
-        param_int.clear();
-        param_float.clear();
-        param_vector_int.clear();
+        p_int.clear();
+        p_float.clear();
+        p_vec_int.clear();
 
         in.clear();
         system_function.clear();
@@ -508,8 +459,6 @@ public:
         fit = false;
         mtag_1=-1;
         mtag_2=-1;
-
-        cell_size = 0.0;
 
         com_pos=Tensor_xyz(0.0, 0.0, 0.0);
 

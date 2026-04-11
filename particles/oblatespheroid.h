@@ -33,25 +33,25 @@ public:
         validate_inputs(data);
         vector<Atom> ligand;
 
-        typeNano = data.in.param_vector_int["Atom_type"][0];
-        typeLig = data.in.param_vector_int["Atom_type"][0] + 1;
+        typeNano = data.in.p_vec_int["Atom_type"][0];
+        typeLig = data.in.p_vec_int["Atom_type"][0] + 1;
 
         int orientations = orientY;
-        int num_beads = data.in.beads_per_area * surface(data.in.param_float["Scale"], data.in.param_float["Scale"]*data.in.param_float["c"]);
-        int num_ligs = data.in.ligs_per_area * surface(data.in.param_float["Scale"], data.in.param_float["Scale"]*data.in.param_float["c"]);
+        int num_beads = data.in.beads_per_area * surface(data.in.p_float["Scale"], data.in.p_float["Scale"]*data.in.p_float["c"]);
+        int num_ligs = data.in.ligs_per_area * surface(data.in.p_float["Scale"], data.in.p_float["Scale"]*data.in.p_float["c"]);
 
-        fibonacci_spheroid(beads, num_beads, data.in.param_float["c"], typeNano, orientations);
-        fibonacci_spheroid(ligand, num_ligs, data.in.param_float["c"], typeTemp, orientations);
+        fibonacci_spheroid(beads, num_beads, data.in.p_float["c"], typeNano, orientations);
+        fibonacci_spheroid(ligand, num_ligs, data.in.p_float["c"], typeTemp, orientations);
         gen_ligands( data, ligand, data.in.patch_1, typeNano, typeTemp);
         gen_ligands( data, ligand, data.in.patch_2, typeNano, typeTemp);
 
-        gen_TMD(data.in.param_float["c"], data.in.param_float["Scale"], data.in.tmd.size, data.in.tmd.proximal_n, data.in.tmd.distal_n, orientations);
+        gen_TMD(data.in.p_float["c"], data.in.p_float["Scale"], data.in.tmd.size, data.in.tmd.proximal_n, data.in.tmd.distal_n, orientations);
 
         // add to existing data
         int i=0;
         for(auto& item : beads)
         {
-            item.mol_tag = data.in.param_int["Mol_tag"];
+            item.mol_tag = data.in.p_int["Mol_tag"];
             item.N = i+1+data.in.offset+data.get_bead_count();
             ++i;
         }
@@ -75,16 +75,8 @@ public:
 private:
     void validate_inputs( Data& data )
     {
-        if( !data.in.param_float.contains("Scale") )
-        {
-            cerr << "Missing keyword; Scale: 1.0" << endl;
-            exit(-1);
-        }
-        if( !data.in.param_float.contains("c") )
-        {
-            cerr << "Missing keyword; c: 0.5" << endl;
-            exit(-1);
-        }
+        data.in.p_float.validate_keyword("Scale", "1.0");
+        data.in.p_float.validate_keyword("c", "0.5");
     }
 
 

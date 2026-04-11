@@ -66,7 +66,6 @@ public:
         {
             c_p_ID = at(i);
             cell_list.set_neighbors_pbc( topo[c_p_ID].pos );
-            cell_list.neighbors;
             for(int j=0; j<cell_list.neighbors.size(); ++j) // Loop over cells
             {
                 for(int nei_ID : (*cell_list.neighbors[j]) ) // Loop over neigbor particles in those cells

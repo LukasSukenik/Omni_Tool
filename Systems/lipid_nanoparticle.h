@@ -61,10 +61,11 @@ private:
 
     void validate_cluster_analysis_inputs( Data& data )
     {
-        validate_keyword(data.in.param, "Load_file",             "data.start");
-        validate_keyword(data.in.param, "Trajectory_file",       "traj_1.xtc");
-        validate_keyword(data.in.param_vector_int, "Atom_type",     "1 2 3 4 5 6");
-        validate_keyword(data.in.param_float, "Cluster_cutoff",     "2.6");
+        data.in.param.validate_keyword("Input_type", "lammps_full");
+        data.in.param.validate_keyword("Load_file", "data.start");
+        data.in.param.validate_keyword("Trajectory_file", "traj_1.xtc");
+        data.in.p_vec_int.validate_keyword("Atom_type", "2 3 5 6");
+        data.in.p_float.validate_keyword("Cluster_cutoff", "2.6");
     }
 
     void cluster_analysis(Data& data)
@@ -72,17 +73,16 @@ private:
         validate_cluster_analysis_inputs(data);
         cerr << "Lipid_Nanoparticle::cluster_analysis" << endl;
 
-        int sys_id = data.id_map[ data.in.param_int["ID"] ];
+        int sys_id = data.id_map[ data.in.p_int["ID"] ];
         Atoms& topo = data.coll_beads[sys_id];
 
-        Clusters clusters(topo, data.in.param_vector_int["Atom_type"]); // list of particle indexes
-        Trajectory traj;
-        traj.load(data.in.param["Trajectory_file"]);
+        Clusters clusters(topo, data.in.p_vec_int["Atom_type"]); // list of particle indexes
+        Trajectory traj(data.in.param["Trajectory_file"]);
 
         for(int i=0; i<traj.frame_count(); ++i)
         {
             topo.set_frame(traj[i]);
-            clusters.analyze(topo, data.in.sim_box, data.in.param_float["Cluster_cutoff"]);
+            clusters.analyze(topo, data.in.sim_box, data.in.p_float["Cluster_cutoff"]);
             cout << i << " ";
             for(Cluster& cluster : clusters)
             {
@@ -118,22 +118,21 @@ private:
 
     void validate_analyze_phase_inputs( Data& data )
     {
-        validate_keyword(data.in.param, "Load_file",             "data.start");
-        validate_keyword(data.in.param, "Trajectory_file",       "traj_1.xtc");
-        validate_keyword(data.in.param, "Histo_2D_dirs_outfile", "dirs_distrib_2D");
-        validate_keyword(data.in.param, "Histo_1D_dirs_outfile", "dirs_distrib_1D");
-        validate_keyword(data.in.param_vector_int, "Histo_2D_settings",     "20 40");
-        validate_keyword(data.in.param_int, "Averaged_frame_count",     "10");
+        data.in.param.validate_keyword("Load_file",             "data.start");
+        data.in.param.validate_keyword("Trajectory_file",       "traj_1.xtc");
+        data.in.param.validate_keyword("Histo_2D_dirs_outfile", "dirs_distrib_2D");
+        data.in.param.validate_keyword("Histo_1D_dirs_outfile", "dirs_distrib_1D");
+        data.in.p_vec_int.validate_keyword("Histo_2D_settings",     "20 40");
+        data.in.p_int.validate_keyword("Averaged_frame_count",     "10");
     }
 
     void analyze_phase(Data& data)
     {
         validate_analyze_phase_inputs(data);
-        int sys_id = data.id_map[ data.in.param_int["ID"] ];
+        int sys_id = data.id_map[ data.in.p_int["ID"] ];
         Atoms& topo = data.coll_beads[sys_id];
 
-        Trajectory traj;
-        traj.load(data.in.param["Trajectory_file"]);
+        Trajectory traj(data.in.param["Trajectory_file"]);
         string phase = "";
 
         phase.append( analyze_dirs(data, topo, traj, 10) ); // Dirs analysis identifies planar membrane
@@ -156,11 +155,10 @@ private:
 
     void print_last(Data& data)
     {
-        int sys_id = data.id_map[ data.in.param_int["ID"] ];
+        int sys_id = data.id_map[ data.in.p_int["ID"] ];
         Atoms& mem = data.coll_beads[sys_id];
 
-        Trajectory traj;
-        traj.load(data.in.param["Trajectory_file"]);
+        Trajectory traj(data.in.param["Trajectory_file"]);
         mem.set_frame(  traj[traj.frame_count()-1]  );
 
         data.gro.print_lammps_data(mem, data.in.sim_box.get_box());
@@ -197,11 +195,9 @@ private:
         // box boundaries
         cerr << data.in.sim_box.xlo << " " << data.in.sim_box.xhi << endl;
 
-        // trajectory load
-        Trajectory traj;
-        traj.load(data.in.param["Trajectory_file"]);
+        Trajectory traj(data.in.param["Trajectory_file"]);
 
-        int sys_id = data.id_map[ data.in.param_int["ID"] ];
+        int sys_id = data.id_map[ data.in.p_int["ID"] ];
         Atoms& last_frame = data.coll_beads[sys_id];
         last_frame.set_frame(traj[ traj.size()-1 ]);
         cerr << "Trajectory loaded" << endl;
@@ -292,7 +288,7 @@ private:
         vector<Tensor_xyz> dirs(topo.size() / 4, Tensor_xyz(0.0, 0.0, 0.0));
         get_frame_averaged_dirs(data, dirs, topo, traj, number_of_averaged_frames);
 
-        Histogram_Spherical h_sp(data.in.param_vector_int["Histo_2D_settings"][0], data.in.param_vector_int["Histo_2D_settings"][1]);
+        Histogram_Spherical h_sp(data.in.p_vec_int["Histo_2D_settings"][0], data.in.p_vec_int["Histo_2D_settings"][1]);
 
         for(Tensor_xyz a : dirs)
         {

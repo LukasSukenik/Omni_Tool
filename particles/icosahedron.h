@@ -69,18 +69,14 @@ public:
         this->types = data.in.ff.types;
         ligandModulo = data.in.num_lig;
 
-        this->icoFrame( data.in.num_of_beads, data.in.param_float["Scale"], data.in.com_pos); // generate icosahedron
+        this->icoFrame( data.in.num_of_beads, data.in.p_float["Scale"], data.in.com_pos); // generate icosahedron
         setUnitSize();
     }
 
 protected:
     void validate_inputs( Data& data )
     {
-        if( !data.in.param_float.contains("Scale") )
-        {
-            cerr << "Missing keyword; Scale: 1.0" << endl;
-            exit(-1);
-        }
+        data.in.p_float.validate_keyword("Scale", "1.0");
     }
 
     void setUnitSize()

@@ -102,7 +102,7 @@ public:
     void generate( Data& data )
     {
         set_input(data);
-        gen_lipid(Tensor_xyz(0,0,0), Tensor_xyz(0,0,1), 0, data.in.param_int["Mol_tag"]);
+        gen_lipid(Tensor_xyz(0,0,0), Tensor_xyz(0,0,1), 0, data.in.p_int["Mol_tag"]);
 
         beads.insert(beads.end(), part.begin(), part.end());
         bonds.insert(bonds.end(), bond.begin(), bond.end());
@@ -153,13 +153,13 @@ public:
 private: // Lipid Generation
     void set_input( Data& data )
     {
-        type_head_upper_leaf = data.in.param_vector_int["Atom_type"][0];
-        type_tail_upper_leaf = data.in.param_vector_int["Atom_type"][1];
-        type_tail_2_upper_leaf = data.in.param_vector_int["Atom_type"][2];
-        type_head_lower_leaf = data.in.param_vector_int["Atom_type"][3];
-        type_tail_lower_leaf = data.in.param_vector_int["Atom_type"][4];
-        type_tail_2_lower_leaf = data.in.param_vector_int["Atom_type"][5];
-        type_receptor = data.in.param_vector_int["Atom_type"][6];
+        type_head_upper_leaf = data.in.p_vec_int["Atom_type"][0];
+        type_tail_upper_leaf = data.in.p_vec_int["Atom_type"][1];
+        type_tail_2_upper_leaf = data.in.p_vec_int["Atom_type"][2];
+        type_head_lower_leaf = data.in.p_vec_int["Atom_type"][3];
+        type_tail_lower_leaf = data.in.p_vec_int["Atom_type"][4];
+        type_tail_2_lower_leaf = data.in.p_vec_int["Atom_type"][5];
+        type_receptor = data.in.p_vec_int["Atom_type"][6];
     }
 
     void set_bond_types()
@@ -315,7 +315,7 @@ public:
 
             Tensor_xyz random_pos;
             Tensor_xyz random_dir;
-            int mol_tag = data.in.param_int["Mol_tag"];
+            int mol_tag = data.in.p_int["Mol_tag"];
             int existing_lipid_count = get_lipid_count(data);
 
             cell_list.init(data.in.sim_box); // currently generated data
