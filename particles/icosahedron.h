@@ -1,9 +1,10 @@
 #ifndef ICOSAHEDRON_H
 #define ICOSAHEDRON_H
 
-#include "particle.h"
-#include "surface.h"
 #include <array>
+
+#include "particle.h"
+
 
 using namespace std;
 

@@ -1,7 +1,6 @@
 #ifndef SYSTEM_BASE_H
 #define SYSTEM_BASE_H
 
-#include <sstream>
 #include <string>
 
 #include "data.h"

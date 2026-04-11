@@ -1,18 +1,12 @@
 #ifndef FORCE_FIELD_H
 #define FORCE_FIELD_H
 
-#include <sstream>
 #include <vector>
-#include <string>
 #include <iostream>
 #include <map>
 #include <cmath>
 
-#include "rng.h"
-#include "types.h"
-#include "angle.h"
-#include "bond.h"
-#include "tensor_xyz.h"
+
 
 using namespace std;
 

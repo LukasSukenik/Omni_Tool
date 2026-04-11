@@ -37,6 +37,23 @@ public:
     {
         return hist.size();
     }
+
+    void print(string filename)
+    {
+        fstream fs(filename, fstream::out);
+        if(!fs.is_open())
+        {
+            cout << "Failed to open file " << filename << endl;;
+        }
+        else
+        {
+            for(size_t i=0; i<hist.size(); ++i)
+            {
+                fs << min+ ( ((max-min)*i)/hist.size() )  << " " << hist[i] << endl;
+            }
+        }
+        fs.close();
+    }
 };
 
 

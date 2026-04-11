@@ -2,16 +2,8 @@
 #define DATA_H
 
 #include <iostream>
-#include <fstream>
-#include <sstream>
-
-#include <iomanip>
 #include <cmath>
-#include <limits>
 #include <cstdlib>
-#include <algorithm>
-#include <random>
-#include <string.h>
 
 #include <array>
 #include <map>
@@ -143,7 +135,7 @@ public:
         // if generating into an existing structure that you did not load, give the number of particles as offset
         //offset(all_beads.size());
 
-        if( in.center )
+        if( in.p_bool.contains("Center") )
             coll_beads[ id_map[ in.p_int["ID"] ] ].center();
     }
 

@@ -4,8 +4,9 @@
 #include <algorithm>
 #include <fstream>
 #include <string.h>
-#include <array>
 
+#include "bond.h"
+#include "angle.h"
 #include "types.h"
 #include "sim_box.h"
 #include "io_input.h"

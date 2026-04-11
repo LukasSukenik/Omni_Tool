@@ -2,6 +2,7 @@
 #define CELL_LIST_H
 
 #include <vector>
+#include <cmath>
 
 #include "atom.h"
 #include "sim_box.h"
@@ -58,18 +59,24 @@ public:
         cerr << "cell_size: " << cell_size.x << ", " << cell_size.y << ", " << cell_size.x << endl;
     }
 
+    double round_to(double a, double decimals)
+    {
+        return round( a*pow(10.0,decimals) ) / pow(10.0,decimals);
+    }
 
     /**
      * @brief init - allocate cell list memory
      */
     void init(Simulation_Box& sim_box)
     {
-        xlo = sim_box.xlo;
-        xhi = sim_box.xhi;
-        ylo = sim_box.ylo;
-        yhi = sim_box.yhi;
-        zlo = sim_box.zlo;
-        zhi = sim_box.zhi;
+        double decimal_places = 3.0; // XTC is usually rounded to 3 decimal places, meaning with lammps 4 decimal places a particle can be out of bound
+        double tiny_num = pow(10.0, -5.0);
+        xlo = round_to(sim_box.xlo, decimal_places) -tiny_num; // just rounding is not enough, need to enlarge the box slightly
+        xhi = round_to(sim_box.xhi, decimal_places) +tiny_num;
+        ylo = round_to(sim_box.ylo, decimal_places) -tiny_num;
+        yhi = round_to(sim_box.yhi, decimal_places) +tiny_num;
+        zlo = round_to(sim_box.zlo, decimal_places) -tiny_num;
+        zhi = round_to(sim_box.zhi, decimal_places) +tiny_num;
 
         pbc.x = xhi - xlo;
         pbc.x = yhi - ylo;
@@ -128,16 +135,22 @@ public:
         delete empty_list;
     }
 
-    void add(Atoms& coll, int offset=0)
+    void add(Atoms& a, int offset=0)
     {
-        if(!coll.empty())
+        if(!a.empty())
         {
-            for(unsigned int i=0; i<coll.size(); ++i)
+            for(size_t i=0; i<a.size(); ++i)
             {
-                (*this)[get_spatial_X(coll[i].pos)]
-                       [get_spatial_Y(coll[i].pos)]
-                       [get_spatial_Z(coll[i].pos)]->push_back(offset + i);
-                //cerr << "Cell_List::add_lipid_cell_list [" << get_spatial_index(part[0].pos.x) << ", " << get_spatial_index(part[0].pos.y) << ", " << get_spatial_index(part[0].pos.z) << "] = " << beads.size() + i << endl;
+                /*if( get_spatial_X(a[i].pos) <0 || get_spatial_Y(a[i].pos)<0 || get_spatial_Z(a[i].pos)<0 ) // testing out-of-bound spatial indexes caused by XTC low accuracy
+                {
+                    show();
+                    cerr << "Size: " << this->size() << ", " << this->at(0).size() << ", " << this->at(0).at(0).size() << endl;
+                    cerr << a[i].pos << endl;
+                    cerr << "Cell_List::add [" << get_spatial_X(a[i].pos) << ", " << get_spatial_Y(a[i].pos) << ", " << get_spatial_Z(a[i].pos) << "] = " << i << endl;
+                }*/
+                this->at(get_spatial_X(a[i].pos)).at(get_spatial_Y(a[i].pos)).at(get_spatial_Z(a[i].pos))->push_back(offset + i); // does boundary checking
+                //(*this)[get_spatial_X(a[i].pos)][get_spatial_Y(a[i].pos)][get_spatial_Z(a[i].pos)]->push_back(offset + i);
+
             }
         }
     }

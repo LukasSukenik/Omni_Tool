@@ -1,7 +1,7 @@
 #ifndef DODECAHEDRON_H
 #define DODECAHEDRON_H
 
-#include "pentamer.h"
+
 #include "icosahedron.h"
 
 

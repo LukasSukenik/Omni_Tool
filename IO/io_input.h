@@ -211,8 +211,10 @@ public:
      *
      */
     unordered_set<string> keys = {"System_type:", "Particle_type:", "System_execute:"};
-    unordered_set<string> files = {"Load_file:", "Trajectory_file:", "Histo_2D_dirs_outfile:", "Histo_1D_dirs_outfile:"};
+    unordered_set<string> files = {"Load_file:", "Trajectory_file:", "Histo_2D_dirs_outfile:", "Histo_1D_dirs_outfile:", "Histo_outfile:"};
     Param_Dictionary<string> param = Param_Dictionary<string>(keys + files);
+
+    Param_Dictionary<bool> p_bool = Param_Dictionary<bool>({"Fit:", "Center:", "Only_last_frame:"});
 
     unordered_set<string> counts = {"Number_of_beads:", "Number_of_ligands:", "Num_lipids:", "Number_of_receptors:", "Averaged_frame_count:", "Subdiv_of_beads:", "Subdiv_of_ligands:"};
     unordered_set<string> types = {"Mol_tag:", "Chain_type:"};
@@ -220,7 +222,7 @@ public:
     Param_Dictionary<int> p_int = Param_Dictionary<int>(counts + types + other);
 
     Param_Dictionary<double> p_float = Param_Dictionary<double>({"Cluster_cutoff:", "Radius:", "Scale:", "b:", "c:", "Cell_size:", "Beads_per_area:", "Ligands_per_area:"});
-    Param_Dictionary<vector<int>> p_vec_int = Param_Dictionary<vector<int>>({"Atom_type:", "Atom_mass:", "Histo_2D_settings:"});
+    Param_Dictionary<vector<int>> p_vec_int = Param_Dictionary<vector<int>>({"Atom_type:", "Atom_mass:", "Histo_settings:", "Histo_spherical_settings:"});
 
     IO out; /// Output type - none, pdb, lammps_full, xyz
     IO in;  /// Input type  - none, pdb, lammps_full
@@ -240,9 +242,6 @@ public:
     double bead_size=1.12246204831;
 
     int offset = 0;
-
-    bool center=false;
-    bool fit = false;
 
     Tensor_xyz com_pos = Tensor_xyz(0.0, 0.0, 0.0);
     Tensor_xyz ivx = Tensor_xyz(0.0, 0.0, 0.0);
@@ -305,8 +304,6 @@ public:
             if( key.compare("Position_shift:") == 0 )    { ss >> com_pos.x >> com_pos.y >> com_pos.z; }
 
             // Load system
-            if( key.compare("Center") == 0 )             { center=true; }
-
             if( key.compare("Lammps_offset:") == 0 )     { ss >> offset; }
 
             // Load the simulation box
@@ -321,8 +318,6 @@ public:
 
             // Load stuff for nanoparticle orientation and position
             if( key.compare("Align:") == 0 )  			{ ss >> mtag_1 >> mtag_2; }
-            if( key.compare("Fit") == 0 )              { fit=true; }
-
         }
         fs.close();
 
@@ -369,7 +364,7 @@ public:
 
 
         // Loading a file
-        ss << "Input_type:" << in << endl;
+        ss << "Input_type: " << in << endl;
 
         ss << "Output_type: " << out << endl;
 
@@ -421,9 +416,6 @@ public:
         tmd.clear();
 
         offset=0;
-
-        center=false;
-        fit = false;
         mtag_1=-1;
         mtag_2=-1;
 

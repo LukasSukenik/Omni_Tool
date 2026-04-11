@@ -3,7 +3,6 @@
 
 #include "sphere.h"
 #include "particle.h"
-#include "cow.h"
 
 class Slab1D : public Particle
 {

@@ -1,8 +1,6 @@
 #ifndef ELLIPSOID_H
 #define ELLIPSOID_H
 
-#include <complex>
-
 #include "sphere.h"
 
 using namespace std;

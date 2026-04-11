@@ -4,6 +4,7 @@
 #include "system_base.h"
 #include "atom.h"
 #include "xtcanalysis.h"
+#include "rdf.h"
 
 #include "sphere.h"
 #include "lipid.h"
@@ -35,6 +36,14 @@ public:
         Atoms& ves = data.coll_beads[sys_id];
         vector<int> mol_tags = ves.get_Mol_Types();
 
+        if(data.in.param["System_execute"].compare("rdf") == 0) { radial_distribution_histogram(data, ves); }
+        if(data.in.param["System_execute"].compare("Make_2_Vesicle_System") == 0) { make_2_Vesicle_System(data, sys_id); }
+        if(data.in.param["System_execute"].compare("Rotate_System") == 0) { rotate(ves, data, sys_id); }
+        if(data.in.param["System_execute"].compare("Make_Ves_Nano_Ves_System") == 0) { make_sys(ves, data, sys_id); }
+
+        //
+        // Stubs
+        //
         if(data.in.param["System_execute"].compare("is_Single_Vesicle") == 0)
         {
             const Atoms& ves_1 = ves.get_molecule(mol_tags[0]);
@@ -44,10 +53,6 @@ public:
 
             exit(0);
         }
-        if(data.in.param["System_execute"].compare("rdf") == 0) { radial_distribution_histogram(ves, data.in.system_var_a, data.in.system_var_b); }
-        if(data.in.param["System_execute"].compare("Make_2_Vesicle_System") == 0) { make_2_Vesicle_System(data, sys_id); }
-        if(data.in.param["System_execute"].compare("Rotate_System") == 0) { rotate(ves, data, sys_id); }
-        if(data.in.param["System_execute"].compare("Make_Ves_Nano_Ves_System") == 0) { make_sys(ves, data, sys_id); }
         if(data.in.param["System_execute"].compare("Analyze_Fusion") == 0)
         {
             const Atoms& ves_1 = ves.get_molecule(mol_tags[0]);
@@ -205,36 +210,51 @@ private:
         }
     }
 
+
+
+
     ///
-    /// START /// radial_distribution_histogram ///
+    /// radial_distribution_histogram
     ///
-    void radial_distribution_histogram(Atoms& at_col, double r_max, int hist_size)
+    string help_radial_distribution_histogram()
     {
-        double r=0.0;
-        vector<int> histogram(hist_size,0);
-        Atom com = at_col.get_center_of_mass();
+        stringstream ss;
 
-        for(Atom& a : at_col)
-        {
-            r = a.pos.dist(com.pos);
-            if(r > r_max)
-            {
-                cerr << "Vesicle sigma radius exeeds bounds of histogram set at " << r_max << ", r calculated at " << r << endl;
-                exit(1);
-            }
-            histogram[(int) hist_size * (r/r_max)]++;
-        }
+        ss << "*********************************************************" << endl;
+        ss << "System_type: Vesicle" << endl;
+        ss << "System_execute: rdf" << endl;
+        ss << "Input_type: lammps_full" << endl;
+        ss << "Load_file: data.start" << endl;
+        ss << "Trajectory_file: traj_1.xtc" << endl;
+        ss << "Histo_outfile: hist" << endl;
+        ss << "Histo_settings: 100 0 20" << endl;
+        ss << "#Histo_settings: size min max" << endl;
+        ss << "ID: 1" << endl;
 
-        for(unsigned int i=0; i<histogram.size(); ++i)
-        {
-            cout << r_max * i / histogram.size() << " " << histogram[i] << endl;
-        }
-
-        cerr << "Generated radial distribution function" << endl;
+        return ss.str();
     }
-    ///
-    /// END /// radial_distribution_histogram ///
-    ///
+
+    void validate_analyze_phase_inputs( Data& data )
+    {
+        data.in.param.validate_keyword("Histo_outfile",      "hist");
+        data.in.param.validate_keyword("Load_file",          "data.start");
+        data.in.param.validate_keyword("Trajectory_file",    "traj_1.xtc");
+        data.in.p_vec_int.validate_keyword("Histo_settings", "100 0 20");
+    }
+
+    void radial_distribution_histogram(Data& data, Atoms& topo)
+    {
+        validate_analyze_phase_inputs(data);
+        int hist_size = data.in.p_vec_int["Histo_settings"][0];
+        int r_min = data.in.p_vec_int["Histo_settings"][1];
+        int r_max = data.in.p_vec_int["Histo_settings"][2];
+        string outfile = data.in.param["Histo_outfile"];
+
+        rdf(topo, r_min, r_max, hist_size, outfile);
+    }
+
+
+
 
     ///
     /// START /// Make_2_Vesicle_System ///
@@ -262,9 +282,7 @@ private:
 
         cerr << "Generated 2 vesicle system" << endl;
     }
-    ///
-    /// END /// Make_2_Vesicle_System ///
-    ///
+
 
 
 
@@ -301,30 +319,7 @@ private:
 
 
 
-    void radial_distribution_histogram(vector<Tensor_xyz>& frame)
-    {
-        double r_max=20;
-        double r=0.0;
-        vector<int> histogram(1000,0);
-        Tensor_xyz com(0.0,0.0,0.0);
 
-        for(Tensor_xyz& pos : frame)
-        {
-            com += pos;
-        }
-        com /= frame.size();
-
-        for(Tensor_xyz& pos : frame)
-        {
-            r = pos.dist(com);
-            histogram[(int) 1000 * (r/r_max)]++;
-        }
-
-        for(unsigned int i=0; i<histogram.size(); ++i)
-        {
-            cout << r_max * i / histogram.size() << " " << histogram[i] << endl;
-        }
-    }
 
     void get_leaflet_count(Lipids& vesicle, int& count_upper, int& count_lower)
     {

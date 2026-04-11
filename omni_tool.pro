@@ -22,6 +22,7 @@ HEADERS += \
     data.h \
     force_field.h \
     histogram.h \
+    rdf.h \
     rng.h \
     sim_box.h \
     types.h \

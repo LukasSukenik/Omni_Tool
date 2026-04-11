@@ -4,6 +4,7 @@
 #include <cmath>
 
 #include "types.h"
+#include "rng.h"
 
 class Quat{
 public:

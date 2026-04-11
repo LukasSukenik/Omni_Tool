@@ -1,6 +1,8 @@
 #ifndef PARTICLE_CONTAINER_H
 #define PARTICLE_CONTAINER_H
 
+#include "cow.h"
+#include "surface.h"
 #include "icosahedron.h"
 #include "oblatespheroid.h"
 #include "sphere.h"

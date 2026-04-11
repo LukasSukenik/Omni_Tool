@@ -2,7 +2,6 @@
 #define PENTAMER_H
 
 #include "icosahedron.h"
-#include "surface.h"
 
 template<class Surface>
 class Pentamer : public Icosahedron<Surface> {

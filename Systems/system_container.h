@@ -6,7 +6,6 @@
 
 #include "system_base.h"
 #include "virus_pseudot3.h"
-#include "membrane.h"
 #include "lipid_nanoparticle.h"
 #include "vesicle.h"
 #include "flat_membrane.h"

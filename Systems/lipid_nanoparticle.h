@@ -53,8 +53,8 @@ private:
         ss << "Input_type: lammps_full" << endl;
         ss << "Load_file: data.start" << endl;
         ss << "Trajectory_file: traj_1.xtc" << endl;
-        ss << "Atom_type: 1 2 3 4 5 6" << endl;
-        ss << "Cluster_cutoff: 2.6" << endl;
+        ss << "Atom_type: 2 3 5 6" << endl;
+        ss << "Cluster_cutoff: 2.0" << endl;
         ss << "ID: 1" << endl;
 
         return ss.str();
@@ -62,11 +62,10 @@ private:
 
     void validate_cluster_analysis_inputs( Data& data )
     {
-        data.in.param.validate_keyword("Input_type", "lammps_full");
         data.in.param.validate_keyword("Load_file", "data.start");
         data.in.param.validate_keyword("Trajectory_file", "traj_1.xtc");
         data.in.p_vec_int.validate_keyword("Atom_type", "2 3 5 6");
-        data.in.p_float.validate_keyword("Cluster_cutoff", "2.6");
+        data.in.p_float.validate_keyword("Cluster_cutoff", "2.0");
     }
 
     void cluster_analysis(Data& data)
@@ -76,7 +75,6 @@ private:
 
         int sys_id = data.id_map[ data.in.p_int["ID"] ];
         Atoms& topo = data.coll_beads[sys_id];
-
         Clusters clusters(topo, data.in.p_vec_int["Atom_type"]); // list of particle indexes
         Trajectory traj(data.in.param["Trajectory_file"]);
 
@@ -84,7 +82,7 @@ private:
         {
             topo.set_frame(traj[i]);
             clusters.analyze(topo, data.in.sim_box, data.in.p_float["Cluster_cutoff"]);
-            cout << i << " ";
+            cout << i << " " << clusters.size() << " ";
             for(Cluster& cluster : clusters)
             {
                 cout << cluster.size()/3 << " "; // dividing by 3 to get the lipid count, assumes we analyze tails only, deserno 4 bead types model
@@ -109,7 +107,7 @@ private:
         ss << "Trajectory_file: traj_1.xtc" << endl;
         ss << "Histo_2D_dirs_outfile: dirs_distrib_2D" << endl;
         ss << "Histo_1D_dirs_outfile: dirs_distrib_1D" << endl;
-        ss << "Histo_2D_settings: 20 40" << endl;
+        ss << "Histo_spherical_settings: 20 40" << endl;
         ss << "Averaged_frame_count: 10" << endl;
         ss << "ID: 1" << endl;
         ss << "Histo 1D is a cumulative ordered version of histo_2D" << endl;
@@ -123,7 +121,7 @@ private:
         data.in.param.validate_keyword("Trajectory_file",       "traj_1.xtc");
         data.in.param.validate_keyword("Histo_2D_dirs_outfile", "dirs_distrib_2D");
         data.in.param.validate_keyword("Histo_1D_dirs_outfile", "dirs_distrib_1D");
-        data.in.p_vec_int.validate_keyword("Histo_2D_settings",     "20 40");
+        data.in.p_vec_int.validate_keyword("Histo_spherical_settings", "20 40");
         data.in.p_int.validate_keyword("Averaged_frame_count",     "10");
     }
 
@@ -289,7 +287,7 @@ private:
         vector<Tensor_xyz> dirs(topo.size() / 4, Tensor_xyz(0.0, 0.0, 0.0));
         get_frame_averaged_dirs(data, dirs, topo, traj, number_of_averaged_frames);
 
-        Histogram_Spherical h_sp(data.in.p_vec_int["Histo_2D_settings"][0], data.in.p_vec_int["Histo_2D_settings"][1]);
+        Histogram_Spherical h_sp(data.in.p_vec_int["Histo_spherical_settings"][0], data.in.p_vec_int["Histo_spherical_settings"][1]);
 
         for(Tensor_xyz a : dirs)
         {

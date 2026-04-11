@@ -3,7 +3,7 @@
 
 #include "types.h"
 #include "atom.h"
-
+#include "rng.h"
 
 
 class Simulation_Box

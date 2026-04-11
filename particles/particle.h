@@ -2,18 +2,11 @@
 #define PARTICLE_H
 
 #include <vector>
-#include <fstream>
 #include <sstream>
 #include <cstring>
 #include <vector>
 #include <cstdlib>
-#include <algorithm>
 #include <string>
-
-#include "xdrfile-1.1.4/include/xdrfile.h"
-#include "xdrfile-1.1.4/include/xdrfile_xtc.h"
-
-#include <stdio.h>
 
 #include "data.h"
 #include "atom.h"

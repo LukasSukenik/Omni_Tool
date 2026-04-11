@@ -39,8 +39,16 @@ public:
         return ss.str();
     }
 
+    void validate_inputs( Data& data )
+    {
+        data.in.p_int.validate_keyword("Number_of_ligands", "3");
+        data.in.p_int.validate_keyword("Number_of_beads", "7");
+        data.in.p_int.validate_keyword("Chain_type", "1");
+    }
+
     void generate( Data& data )
     {
+        validate_inputs(data);
         load_params(data);
 
         //

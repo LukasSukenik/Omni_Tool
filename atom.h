@@ -2,8 +2,7 @@
 #define VECTOR_H
 
 #include <string>
-
-#include "rng.h"
+#include "tensor_xyz.h"
 #include "force_field.h"
 
 

@@ -1,11 +1,6 @@
 #include <iostream>
-#include <fstream>
-#include <iomanip>
 #include <cmath>
-#include <limits>
 #include <cstdlib>
-#include <algorithm>
-#include <vector>
 #include <map>
 
 #include "particle_container.h"

@@ -1,7 +1,6 @@
 #ifndef MEMBRANE_H
 #define MEMBRANE_H
 
-#include <string>
 #include <vector>
 
 #include "atom.h"
