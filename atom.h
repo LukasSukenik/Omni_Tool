@@ -1,11 +1,12 @@
 #ifndef VECTOR_H
 #define VECTOR_H
 
+#include <sstream>
 #include <string>
 #include "tensor_xyz.h"
 #include "force_field.h"
 
-
+using namespace std;
 
 class Atom{
 public:
@@ -213,6 +214,15 @@ public:
         for(unsigned int i=0; i<frame.size(); ++i)
         {
             (*this)[i].pos = frame[i];
+        }
+    }
+
+    void set_cluster(Atoms& topo, vector<int>& cluster)
+    {
+        this->resize(cluster.size());
+        for(size_t i=0; i<cluster.size(); ++i)
+        {
+            (*this)[i] = topo[ cluster[i] ];
         }
     }
 

@@ -41,10 +41,11 @@ public:
     unordered_set<string> files = {"Load_file:", "Trajectory_file:", "Histo_2D_dirs_outfile:", "Histo_1D_dirs_outfile:", "Histo_outfile:"};
     Param_Dictionary<string> param = Param_Dictionary<string>(keys + files);
 
-    unordered_set<string> counts = {"Number_of_beads:", "Number_of_ligands:", "Num_lipids:", "Number_of_receptors:", "Averaged_frame_count:", "Subdiv_of_beads:", "Subdiv_of_ligands:"};
+    unordered_set<string> counts1 = {"Number_of_beads:", "Number_of_ligands:", "Num_lipids:", "Number_of_receptors:", "Subdiv_of_beads:", "Subdiv_of_ligands:"};
+    unordered_set<string> counts2 = {"Averaged_frame_count:", "Trajectory_step:"};
     unordered_set<string> types = {"Mol_tag:", "Chain_type:"};
     unordered_set<string> other = {"ID:", "Seed:"};
-    Param_Dictionary<int> p_int = Param_Dictionary<int>(counts + types + other);
+    Param_Dictionary<int> p_int = Param_Dictionary<int>(counts1 + counts2 + types + other);
 
     Param_Dictionary<bool> p_bool = Param_Dictionary<bool>({"Fit:", "Center:", "Only_last_frame:"});
     Param_Dictionary<Tensor_xyz> p_tensor = Param_Dictionary<Tensor_xyz>({"Position_shift:", "Impact_vector:"});
@@ -105,7 +106,7 @@ public:
             ss >> key; // first stuff,
 
             if(  param.is_key_valid(key) )     { ss >> value;       param[key.substr(0, key.find(':'))] = value; }
-            if(  p_bool.is_key_valid(key) )    {                    p_int[key.substr(0, key.find(':'))] = true; }
+            if(  p_bool.is_key_valid(key) )    {                    p_bool[key.substr(0, key.find(':'))] = true; }
             if(  p_int.is_key_valid(key) )     { ss >> value_int;   p_int[key.substr(0, key.find(':'))] = value_int; }
             if(  p_float.is_key_valid(key) )   { ss >> value_float; p_float[key.substr(0, key.find(':'))] = value_float; }
             if(  p_tensor.is_key_valid(key) )  { ss >> v_tensor;    p_tensor[key.substr(0, key.find(':'))] = v_tensor; }

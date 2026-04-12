@@ -102,7 +102,7 @@ public:
         }
     }
 
-    inline int frame_count()
+    inline size_t frame_count()
     {
         return size();
     }

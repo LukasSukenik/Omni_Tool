@@ -6,7 +6,7 @@
 #include "xtcanalysis.h"
 #include "histogram.h"
 #include "cluster_analysis.h"
-
+#include "rdf.h"
 
 
 class Lipid_Nanoparticle : public System_Base
@@ -56,6 +56,8 @@ private:
         ss << "Atom_type: 2 3 5 6" << endl;
         ss << "Cluster_cutoff: 2.0" << endl;
         ss << "ID: 1" << endl;
+        ss << "Optionally use keyword 'Only_last_frame:'" << endl;
+        ss << "Optionally use keyword 'Trajectory_step: 10'" << endl;
 
         return ss.str();
     }
@@ -75,10 +77,14 @@ private:
 
         int sys_id = data.id_map[ data.in.p_int["ID"] ];
         Atoms& topo = data.coll_beads[sys_id];
+        Atoms clust_topo;
+        clust_topo.reserve(topo.size());
         Clusters clusters(topo, data.in.p_vec_int["Atom_type"]); // list of particle indexes
         Trajectory traj(data.in.param["Trajectory_file"]);
 
-        for(int i=0; i<traj.frame_count(); ++i)
+        size_t step = (data.in.p_int.contains("Trajectory_step")) ? data.in.p_int["Trajectory_step"] : 1;
+        size_t start = (data.in.p_bool.contains("Only_last_frame")) ? traj.frame_count()-1 : 0;
+        for(size_t i=start; i<traj.frame_count(); i+=step)
         {
             topo.set_frame(traj[i]);
             clusters.analyze(topo, data.in.sim_box, data.in.p_float["Cluster_cutoff"]);
@@ -86,6 +92,8 @@ private:
             for(Cluster& cluster : clusters)
             {
                 cout << cluster.size()/3 << " "; // dividing by 3 to get the lipid count, assumes we analyze tails only, deserno 4 bead types model
+                clust_topo.set_cluster(topo, cluster);
+                rdf(clust_topo, 0.0, 50.0, 200, "clust_rdf");
             }
             cout << endl;
             clusters.clear();
