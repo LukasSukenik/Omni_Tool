@@ -1,6 +1,7 @@
 #ifndef TENSOR_XYZ_H
 #define TENSOR_XYZ_H
 
+#include <iostream>
 #include <cmath>
 
 #include "types.h"
@@ -223,6 +224,12 @@ public:
     friend std::ostream& operator<<(std::ostream& os, const Tensor_xyz& vec) {
       os << vec.x << " " << vec.y << " " << vec.z;
       return os;
+    }
+
+    friend std::istream& operator>>(std::istream& is, Tensor_xyz& a)
+    {
+        is >> a.x >> a.y >> a.z;
+        return is;
     }
 };
 

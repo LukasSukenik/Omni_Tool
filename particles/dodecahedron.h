@@ -53,7 +53,7 @@ public:
         info();
 
         this->scale = data.in.p_float["Scale"];
-        this->com_pos = data.in.com_pos;
+        this->com_pos = data.in.p_tensor["Position_shift"];
 
         //
         // Define sigma values for forcefield
@@ -107,6 +107,7 @@ private:
 
     void validate_inputs( Data& data )
     {
+        data.in.p_tensor.validate_keyword("Position_shift", "0 0 0");
         data.in.p_int.validate_keyword("Number_of_beads", "7");
         data.in.p_float.validate_keyword("Scale", "1.0");
         data.in.p_float.validate_keyword("c", "0.5");

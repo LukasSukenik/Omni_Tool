@@ -116,27 +116,16 @@ public:
     ///
     void modify()
     {
-        if (in.p_float.contains("Scale") )
-        {
-            coll_beads[ id_map[ in.p_int["ID"] ] ].scale( in.p_float["Scale"] );    // Rescale atom positions
-        }
-
-        coll_beads[ id_map[ in.p_int["ID"] ] ].move(in.com_pos);   // Move entire system by vector
-
-        if( in.p_int.contains("Mol_tag") )
-        {
-            coll_beads[ id_map[ in.p_int["ID"] ] ].set_mol_tag( in.p_int["Mol_tag"] ); // Change mol_tag of all particles to one set by input
-        }
+        if( in.p_float.contains("Scale") )          { coll_beads[ id_map[ in.p_int["ID"] ] ].scale( in.p_float["Scale"] ); }         // Rescale atom positions
+        if( in.p_tensor.contains("Position_shift")) { coll_beads[ id_map[ in.p_int["ID"] ] ].move(in.p_tensor["Position_shift"] ); } // Move entire system by vector
+        if( in.p_int.contains("Mol_tag") )          { coll_beads[ id_map[ in.p_int["ID"] ] ].set_mol_tag( in.p_int["Mol_tag"] ); }   // Change mol_tag of all particles to one set by input
+        if( in.p_bool.contains("Center") )          { coll_beads[ id_map[ in.p_int["ID"] ] ].center(); }
 
         /*if(in.is_mtag_12())
             align(in.mtag_1, in.mtag_2); // align mol_tag particles in z axis and XY plane
         */
 
         // if generating into an existing structure that you did not load, give the number of particles as offset
-        //offset(all_beads.size());
-
-        if( in.p_bool.contains("Center") )
-            coll_beads[ id_map[ in.p_int["ID"] ] ].center();
     }
 
 

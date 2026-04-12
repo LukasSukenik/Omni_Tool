@@ -161,7 +161,7 @@ public:
         vector<int> array = get_ordered_array();
         size_t size_1 = h_2D.hist.size();
         size_t size_2 = h_2D.hist[0].size();
-        double z;
+        //double z;
         double rad;
         double phi;
         Tensor_xyz r;

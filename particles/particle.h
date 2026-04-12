@@ -71,11 +71,8 @@ public:
 
     void modify( Data& data )
     {
-        if( data.in.p_float.contains("Scale") )
-        {
-            scale( data.in.p_float["Scale"] );
-        }
-        move( data.in.com_pos );
+        if( data.in.p_float.contains("Scale") )          { scale( data.in.p_float["Scale"] ); }
+        if( data.in.p_tensor.contains("Position_shift")) { move(  data.in.p_tensor["Position_shift"] ); }
     }
 
     void make_persistent(Data& data)

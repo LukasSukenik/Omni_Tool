@@ -7,7 +7,6 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <cstdlib>
-#include <algorithm>
 #include <random>
 #include <sstream>
 
@@ -15,181 +14,9 @@
 #include "atom.h"
 #include "force_field.h"
 #include "rng.h"
+#include "types.h"
 
 using namespace std;
-
-
-enum class IO_Type { none, xyz, pdb, gro, lammps_full };
-
-std::ostream& operator<<(std::ostream& os, const IO_Type out)
-{
-    switch (out) {
-        case IO_Type::gro:
-          os << "gro"; return os;
-        case IO_Type::xyz:
-          os << "xyz"; return os;
-        case IO_Type::pdb:
-          os << "pdb"; return os;
-        case IO_Type::lammps_full:
-          os << "lammps_full"; return os;
-        default:
-          os << "none"; return os;
-    }
-    return os;
-}
-
-
-
-
-class IO{
-public:
-    IO() {}
-
-    IO_Type type = IO_Type::none;
-
-    void clear()
-    {
-        type = IO_Type::none;
-    }
-
-    friend std::istream& operator>>(std::istream& is, IO& out)
-    {
-        string str;
-        is >> str;
-
-        transform(str.begin(), str.end(), str.begin(), ::tolower);
-
-        out.type = IO_Type::none;
-        if (str == "xyz")
-        {
-            out.type = IO_Type::xyz;
-        }
-        if (str == "gro")
-        {
-            out.type = IO_Type::gro;
-        }
-        if (str == "pdb")
-        {
-            out.type = IO_Type::pdb;
-        }
-        if (str == "lammps_full")
-        {
-            out.type = IO_Type::lammps_full;
-        }
-
-        return is;
-    }
-
-    friend std::ostream& operator<<(std::ostream& os, const IO& io)
-    {
-        os << io.type;
-        return os;
-    }
-};
-
-
-
-
-class TMD
-{
-public:
-    TMD(){}
-
-    int size;
-    int proximal_n;
-    int distal_n;
-
-    void clear()
-    {
-        size = 0;
-        proximal_n = 0;
-        distal_n = 0;
-    }
-};
-
-
-
-
-/**
- * @brief Populate
- * Defines the population of particles in the simulation box
- */
-class Population
-{
-public:
-	Population(){}
-
-	bool random=false;
-	int count=0;
-
-    bool empty()
-    {
-        if(count == 0)
-            return true;
-        return false;
-    }
-
-	void clear()
-	{
-		random=false;
-		count=0;
-	}
-
-    friend std::ostream& operator<<(std::ostream& os, const Population& pop)
-    {
-    	if(pop.random)
-    	{
-            os << pop.count << " random";
-    	}
-    	else
-    	{
-    		os << "not defined";
-    	}
-        return os;
-    }
-
-	friend std::istream& operator>>(std::istream& is, Population& pop)
-	{
-	    string str;
-	    is >> pop.count >> str;
-
-	    transform(str.begin(), str.end(), str.begin(), ::tolower);
-
-	    if (str == "random")
-	    {
-	    	pop.random = true;
-	    }
-
-	    return is;
-	}
-};
-
-
-template <typename T>
-unordered_set<T> operator+(unordered_set<T> a, unordered_set<T>& b)
-{
-    a.merge(b);
-    return a;
-}
-
-template <typename T>
-class Param_Dictionary : public unordered_map<string, T>
-{
-public:
-    unordered_set<string> valid_keys;
-
-    Param_Dictionary(unordered_set<string> valid_key_list) : valid_keys(valid_key_list) {}
-
-    bool is_key_valid(string key) { return valid_keys.contains(key); }
-    void validate_keyword(string keyword, string default_value)
-    {
-        if( !this->contains(keyword) )
-        {
-            cerr << "Missing keyword; " << keyword << ": " << default_value << endl;
-            exit(-1);
-        }
-    }
-};
 
 
 
@@ -214,13 +41,13 @@ public:
     unordered_set<string> files = {"Load_file:", "Trajectory_file:", "Histo_2D_dirs_outfile:", "Histo_1D_dirs_outfile:", "Histo_outfile:"};
     Param_Dictionary<string> param = Param_Dictionary<string>(keys + files);
 
-    Param_Dictionary<bool> p_bool = Param_Dictionary<bool>({"Fit:", "Center:", "Only_last_frame:"});
-
     unordered_set<string> counts = {"Number_of_beads:", "Number_of_ligands:", "Num_lipids:", "Number_of_receptors:", "Averaged_frame_count:", "Subdiv_of_beads:", "Subdiv_of_ligands:"};
     unordered_set<string> types = {"Mol_tag:", "Chain_type:"};
     unordered_set<string> other = {"ID:", "Seed:"};
     Param_Dictionary<int> p_int = Param_Dictionary<int>(counts + types + other);
 
+    Param_Dictionary<bool> p_bool = Param_Dictionary<bool>({"Fit:", "Center:", "Only_last_frame:"});
+    Param_Dictionary<Tensor_xyz> p_tensor = Param_Dictionary<Tensor_xyz>({"Position_shift:", "Impact_vector:"});
     Param_Dictionary<double> p_float = Param_Dictionary<double>({"Cluster_cutoff:", "Radius:", "Scale:", "b:", "c:", "Cell_size:", "Beads_per_area:", "Ligands_per_area:"});
     Param_Dictionary<vector<int>> p_vec_int = Param_Dictionary<vector<int>>({"Atom_type:", "Atom_mass:", "Histo_settings:", "Histo_spherical_settings:"});
 
@@ -243,8 +70,6 @@ public:
 
     int offset = 0;
 
-    Tensor_xyz com_pos = Tensor_xyz(0.0, 0.0, 0.0);
-    Tensor_xyz ivx = Tensor_xyz(0.0, 0.0, 0.0);
     Atom patch_1 = Atom(0,0,0,0);
     Atom patch_2 = Atom(0,0,0,0);
     vector<Atom> patches;
@@ -266,6 +91,7 @@ public:
         string line, key, value;
         int value_int;
         double value_float;
+        Tensor_xyz v_tensor;
         stringstream ss;
 
         while( !fs.eof() ) // Lines in input
@@ -282,6 +108,7 @@ public:
             if(  p_bool.is_key_valid(key) )    {                    p_int[key.substr(0, key.find(':'))] = true; }
             if(  p_int.is_key_valid(key) )     { ss >> value_int;   p_int[key.substr(0, key.find(':'))] = value_int; }
             if(  p_float.is_key_valid(key) )   { ss >> value_float; p_float[key.substr(0, key.find(':'))] = value_float; }
+            if(  p_tensor.is_key_valid(key) )  { ss >> v_tensor;    p_tensor[key.substr(0, key.find(':'))] = v_tensor; }
             if(  p_vec_int.is_key_valid(key) ) { p_vec_int[key.substr(0, key.find(':'))] = load_int_array(ss); }
 
             // Load io
@@ -291,18 +118,11 @@ public:
             // Load particle atom counts
             if( key.compare("Trans_membrane_domain:") == 0 ) { ss >> tmd.size; ss >> tmd.proximal_n; ss >> tmd.distal_n; }
 
-            // from gen_membrane
-            if( key.compare("Operation_type:") == 0 )      { ss >> op; }
-            if( key.compare("Trim:") == 0 )                { ss >> trim; }
-            if( key.compare("Multiple:") == 0 )            { ss >> multiple; }
-
             // Load particle properties: aspect ration, patches
             if( key.compare("Patch:") == 0 )             { Atom a; ss >> a; patches.push_back(a); }
 
             if( key.compare("Patch_1:") == 0 )           { ss >> patch_1; }
             if( key.compare("Patch_2:") == 0 )           { ss >> patch_2; }
-            if( key.compare("Impact_vector:") == 0 )   { ss >> ivx.x >> ivx.y >> ivx.z; }
-            if( key.compare("Position_shift:") == 0 )    { ss >> com_pos.x >> com_pos.y >> com_pos.z; }
 
             // Load system
             if( key.compare("Lammps_offset:") == 0 )     { ss >> offset; }
@@ -319,6 +139,11 @@ public:
 
             // Load stuff for nanoparticle orientation and position
             if( key.compare("Align:") == 0 )  			{ ss >> mtag_1 >> mtag_2; }
+
+            // from gen_membrane - deprecated
+            if( key.compare("Operation_type:") == 0 )      { ss >> op; }
+            if( key.compare("Trim:") == 0 )                { ss >> trim; }
+            if( key.compare("Multiple:") == 0 )            { ss >> multiple; }
         }
         fs.close();
 
@@ -345,31 +170,15 @@ public:
     {
         stringstream ss;
 
-        for (const auto& [key, value] : param) {
-            ss << key << ": " << value << '\n';
-        }
-        for (const auto& [key, value] : p_bool) {
-            ss << key << ": true" << '\n';
-        }
-        for (const auto& [key, value] : p_int) {
-            ss << key << ": " << value << '\n';
-        }
-        for (const auto& [key, value] : p_float) {
-            ss << key << ": " << value << '\n';
-        }
-        for (const auto& [key, values] : p_vec_int) {
-            ss << key << ": ";
-            for(const auto& val : values)
-            {
-                ss << val << ' ';
-            }
-            ss << '\n';
-        }
-
+        for (const auto& [key, value] : param)      { ss << key << ": " << value << '\n'; }
+        for (const auto& [key, value] : p_bool)     { ss << key << ": true" << '\n'; }
+        for (const auto& [key, value] : p_int)      { ss << key << ": " << value << '\n'; }
+        for (const auto& [key, value] : p_float)    { ss << key << ": " << value << '\n'; }
+        for (const auto& [key, value] : p_tensor)   { ss << key << ": " << value << '\n'; }
+        for (const auto& [key, values] : p_vec_int) { ss << key << ": " << values << '\n'; }
 
         // Loading a file
         ss << "Input_type: " << in << endl;
-
         ss << "Output_type: " << out << endl;
 
         if( param.contains("Particle_type") )
@@ -383,7 +192,6 @@ public:
             ss << "Box: ( " << sim_box << " )" << endl;
 
         ss << "Offset: " << offset << endl;
-        ss << "Position: (" << com_pos.x << ", " << com_pos.y << ", " << com_pos.z << ")" << endl;
 
         if(!population.empty())
             ss << "Populate: " << population << endl;
@@ -424,14 +232,10 @@ public:
         mtag_1=-1;
         mtag_2=-1;
 
-        com_pos=Tensor_xyz(0.0, 0.0, 0.0);
-
         patches.clear();
 
         patch_1=Atom(0,0,0,0);
         patch_2=Atom(0,0,0,0);
-
-        ivx=Tensor_xyz(0.0, 0.0, 0.0);
 
         population.clear();
         bparam.clear();

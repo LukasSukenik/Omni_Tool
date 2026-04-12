@@ -179,9 +179,9 @@ public:
             Atom next;
             bool clash=true;
             while(clash) {
-                double x = ((0.20+ran()/10*6)*data.in.sim_box.xhi - data.in.com_pos.x) / data.in.p_float["Scale"];
-                double y = ( (0.20+ran()/4) *data.in.sim_box.yhi - data.in.com_pos.y) / data.in.p_float["Scale"];
-                double z = ((0.20+ran()/10*6)*data.in.sim_box.zhi - data.in.com_pos.z) / data.in.p_float["Scale"];
+                double x = ((0.20+ran()/10*6)*data.in.sim_box.xhi - data.in.p_tensor["Position_shift"].x) / data.in.p_float["Scale"];
+                double y = ( (0.20+ran()/4) *data.in.sim_box.yhi - data.in.p_tensor["Position_shift"].y) / data.in.p_float["Scale"];
+                double z = ((0.20+ran()/10*6)*data.in.sim_box.zhi - data.in.p_tensor["Position_shift"].z) / data.in.p_float["Scale"];
 
                 next = Atom(x,y,z,2);
 
@@ -226,6 +226,7 @@ public:
 private:
     void validate_inputs( Data& data )
     {
+        data.in.p_tensor.validate_keyword("Position_shift", "0 0 0");
         data.in.p_float.validate_keyword("Scale", "1.0");
         data.in.p_float.validate_keyword("c", "0.5");
     }

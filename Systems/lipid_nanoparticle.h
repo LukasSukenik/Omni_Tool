@@ -141,7 +141,6 @@ private:
     ///
     /// Print Last Frame
     ///
-
     string help_print_last_frame_as_gro()
     {
         stringstream ss;
@@ -166,7 +165,6 @@ private:
     ///
     /// Calc Water Content
     ///
-
     string help_calc_water_content()
     {
         stringstream ss;

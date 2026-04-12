@@ -39,7 +39,7 @@ public:
         validate_inputs(data);
 
         vector<Atom> ligand;
-        int nano_start = beads.size();
+        //int nano_start = beads.size();
         data.in.p_float["c"] = 1.0;
 
         fibonacci_sphere( beads, data.in.p_int["Number_of_beads"], typeNano);
@@ -52,7 +52,7 @@ public:
 
         beads.erase(beads.begin()+data.in.p_int["Number_of_beads"], beads.end()); // erase second fib sphere
 
-        int nano_end = beads.size();
+        //int nano_end = beads.size();
         for(auto& atom : ligand)
         {
             atom.mol_tag = data.in.p_int["Mol_tag"];
@@ -232,7 +232,7 @@ public:
         }
 
         for(int i=nano_start; i<nano_end; ++i) {
-            beads[i] = ((beads[i]*data.in.p_float["Scale"]) + data.in.com_pos);
+            beads[i] = ((beads[i]*data.in.p_float["Scale"]) + data.in.p_tensor["Position_shift"]);
             beads[i].mol_tag = 2;
         }
 
@@ -258,6 +258,7 @@ public:
 private:
     void validate_inputs( Data& data )
     {
+        data.in.p_tensor.validate_keyword("Position_shift", "0 0 0");
         data.in.p_float.validate_keyword("Scale", "1.0");
         data.in.p_int.validate_keyword("Number_of_beads", "7");
     }

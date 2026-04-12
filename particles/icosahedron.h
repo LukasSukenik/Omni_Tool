@@ -44,15 +44,11 @@ public:
     Icosahedron() : Particle("icosahedron"), surface(edge, beads) {}
     Icosahedron(string str) : Particle(str), surface(edge, beads) {}
 
-
-
     IcoVertice edge;
     vector<int> types;
     int molTag_offset;
     int ligandModulo;
     int offset;
-
-
 
     string help()
     {
@@ -69,14 +65,14 @@ public:
         offset = data.get_bead_count();
         this->types = data.in.ff.types;
         ligandModulo = data.in.p_int["Number_of_ligands"];
-
-        this->icoFrame( data.in.p_int["Number_of_beads"], data.in.p_float["Scale"], data.in.com_pos); // generate icosahedron
+        this->icoFrame( data.in.p_int["Number_of_beads"], data.in.p_float["Scale"], data.in.p_tensor["Position_shift"]); // generate icosahedron
         setUnitSize();
     }
 
 protected:
     void validate_inputs( Data& data )
     {
+        data.in.p_tensor.validate_keyword("Position_shift", "0 0 0");
         data.in.p_float.validate_keyword("Scale", "1.0");
         data.in.p_int.validate_keyword("Number_of_ligands", "3");
         data.in.p_int.validate_keyword("Number_of_beads", "7");
