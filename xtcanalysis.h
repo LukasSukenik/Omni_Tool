@@ -14,71 +14,50 @@
 
 using namespace std;
 
-class Trajectory : public vector< vector<Tensor_xyz> >
+class Trajectory
 {
 private:
     char fileName[64];
     int natoms;
 
     int step;
-    int release_step = numeric_limits<int>::max();
     float time;
     matrix temp_box;
     float prec;
-
-    int first_step;
+    int first_step=-1;
     int status=exdrOK;
 
+    int release_step = numeric_limits<int>::max();
+
 public:   
+    vector< vector<Tensor_xyz> > conf_traj;
+    vector<float> time_traj;
+    vector<int > step_traj;
     vector<Tensor_xyz> box_traj;
 
     Trajectory(){}
-    Trajectory(string inName, int start=-1, int stop=-1)
+    Trajectory(string inName, int start=-1, int stop=-1, int modulo=1)
     {
-        load(inName, start, stop);
+        load(inName, start, stop, modulo);
     }
 
-    void load(string inName, int start=-1, int stop=-1)
+    void load(string inName, int start=-1, int stop=-1, int modulo=1)
     {
-        Tensor_xyz pos;
-
         string_to_char(inName); // inName -> fileName
-
         status = read_xtc_natoms(fileName, &natoms);
         if (status == exdrOK)
         {
             XDRFILE* xfp = xdrfile_open(fileName, "r");
             if (xfp != NULL)
             {
-                rvec k[natoms];
-
-                status = read_xtc(xfp, natoms, &first_step, &time, temp_box, k, &prec);
-
-                box_traj.push_back(Tensor_xyz(temp_box[0][0], temp_box[1][1], temp_box[2][2]));
-                this->push_back( vector<Tensor_xyz>() );
-                for(int i=0; i<natoms; ++i)
-                {
-                    this->back().resize(natoms);
-                    this->back()[i].x = k[i][0];
-                    this->back()[i].y = k[i][1];
-                    this->back()[i].z = k[i][2];
-                }
-
+                rvec conf[natoms];
                 while(status == exdrOK && ( stop == -1 || step < first_step+stop) ) // Load frame
                 {
-                    status = read_xtc(xfp, natoms, &step, &time, temp_box, k, &prec);
+                    status = read_xtc(xfp, natoms, &step, &time, temp_box, conf, &prec);
 
                     if(step > start)// add frame
                     {
-                        box_traj.push_back(Tensor_xyz(temp_box[0][0], temp_box[1][1], temp_box[2][2]));
-                        this->push_back( vector<Tensor_xyz>() );
-                        for(int i=0; i<natoms; ++i)
-                        {
-                            this->back().resize(natoms);
-                            this->back()[i].x = k[i][0];
-                            this->back()[i].y = k[i][1];
-                            this->back()[i].z = k[i][2];
-                        }
+                        save(conf);
                     }
                 }
                 xdrfile_close(xfp);
@@ -102,12 +81,35 @@ public:
         }
     }
 
+    vector<Tensor_xyz>& operator[](std::size_t index)
+    {
+            return conf_traj[index];
+    }
+
+    const vector<Tensor_xyz>& operator[](std::size_t index) const
+    {
+            return conf_traj[index];
+    }
+
     inline size_t frame_count()
     {
-        return size();
+        return conf_traj.size();
     }
 
 private:
+
+
+    void save(rvec *conf)
+    {
+        box_traj.push_back(Tensor_xyz(temp_box[0][0], temp_box[1][1], temp_box[2][2])); // box
+        conf_traj.push_back( vector<Tensor_xyz>(natoms) );
+        for(int i=0; i<natoms; ++i) // conf
+        {
+            conf_traj.back()[i].x = conf[i][0];
+            conf_traj.back()[i].y = conf[i][1];
+            conf_traj.back()[i].z = conf[i][2];
+        }
+    }
 
     void string_to_char(string inName)
     {

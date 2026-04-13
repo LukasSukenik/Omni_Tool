@@ -304,7 +304,7 @@ private:
 
         int count_upper=0;
         int count_lower=0;
-        for(unsigned int i=0; i<traj.size(); ++i)
+        for(size_t i=0; i<traj.frame_count(); ++i)
         {
             vector<Tensor_xyz>& frame = traj[i];
             if( vesicle.update_positions(frame) )

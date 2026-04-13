@@ -56,8 +56,9 @@ private:
         ss << "Atom_type: 2 3 5 6" << endl;
         ss << "Cluster_cutoff: 2.0" << endl;
         ss << "ID: 1" << endl;
-        ss << "Optionally use keyword 'Only_last_frame:'" << endl;
-        ss << "Optionally use keyword 'Trajectory_step: 10'" << endl;
+        ss << "Optionally use keyword 'Only_last_frame:' , i.e. use only last trajectory frame" << endl;
+        ss << "Optionally use keyword 'Trajectory_frame: 10' , i.e. use only 10th frame" << endl;
+        ss << "Optionally use keyword 'Trajectory_step: 10' , i.e. only every 10th step of trajectory" << endl;
 
         return ss.str();
     }
@@ -71,6 +72,66 @@ private:
     }
 
     void cluster_analysis(Data& data)
+    {
+        validate_cluster_analysis_inputs(data);
+        cerr << "Lipid_Nanoparticle::cluster_analysis" << endl;
+
+        int sys_id = data.id_map[ data.in.p_int["ID"] ];
+        Atoms& topo = data.coll_beads[sys_id];
+        Clusters clusters(topo, data.in.p_vec_int["Atom_type"]); // list of particle indexes
+        Trajectory traj(data.in.param["Trajectory_file"]);
+
+        size_t step = (data.in.p_int.contains("Trajectory_step")) ? data.in.p_int["Trajectory_step"] : 1;
+        size_t start = (data.in.p_bool.contains("Only_last_frame")) ? traj.frame_count()-1 : 0;
+
+        for(size_t i=start; i<traj.frame_count(); i+=step)
+        {
+            topo.set_frame(traj[i]);
+            clusters.analyze(topo, data.in.sim_box, data.in.p_float["Cluster_cutoff"]);
+            cout << i << " " << clusters.size() << " ";
+            for(Cluster& cluster : clusters)
+            {
+                cout << cluster.size()/3 << " "; // dividing by 3 to get the lipid count, assumes we analyze tails only, deserno 4 bead types model
+            }
+            cout << endl;
+            clusters.clear();
+        }
+    }
+
+
+
+
+    ///
+    /// Cluster Radial Distribution Function
+    ///
+    string help_cluster_rdf()
+    {
+        stringstream ss;
+
+        ss << "*********************************************************" << endl;
+        ss << "System_type: Lipid_Nanoparticle" << endl;
+        ss << "System_execute: Cluster_Analysis" << endl;
+        ss << "Input_type: lammps_full" << endl;
+        ss << "Load_file: data.start" << endl;
+        ss << "Trajectory_file: traj_1.xtc" << endl;
+        ss << "Atom_type: 2 3 5 6" << endl;
+        ss << "Cluster_cutoff: 2.0" << endl;
+        ss << "ID: 1" << endl;
+        ss << "Optionally use keyword 'Only_last_frame:'" << endl;
+        ss << "Optionally use keyword 'Trajectory_step: 10'" << endl;
+
+        return ss.str();
+    }
+
+    void validate_cluster_rdf_inputs( Data& data )
+    {
+        data.in.param.validate_keyword("Load_file", "data.start");
+        data.in.param.validate_keyword("Trajectory_file", "traj_1.xtc");
+        data.in.p_vec_int.validate_keyword("Atom_type", "2 3 5 6");
+        data.in.p_float.validate_keyword("Cluster_cutoff", "2.0");
+    }
+
+    void cluster_rdf(Data& data)
     {
         validate_cluster_analysis_inputs(data);
         cerr << "Lipid_Nanoparticle::cluster_analysis" << endl;
@@ -204,7 +265,7 @@ private:
 
         int sys_id = data.id_map[ data.in.p_int["ID"] ];
         Atoms& last_frame = data.coll_beads[sys_id];
-        last_frame.set_frame(traj[ traj.size()-1 ]);
+        last_frame.set_frame(traj[ traj.frame_count()-1 ]);
         cerr << "Trajectory loaded" << endl;
 
         double step_size = 1.0;
