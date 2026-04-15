@@ -109,17 +109,6 @@ public:
     Clusters_Cell_List(){}
     Clusters_Cell_List(Atoms& topo, vector<int> types) : types(types) {}
 
-    Atoms reduce_topo(Atoms& topo)
-    {
-        Atoms reduced_topo;
-        reduced_topo.reserve(topo.size());
-        /*for(size_t i=0; i<topo.size(); ++i)
-        {
-            reduced_topo.push_back(topo[i]);
-        }*/
-        return reduced_topo;
-    }
-
     int analyze(Atoms& topo, Simulation_Box& sim_box, double cutoff)
     {
         In_Cluster in_cluster(topo, types); // set all to true, then for types vector set to false

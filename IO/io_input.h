@@ -42,7 +42,7 @@ public:
     Param_Dictionary<string> param = Param_Dictionary<string>(keys + files);
 
     unordered_set<string> counts1 = {"Number_of_beads:", "Number_of_ligands:", "Num_lipids:", "Number_of_receptors:", "Subdiv_of_beads:", "Subdiv_of_ligands:"};
-    unordered_set<string> counts2 = {"Averaged_frame_count:", "Trajectory_step:"};
+    unordered_set<string> counts2 = {"Averaged_frame_count:"};
     unordered_set<string> types = {"Mol_tag:", "Chain_type:"};
     unordered_set<string> other = {"ID:", "Seed:"};
     Param_Dictionary<int> p_int = Param_Dictionary<int>(counts1 + counts2 + types + other);
@@ -50,7 +50,8 @@ public:
     Param_Dictionary<bool> p_bool = Param_Dictionary<bool>({"Fit:", "Center:", "Only_last_frame:"});
     Param_Dictionary<Tensor_xyz> p_tensor = Param_Dictionary<Tensor_xyz>({"Position_shift:", "Impact_vector:"});
     Param_Dictionary<double> p_float = Param_Dictionary<double>({"Cluster_cutoff:", "Radius:", "Scale:", "b:", "c:", "Cell_size:", "Beads_per_area:", "Ligands_per_area:"});
-    Param_Dictionary<vector<int>> p_vec_int = Param_Dictionary<vector<int>>({"Atom_type:", "Atom_mass:", "Histo_settings:", "Histo_spherical_settings:"});
+
+    Param_Dictionary<vector<int>> p_vec_int = Param_Dictionary<vector<int>>({"Atom_type:", "Atom_mass:", "Histo_settings:", "Histo_spherical_settings:", "Trajectory_settings:"});
 
     IO out; /// Output type - none, pdb, lammps_full, xyz
     IO in;  /// Input type  - none, pdb, lammps_full

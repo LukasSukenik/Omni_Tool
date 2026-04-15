@@ -1,12 +1,16 @@
 #ifndef LIPID_NANOPARTICLE_H
 #define LIPID_NANOPARTICLE_H
 
+#include <algorithm>
+
 #include "system_base.h"
 #include "atom.h"
 #include "xtcanalysis.h"
 #include "histogram.h"
 #include "cluster_analysis.h"
 #include "rdf.h"
+
+using namespace std;
 
 
 class Lipid_Nanoparticle : public System_Base
@@ -22,10 +26,14 @@ public:
     string help()
     {
         stringstream ss;
+
         ss << help_calc_water_content() << endl;
         ss << help_print_last_frame_as_gro() << endl;
         ss << help_analyze_phase() << endl;
         ss << help_cluster_analysis() << endl;
+        ss << help_cluster_rdf() << endl;
+        ss << help_optional() << endl;
+
         return ss.str();
     }
 
@@ -36,9 +44,20 @@ public:
         if(data.in.param["System_execute"].compare("print_last_frame_as_gro") == 0) { print_last(data); }
         if(data.in.param["System_execute"].compare("analyze_phase") == 0) { analyze_phase(data); }
         if(data.in.param["System_execute"].compare("Cluster_Analysis") == 0) { cluster_analysis(data); }
+        if(data.in.param["System_execute"].compare("Cluster_RDF") == 0) { cluster_rdf(data); }
     }
 
 private:
+
+    string help_optional()
+    {
+        stringstream ss;
+
+        ss << "Optionally use keyword 'Only_last_frame:' , i.e. use only last trajectory frame" << endl;
+        ss << "Optionally use keyword 'Trajectory_settings: start step stop' , analyze custom frames, like seq" << endl;
+
+        return ss.str();
+    }
 
     ///
     /// Cluster analysis
@@ -56,9 +75,6 @@ private:
         ss << "Atom_type: 2 3 5 6" << endl;
         ss << "Cluster_cutoff: 2.0" << endl;
         ss << "ID: 1" << endl;
-        ss << "Optionally use keyword 'Only_last_frame:' , i.e. use only last trajectory frame" << endl;
-        ss << "Optionally use keyword 'Trajectory_frame: 10' , i.e. use only 10th frame" << endl;
-        ss << "Optionally use keyword 'Trajectory_step: 10' , i.e. only every 10th step of trajectory" << endl;
 
         return ss.str();
     }
@@ -73,22 +89,18 @@ private:
 
     void cluster_analysis(Data& data)
     {
-        validate_cluster_analysis_inputs(data);
         cerr << "Lipid_Nanoparticle::cluster_analysis" << endl;
+        validate_cluster_analysis_inputs(data);
 
-        int sys_id = data.id_map[ data.in.p_int["ID"] ];
-        Atoms& topo = data.coll_beads[sys_id];
+        Atoms& topo = data.coll_beads[  data.id_map[ data.in.p_int["ID"] ]  ];
         Clusters clusters(topo, data.in.p_vec_int["Atom_type"]); // list of particle indexes
-        Trajectory traj(data.in.param["Trajectory_file"]);
+        Trajectory traj(data);
 
-        size_t step = (data.in.p_int.contains("Trajectory_step")) ? data.in.p_int["Trajectory_step"] : 1;
-        size_t start = (data.in.p_bool.contains("Only_last_frame")) ? traj.frame_count()-1 : 0;
-
-        for(size_t i=start; i<traj.frame_count(); i+=step)
+        for(size_t i=0; i<traj.frame_count(); ++i)
         {
             topo.set_frame(traj[i]);
             clusters.analyze(topo, data.in.sim_box, data.in.p_float["Cluster_cutoff"]);
-            cout << i << " " << clusters.size() << " ";
+            cout << i << " " << traj.get_step(i) << " " << clusters.size() << " ";
             for(Cluster& cluster : clusters)
             {
                 cout << cluster.size()/3 << " "; // dividing by 3 to get the lipid count, assumes we analyze tails only, deserno 4 bead types model
@@ -117,8 +129,6 @@ private:
         ss << "Atom_type: 2 3 5 6" << endl;
         ss << "Cluster_cutoff: 2.0" << endl;
         ss << "ID: 1" << endl;
-        ss << "Optionally use keyword 'Only_last_frame:'" << endl;
-        ss << "Optionally use keyword 'Trajectory_step: 10'" << endl;
 
         return ss.str();
     }
@@ -133,31 +143,79 @@ private:
 
     void cluster_rdf(Data& data)
     {
-        validate_cluster_analysis_inputs(data);
-        cerr << "Lipid_Nanoparticle::cluster_analysis" << endl;
+        cerr << "Lipid_Nanoparticle::cluster_rdf" << endl;
+        validate_cluster_rdf_inputs(data);
 
-        int sys_id = data.id_map[ data.in.p_int["ID"] ];
-        Atoms& topo = data.coll_beads[sys_id];
-        Atoms clust_topo;
-        clust_topo.reserve(topo.size());
+        Atoms& topo = data.coll_beads[  data.id_map[ data.in.p_int["ID"] ]  ];
         Clusters clusters(topo, data.in.p_vec_int["Atom_type"]); // list of particle indexes
-        Trajectory traj(data.in.param["Trajectory_file"]);
+        Trajectory traj(data);
+        Atoms clust_topo;
+        Atoms mol_1;
+        Atoms mol_2;
 
-        size_t step = (data.in.p_int.contains("Trajectory_step")) ? data.in.p_int["Trajectory_step"] : 1;
-        size_t start = (data.in.p_bool.contains("Only_last_frame")) ? traj.frame_count()-1 : 0;
-        for(size_t i=start; i<traj.frame_count(); i+=step)
+        for(size_t i=0; i<traj.frame_count(); ++i)
         {
             topo.set_frame(traj[i]);
             clusters.analyze(topo, data.in.sim_box, data.in.p_float["Cluster_cutoff"]);
-            cout << i << " " << clusters.size() << " ";
+
+            cout << i << " " << traj.get_step(i) << " " << clusters.size() << " ";
+
             for(Cluster& cluster : clusters)
             {
                 cout << cluster.size()/3 << " "; // dividing by 3 to get the lipid count, assumes we analyze tails only, deserno 4 bead types model
-                clust_topo.set_cluster(topo, cluster);
-                rdf(clust_topo, 0.0, 50.0, 200, "clust_rdf");
+                restore_full_lipids(topo, cluster, clust_topo);
+                mol_1 = clust_topo.get_molecule(1);
+                mol_2 = clust_topo.get_molecule(2);
+
+                rdf(clust_topo, 0.0, 60.0, 100, "clust_rdf_all");
+                rdf(mol_1, 0.0, 60.0, 100, "clust_rdf_ionizable");
+                rdf(mol_2, 0.0, 60.0, 100, "clust_rdf_helper");
             }
             cout << endl;
             clusters.clear();
+        }
+    }
+
+    void restore_full_lipids(Atoms& topo, vector<int> cluster, Atoms& clust_topo)
+    {
+        clust_topo.resize(cluster.size() * 4 / 3, Atom( Tensor_xyz(0.0,0.0,0.0), 0) );
+
+        sort(cluster.begin(), cluster.end());
+
+        size_t h_c = 0; // lipid head count
+        for(size_t i=0; i<cluster.size(); ++i) // loop over tails in cluster
+        {
+            add_lipid_head(topo, clust_topo, i, h_c, cluster[i]-1);
+            add_lipid_middle_bead(topo, clust_topo, i, h_c, cluster[i]);
+            add_lipid_last_bead(topo, clust_topo, i, h_c, cluster[i]);
+        }
+    }
+
+    void add_lipid_head(Atoms& topo, Atoms& clust_topo, size_t& i, size_t& h_c, int p_topo_ID)
+    {
+        if( (topo[p_topo_ID].type == 1 || topo[p_topo_ID].type == 4) && p_topo_ID >= 0 && i+h_c < clust_topo.size())
+        {
+            //cerr << "Head [" << i+h_c << "] == [" << p_topo_ID << "] type 1|4==" << topo[ p_topo_ID ].type << endl;
+            clust_topo[i+h_c] = topo[ p_topo_ID ]; // write head
+            h_c++;
+        }
+    }
+
+    void add_lipid_middle_bead(Atoms& topo, Atoms& clust_topo, size_t& i, size_t& h_c, int p_topo_ID)
+    {
+        if( (topo[p_topo_ID].type == 2 || topo[p_topo_ID].type == 5) && i+h_c < clust_topo.size())
+        {
+            //cerr << "Tail-middle [" << i+h_c << "] == [" << p_topo_ID << "] type2|5==" << topo[ p_topo_ID ].type << endl;
+            clust_topo[i+h_c] = topo[ p_topo_ID ]; // write tail-middle
+        }
+    }
+
+    void add_lipid_last_bead(Atoms& topo, Atoms& clust_topo, size_t& i, size_t& h_c, int p_topo_ID)
+    {
+        if( (topo[p_topo_ID].type == 3 || topo[p_topo_ID].type == 6) && i+h_c < clust_topo.size() )
+        {
+            //cerr << "Tail-Last [" << i+h_c << "] == [" << p_topo_ID << "] type3|6==" << topo[ p_topo_ID ].type << endl;
+            clust_topo[i+h_c] = topo[ p_topo_ID ]; // write tail-end
         }
     }
 
@@ -200,10 +258,10 @@ private:
         int sys_id = data.id_map[ data.in.p_int["ID"] ];
         Atoms& topo = data.coll_beads[sys_id];
 
-        Trajectory traj(data.in.param["Trajectory_file"]);
+        Trajectory traj(data);
         string phase = "";
 
-        phase.append( analyze_dirs(data, topo, traj, 10) ); // Dirs analysis identifies planar membrane
+        phase.append( analyze_dirs(data, topo, traj, data.in.p_int["Averaged_frame_count"]) ); // Dirs analysis identifies planar membrane
         cout << phase << endl;
     }
 

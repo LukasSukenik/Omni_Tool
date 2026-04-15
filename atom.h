@@ -217,15 +217,6 @@ public:
         }
     }
 
-    void set_cluster(Atoms& topo, vector<int>& cluster)
-    {
-        this->resize(cluster.size());
-        for(size_t i=0; i<cluster.size(); ++i)
-        {
-            (*this)[i] = topo[ cluster[i] ];
-        }
-    }
-
     //
     //
     // IO methods
