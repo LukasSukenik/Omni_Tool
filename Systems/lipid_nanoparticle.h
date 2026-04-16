@@ -42,9 +42,11 @@ public:
         data.in.param.validate_keyword("System_execute", "calc_water_content | print_last_frame_as_gro | analyze_phase | Cluster_Analysis");
         if(data.in.param["System_execute"].compare("calc_water_content") == 0) { calc_water_content(data); }
         if(data.in.param["System_execute"].compare("print_last_frame_as_gro") == 0) { print_last(data); }
+
         if(data.in.param["System_execute"].compare("analyze_phase") == 0) { analyze_phase(data); }
         if(data.in.param["System_execute"].compare("Cluster_Analysis") == 0) { cluster_analysis(data); }
         if(data.in.param["System_execute"].compare("Cluster_RDF") == 0) { cluster_rdf(data); }
+        if(data.in.param["System_execute"].compare("Cluster_Surf") == 0) { cluster_surf(data); }
     }
 
 private:
@@ -110,9 +112,6 @@ private:
         }
     }
 
-
-
-
     ///
     /// Cluster Radial Distribution Function
     ///
@@ -122,12 +121,13 @@ private:
 
         ss << "*********************************************************" << endl;
         ss << "System_type: Lipid_Nanoparticle" << endl;
-        ss << "System_execute: Cluster_Analysis" << endl;
+        ss << "System_execute: Cluster_RDF" << endl;
         ss << "Input_type: lammps_full" << endl;
         ss << "Load_file: data.start" << endl;
         ss << "Trajectory_file: traj_1.xtc" << endl;
         ss << "Atom_type: 2 3 5 6" << endl;
         ss << "Cluster_cutoff: 2.0" << endl;
+        ss << "Only_last_frame: true" << endl;
         ss << "ID: 1" << endl;
 
         return ss.str();
@@ -164,59 +164,58 @@ private:
             {
                 cout << cluster.size()/3 << " "; // dividing by 3 to get the lipid count, assumes we analyze tails only, deserno 4 bead types model
                 restore_full_lipids(topo, cluster, clust_topo);
+                // TODO move CM to 0.0,0.0,0.0, PBC: make cluster whole
                 mol_1 = clust_topo.get_molecule(1);
                 mol_2 = clust_topo.get_molecule(2);
 
                 rdf(clust_topo, 0.0, 60.0, 100, "clust_rdf_all");
                 rdf(mol_1, 0.0, 60.0, 100, "clust_rdf_ionizable");
                 rdf(mol_2, 0.0, 60.0, 100, "clust_rdf_helper");
+                // gnuplot -e "plot 'clust_rdf_all' u 1:2 w l t 'All', 'clust_rdf_ionizable' u 1:2 w l t 'Ionizable', 'clust_rdf_helper' u 1:2 w l t 'Helper'; pause -1"
             }
             cout << endl;
             clusters.clear();
         }
     }
 
-    void restore_full_lipids(Atoms& topo, vector<int> cluster, Atoms& clust_topo)
+    ///
+    /// Cluster Surface analysis
+    /// -> % of Ionizable vs Helper lipids
+    /// -> Mixed or Raft
+    ///
+    string help_cluster_surf()
     {
-        clust_topo.resize(cluster.size() * 4 / 3, Atom( Tensor_xyz(0.0,0.0,0.0), 0) );
+        stringstream ss;
 
-        sort(cluster.begin(), cluster.end());
+        ss << "*********************************************************" << endl;
+        ss << "System_type: Lipid_Nanoparticle" << endl;
+        ss << "System_execute: Cluster_Analysis" << endl;
+        ss << "Input_type: lammps_full" << endl;
+        ss << "Load_file: data.start" << endl;
+        ss << "Trajectory_file: traj_1.xtc" << endl;
+        ss << "Atom_type: 2 3 5 6" << endl;
+        ss << "Cluster_cutoff: 2.0" << endl;
+        ss << "ID: 1" << endl;
 
-        size_t h_c = 0; // lipid head count
-        for(size_t i=0; i<cluster.size(); ++i) // loop over tails in cluster
-        {
-            add_lipid_head(topo, clust_topo, i, h_c, cluster[i]-1);
-            add_lipid_middle_bead(topo, clust_topo, i, h_c, cluster[i]);
-            add_lipid_last_bead(topo, clust_topo, i, h_c, cluster[i]);
-        }
+        return ss.str();
     }
 
-    void add_lipid_head(Atoms& topo, Atoms& clust_topo, size_t& i, size_t& h_c, int p_topo_ID)
+    void validate_cluster_surf_inputs( Data& data )
     {
-        if( (topo[p_topo_ID].type == 1 || topo[p_topo_ID].type == 4) && p_topo_ID >= 0 && i+h_c < clust_topo.size())
-        {
-            //cerr << "Head [" << i+h_c << "] == [" << p_topo_ID << "] type 1|4==" << topo[ p_topo_ID ].type << endl;
-            clust_topo[i+h_c] = topo[ p_topo_ID ]; // write head
-            h_c++;
-        }
+        data.in.param.validate_keyword("Load_file", "data.start");
+        data.in.param.validate_keyword("Trajectory_file", "traj_1.xtc");
+        data.in.p_vec_int.validate_keyword("Atom_type", "2 3 5 6");
+        data.in.p_float.validate_keyword("Cluster_cutoff", "2.0");
     }
 
-    void add_lipid_middle_bead(Atoms& topo, Atoms& clust_topo, size_t& i, size_t& h_c, int p_topo_ID)
+    void cluster_surf(Data& data)
     {
-        if( (topo[p_topo_ID].type == 2 || topo[p_topo_ID].type == 5) && i+h_c < clust_topo.size())
-        {
-            //cerr << "Tail-middle [" << i+h_c << "] == [" << p_topo_ID << "] type2|5==" << topo[ p_topo_ID ].type << endl;
-            clust_topo[i+h_c] = topo[ p_topo_ID ]; // write tail-middle
-        }
-    }
+        cerr << "Lipid_Nanoparticle::cluster_rdf" << endl;
+        validate_cluster_surf_inputs(data);
 
-    void add_lipid_last_bead(Atoms& topo, Atoms& clust_topo, size_t& i, size_t& h_c, int p_topo_ID)
-    {
-        if( (topo[p_topo_ID].type == 3 || topo[p_topo_ID].type == 6) && i+h_c < clust_topo.size() )
-        {
-            //cerr << "Tail-Last [" << i+h_c << "] == [" << p_topo_ID << "] type3|6==" << topo[ p_topo_ID ].type << endl;
-            clust_topo[i+h_c] = topo[ p_topo_ID ]; // write tail-end
-        }
+        Atoms& topo = data.coll_beads[  data.id_map[ data.in.p_int["ID"] ]  ];
+        Clusters clusters(topo, data.in.p_vec_int["Atom_type"]); // list of particle indexes
+        Trajectory traj(data);
     }
 
     ///
@@ -368,6 +367,48 @@ private:
     //
     // Other
     //
+    void restore_full_lipids(Atoms& topo, vector<int> cluster, Atoms& clust_topo)
+    {
+        clust_topo.resize(cluster.size() * 4 / 3, Atom( Tensor_xyz(0.0,0.0,0.0), 0) );
+
+        sort(cluster.begin(), cluster.end());
+
+        size_t h_c = 0; // lipid head count
+        for(size_t i=0; i<cluster.size(); ++i) // loop over tails in cluster
+        {
+            add_lipid_head(topo, clust_topo, i, h_c, cluster[i]-1);
+            add_lipid_middle_bead(topo, clust_topo, i, h_c, cluster[i]);
+            add_lipid_last_bead(topo, clust_topo, i, h_c, cluster[i]);
+        }
+    }
+
+    void add_lipid_head(Atoms& topo, Atoms& clust_topo, size_t& i, size_t& h_c, int p_topo_ID)
+    {
+        if( (topo[p_topo_ID].type == 1 || topo[p_topo_ID].type == 4) && p_topo_ID >= 0 && i+h_c < clust_topo.size())
+        {
+            //cerr << "Head [" << i+h_c << "] == [" << p_topo_ID << "] type 1|4==" << topo[ p_topo_ID ].type << endl;
+            clust_topo[i+h_c] = topo[ p_topo_ID ]; // write head
+            h_c++;
+        }
+    }
+
+    void add_lipid_middle_bead(Atoms& topo, Atoms& clust_topo, size_t& i, size_t& h_c, int p_topo_ID)
+    {
+        if( (topo[p_topo_ID].type == 2 || topo[p_topo_ID].type == 5) && i+h_c < clust_topo.size())
+        {
+            //cerr << "Tail-middle [" << i+h_c << "] == [" << p_topo_ID << "] type2|5==" << topo[ p_topo_ID ].type << endl;
+            clust_topo[i+h_c] = topo[ p_topo_ID ]; // write tail-middle
+        }
+    }
+
+    void add_lipid_last_bead(Atoms& topo, Atoms& clust_topo, size_t& i, size_t& h_c, int p_topo_ID)
+    {
+        if( (topo[p_topo_ID].type == 3 || topo[p_topo_ID].type == 6) && i+h_c < clust_topo.size() )
+        {
+            //cerr << "Tail-Last [" << i+h_c << "] == [" << p_topo_ID << "] type3|6==" << topo[ p_topo_ID ].type << endl;
+            clust_topo[i+h_c] = topo[ p_topo_ID ]; // write tail-end
+        }
+    }
 
     void get_dirs(Data& data, Atoms& frame, vector<Tensor_xyz>& dirs)
     {
