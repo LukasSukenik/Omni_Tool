@@ -168,9 +168,9 @@ private:
                 mol_1 = clust_topo.get_molecule(1);
                 mol_2 = clust_topo.get_molecule(2);
 
-                rdf(clust_topo, 0.0, 60.0, 100, "clust_rdf_all");
-                rdf(mol_1, 0.0, 60.0, 100, "clust_rdf_ionizable");
-                rdf(mol_2, 0.0, 60.0, 100, "clust_rdf_helper");
+                rdf(clust_topo, 0.0, 60.0, 30, "clust_rdf_all");
+                rdf(mol_1, 0.0, 60.0, 30, "clust_rdf_ionizable");
+                rdf(mol_2, 0.0, 60.0, 30, "clust_rdf_helper");
                 // gnuplot -e "plot 'clust_rdf_all' u 1:2 w l t 'All', 'clust_rdf_ionizable' u 1:2 w l t 'Ionizable', 'clust_rdf_helper' u 1:2 w l t 'Helper'; pause -1"
             }
             cout << endl;

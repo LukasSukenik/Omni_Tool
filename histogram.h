@@ -54,6 +54,11 @@ public:
         }
         fs.close();
     }
+
+    double get(std::size_t index)
+    {
+        return hist[index];
+    }
 };
 
 
