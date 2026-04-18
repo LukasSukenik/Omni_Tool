@@ -181,6 +181,13 @@ public:
     				++tries;
     			}
 
+                // increment N
+                for(Atom& a : temp)
+                {
+                    a.N += beads.back().N;
+                }
+
+                // mol tag increment
                 //temp.set_mol_tag(copy[0].mol_tag+i);
 
     			// rotate copied structure
