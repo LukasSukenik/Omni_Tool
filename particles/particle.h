@@ -181,10 +181,10 @@ public:
     				++tries;
     			}
 
-    			temp.set_mol_tag(copy[0].mol_tag+i);
+                //temp.set_mol_tag(copy[0].mol_tag+i);
 
     			// rotate copied structure
-    			Atoms::clusterRotate_random(temp, 180.0*degToRad);
+                //Atoms::clusterRotate_random(temp, 180.0*degToRad);
 
     			beads.insert( beads.end(), temp.begin(), temp.end() );
 
