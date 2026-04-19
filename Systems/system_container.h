@@ -9,6 +9,7 @@
 #include "lipid_nanoparticle.h"
 #include "vesicle.h"
 #include "flat_membrane.h"
+#include "generic.h"
 
 using namespace std;
 
@@ -28,6 +29,7 @@ public:
         (*this)[Vesicle::keyword] = new Vesicle();
         (*this)[Lipid_Nanoparticle::keyword] = new Lipid_Nanoparticle();
         (*this)[Flat_Membrane::keyword] = new Flat_Membrane();
+        (*this)[Generic::keyword] = new Generic();
         //(*this)[Icosahedron<Surface>::keyword] = new Icosahedron<Surface>();
     }
 

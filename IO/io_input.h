@@ -38,7 +38,7 @@ public:
      *
      */
     unordered_set<string> keys = {"System_type:", "Particle_type:", "System_execute:"};
-    unordered_set<string> files = {"Load_file:", "Trajectory_file:", "Histo_2D_dirs_outfile:", "Histo_1D_dirs_outfile:", "Histo_outfile:"};
+    unordered_set<string> files = {"Load_file:", "Trajectory_file:", "Trajectory_output_file:", "Histo_2D_dirs_outfile:", "Histo_1D_dirs_outfile:", "Histo_outfile:"};
     Param_Dictionary<string> param = Param_Dictionary<string>(keys + files);
 
     unordered_set<string> counts1 = {"Number_of_beads:", "Number_of_ligands:", "Num_lipids:", "Number_of_receptors:", "Subdiv_of_beads:", "Subdiv_of_ligands:"};

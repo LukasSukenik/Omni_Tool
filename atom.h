@@ -60,8 +60,8 @@ public:
     // Constructors
     //
     Atom() {}
-    Atom(Tensor_xyz pos, int type=0): type(type), pos(pos) {}
-    Atom(Tensor_xyz pos, int type, int mol_tag): mol_tag(mol_tag), type(type), pos(pos) {}
+    Atom(Tensor_xyz pos, int type=0): N(1), type(type), pos(pos) {}
+    Atom(Tensor_xyz pos, int type, int mol_tag): N(1), mol_tag(mol_tag), type(type), pos(pos) {}
 
     Atom(myFloat x, myFloat y, myFloat z, int type=0): type(type), pos(x,y,z) {}
     Atom(myFloat x, myFloat y, myFloat z, myFloat vx, myFloat vy, myFloat vz, int type=0): type(type), pos(x,y,z), vel(vx,vy,vz) {}

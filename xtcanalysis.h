@@ -20,6 +20,7 @@ class Trajectory
 private:
     char fileName[64];
     int natoms;
+    int gmmc_natoms_override=-1;
 
     int step;
     float time;
@@ -40,33 +41,60 @@ public:
     Trajectory(){}
     Trajectory(Data& data)
     {
-        int start=0;
-        int modulo=1;
-        int stop=1000*1000;
-
-        if( data.in.p_vec_int.contains("Trajectory_settings") )
-        {
-            start=data.in.p_vec_int["Trajectory_settings"][0];
-            modulo=data.in.p_vec_int["Trajectory_settings"][1];
-            stop=data.in.p_vec_int["Trajectory_settings"][2];
-        }
-
-        if(data.in.p_bool.contains("Only_last_frame") )
-        {
-            only_last=true;
-        }
-
+        int start=0; int stop=1000*1000; int modulo=1;
+        load_start_stop_modulo(data, start, stop, modulo);
         load(data.in.param["Trajectory_file"], start, stop, modulo);
     }
+
     Trajectory(string inName, int start=0, int stop=1000000, int modulo=1)
     {
         load(inName, start, stop, modulo);
+    }
+
+    void load_gcmc_traj(Data& data, Atoms& topo)
+    {
+        cerr << "Loading a xtc trajectory with variable per frame atom size is not possible xdrfile::read_xtc seg. faults" << endl;
+        return;
+        int start=0; int stop=1000*1000; int modulo=1;
+        gmmc_natoms_override = topo.size();
+        load_start_stop_modulo(data, start, stop, modulo);
+        load(data.in.param["Trajectory_file"], start, stop, modulo);
+    }
+
+    void write(string inName)
+    {
+        return; // Originally written for gcmc xtc trajectory fix, but loading of such an xtc is not possible
+        string_to_char(inName); // inName -> fileName
+        XDRFILE* xfp = xdrfile_open(fileName, "w");
+        rvec conf[natoms];
+
+        if (status == exdrOK)
+        {
+            for(size_t i =0; i<conf_traj.size(); ++i)
+            {
+                temp_box[0][0] = box_traj[i].x;
+                temp_box[1][1] = box_traj[i].y;
+                temp_box[2][2] = box_traj[i].z;
+                for(int j=0; j<natoms; ++j)
+                {
+                    if(j < conf_traj[i].size())
+                    {
+                        conf[j][0] = conf_traj[i][j].x;
+                        conf[j][1] = conf_traj[i][j].y;
+                        conf[j][2] = conf_traj[i][j].z;
+                    }
+                }
+                status = write_xtc(xfp, natoms, step_traj[i], time_traj[i], temp_box, conf, prec);
+            }
+        }
+        xdrfile_close(xfp);
     }
 
     void load(string inName, int start=0, int stop=1000000, int modulo=1)
     {
         string_to_char(inName); // inName -> fileName
         status = read_xtc_natoms(fileName, &natoms);
+
         if (status == exdrOK)
         {
             XDRFILE* xfp = xdrfile_open(fileName, "r");
@@ -131,13 +159,13 @@ public:
 
 private:
 
-
     void save(rvec *conf)
     {
         time_traj.push_back(time);
         step_traj.push_back(step);
         box_traj.push_back(Tensor_xyz(temp_box[0][0], temp_box[1][1], temp_box[2][2])); // box
-        conf_traj.push_back( vector<Tensor_xyz>(natoms) );
+
+        conf_traj.push_back( vector<Tensor_xyz>(natoms, box_traj.back()) );
         for(int i=0; i<natoms; ++i) // conf
         {
             conf_traj.back()[i].x = conf[i][0];
@@ -178,6 +206,21 @@ private:
           fileName[i] = inName[i];
         }
         fileName[i] = '\0';
+    }
+
+    void load_start_stop_modulo(Data& data, int& start, int& stop, int& modulo)
+    {
+        if( data.in.p_vec_int.contains("Trajectory_settings") )
+        {
+            start=data.in.p_vec_int["Trajectory_settings"][0];
+            modulo=data.in.p_vec_int["Trajectory_settings"][1];
+            stop=data.in.p_vec_int["Trajectory_settings"][2];
+        }
+
+        if(data.in.p_bool.contains("Only_last_frame") )
+        {
+            only_last=true;
+        }
     }
 };
 

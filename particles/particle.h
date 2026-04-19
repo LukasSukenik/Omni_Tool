@@ -182,9 +182,21 @@ public:
     			}
 
                 // increment N
-                for(Atom& a : temp)
+                if(beads.empty())
                 {
-                    a.N += beads.back().N;
+                    int count = 1; // N=1 by default
+                    for(Atom& a : temp)
+                    {
+                        a.N = count;
+                        ++count;
+                    }
+                }
+                else
+                {
+                    for(Atom& a : temp)
+                    {
+                        a.N += beads.back().N;
+                    }
                 }
 
                 // mol tag increment
