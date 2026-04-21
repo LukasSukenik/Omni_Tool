@@ -279,11 +279,11 @@ public:
 	        item.mol_tag = mtag;
 	}
 
-    void add_offset(int offs)
+    void offset_N(int o_N)
     {
         for(Atom& item : (*this))
         {
-            item.N += offs;
+            item.N += o_N;
         }
     }
 
@@ -317,6 +317,7 @@ public:
                 this->push_back(o);
         }
     }
+
 
     //
     //

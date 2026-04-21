@@ -100,7 +100,8 @@ public:
 
     void add_beads_to_coll(Data& data)
     {
-        cerr << "add_beads_to_coll" << endl;
+        beads.offset_N(get_coll_N(data));
+
         if(data.in.p_int.contains("ID") && data.id_map.contains( data.in.p_int["ID"] ) && !data.coll_beads.empty()) // adding to existing collection
         {
             // Happens when: 1. defined ID, 2. loaded (even empty) file, 3. generated a particle
@@ -132,17 +133,24 @@ public:
                 data.id_map[ data.in.p_int["ID"] ] = data.coll_beads.size()-1;
             }
         }
-        /*if(!data.coll_beads.empty())
+    }
+
+    int get_coll_N(Data& data)
+    {
+        int offset_N = 0;
+
+        if(!data.coll_beads.empty())
         {
-            int offset_N = data.coll_beads.back().back().N;
-            if(!beads.empty() && offset_N+1 != beads[0].N)
+            for(Atoms& coll : data.coll_beads)
             {
-                for(size_t i=0; i<beads.size(); ++i)
+                if(!coll.empty() && coll.back().N > offset_N)
                 {
-                    beads[i].N += offset_N;
+                    offset_N = coll.back().N;
                 }
             }
-        }*/
+        }
+
+        return offset_N;
     }
 
     virtual string help()

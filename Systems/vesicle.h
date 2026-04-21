@@ -268,7 +268,7 @@ private:
         Bonds& bonds2 = data.coll_bonds.back();
 
         bonds2.offset(bonds2.size(), ves2.size());
-        ves2.add_offset(ves2.size());
+        ves2.offset_N(ves2.size());
         ves2.set_mol_tag(2);
 
         Atoms& ves = data.coll_beads[ sys_id ]; // push_back can allocate memory, which will brick the reference ves
