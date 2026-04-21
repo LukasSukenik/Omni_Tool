@@ -175,19 +175,15 @@ private:
         }
     }
 
-    void gen_bonds(int row) {
+    void gen_bonds(int row, int bond_type=1) {
         int actual;
         for(int i=0; i<row; ++i) {
             for(int j=0; j<row; ++j) {
                 actual = i*row + j;
-                if(j > 0)
-                    bonds.push_back( Bond(bonds.size(), bonds.size(), (i)*row + j-1, actual, beads[(i)*row + j-1].dist(beads[actual]) ) );
-                if(i > 0)
-                    bonds.push_back( Bond(bonds.size(), bonds.size(), (i-1)*row + j, actual, beads[(i-1)*row + j].dist(beads[actual]) ) );
-                if(j < row-1)
-                    bonds.push_back( Bond(bonds.size(), bonds.size(), (i)*row + j+1, actual, beads[(i)*row + j+1].dist(beads[actual]) ) );
-                if(i < row-1)
-                    bonds.push_back( Bond(bonds.size(), bonds.size(), (i+1)*row + j, actual, beads[(i+1)*row + j].dist(beads[actual]) ) );
+                if(j > 0)     bonds.push_back(    Bond(bonds.size()+1, bond_type, (i)*row + j-1, actual)    );
+                if(i > 0)     bonds.push_back(    Bond(bonds.size()+1, bond_type, (i-1)*row + j, actual)    );
+                if(j < row-1) bonds.push_back(    Bond(bonds.size()+1, bond_type, (i)*row + j+1, actual)    );
+                if(i < row-1) bonds.push_back(    Bond(bonds.size()+1, bond_type, (i+1)*row + j, actual)    );
             }
         }
 
