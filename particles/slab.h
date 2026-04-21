@@ -1,7 +1,6 @@
 #ifndef SLAB_H
 #define SLAB_H
 
-#include "sphere.h"
 #include "particle.h"
 
 class Slab1D : public Particle
@@ -48,6 +47,9 @@ private:
         }
     }
 };
+
+
+
 
 class Slab : public Particle
 {
@@ -102,31 +104,9 @@ private:
             exit(-1);
         }
     }
-
-    void gen_bonds(int row) {
-        int actual;
-        for(int i=0; i<row; ++i) {
-            for(int j=0; j<row; ++j) {
-                actual = i*row + j;
-
-                if(j > 0)
-                    bonds.push_back( Bond(bonds.size(), bonds.size(), (i)*row + j-1, actual, beads[(i)*row + j-1].dist(beads[actual]) ) );
-                if(i > 0)
-                    bonds.push_back( Bond(bonds.size(), bonds.size(), (i-1)*row + j, actual, beads[(i-1)*row + j].dist(beads[actual]) ) );
-                if(j < row-1)
-                    bonds.push_back( Bond(bonds.size(), bonds.size(), (i)*row + j+1, actual, beads[(i)*row + j+1].dist(beads[actual]) ) );
-                if(i < row-1)
-                    bonds.push_back( Bond(bonds.size(), bonds.size(), (i+1)*row + j, actual, beads[(i+1)*row + j].dist(beads[actual]) ) );
-            }
-        }
-
-        // Correct for offset -> lammps starts at 1 not 0
-        for(int i=0; i<bonds.size(); ++i) {
-            ++bonds[i].at1;
-            ++bonds[i].at2;
-        }
-    }
 };
+
+
 
 
 class NettedSlab : public Particle
@@ -135,14 +115,31 @@ public:
     inline static const string keyword = "netted_slab";
     const string name = "netted_slab";
 
-
     NettedSlab() : Particle("netted_slab") {}
 
     string help()
     {
         stringstream ss;
+
         ss << "Particle_type: netted_slab\n";
+        ss << "Output_type: lammps_full\n";
+        ss << "Position_shift: 0 0 0\n";
+        ss << "Scale: 1.0\n";
+        ss << "Number_of_beads: 10\n";
+        ss << "Mol_tag: 1\n";
+        ss << "Atom_type: 1 2\n";
+        ss << "Atom_type: 1->body 2->edges\n";
+
         return ss.str();
+    }
+
+    void validate_inputs( Data& data )
+    {
+        data.in.p_tensor.validate_keyword("Position_shift", "0 0 0");
+        data.in.p_float.validate_keyword("Scale", "1.0");
+        data.in.p_int.validate_keyword("Number_of_beads", "100");
+        data.in.p_int.validate_keyword("Mol_tag", "1");
+        data.in.p_vec_int.validate_keyword("Atom_type", "1 2");
     }
 
     void generate( Data& data )
@@ -150,86 +147,24 @@ public:
         validate_inputs(data);
 
         int row = sqrt(data.in.p_int["Number_of_beads"]);
-        int bead_size = data.in.p_float["Scale"];
-        double factor = 1.0; // length were we generate beads
-
+        int N = 1;
 
         for(int i=0; i<row; ++i) {
             for(int j=0; j<row; ++j) {
                 for(int k=0; k<1; ++k) {
                     if( j==0 || i == 0 || i == row-1 || j == row-1 )
-                        beads.push_back(Atom( factor*i, factor*k, factor*j, 1));
+                        beads.push_back(Atom(N, Tensor_xyz(i, k, j), data.in.p_vec_int["Atom_type"][1], data.in.p_int["Mol_tag"]));
                     else
-                        beads.push_back(Atom( factor*i, factor*k, factor*j, 0));
+                        beads.push_back(Atom(N, Tensor_xyz(i, k, j), data.in.p_vec_int["Atom_type"][0], data.in.p_int["Mol_tag"]));
+                    ++N;
                 }
             }
         }
 
         gen_bonds(row);
-
-        cerr << "Bonds: " << bonds.size() << endl;
-        Sphere sp;
-        vector<Atom> bVec;
-        factor *= 2.5/2.0;
-
-
-
-        for(int i=0; i<data.in.p_int["Number_of_ligands"]; ++i) {
-
-            Atom next;
-            bool clash=true;
-            while(clash) {
-                double x = ((0.20+ran()/10*6)*data.in.sim_box.xhi - data.in.p_tensor["Position_shift"].x) / data.in.p_float["Scale"];
-                double y = ( (0.20+ran()/4) *data.in.sim_box.yhi - data.in.p_tensor["Position_shift"].y) / data.in.p_float["Scale"];
-                double z = ((0.20+ran()/10*6)*data.in.sim_box.zhi - data.in.p_tensor["Position_shift"].z) / data.in.p_float["Scale"];
-
-                next = Atom(x,y,z,2);
-
-                /*sp.beads.clear();
-                sp.fibonacci_sphere( 300, 2, i+1);
-                sp.rescale(data.c);
-                sp.move(next);*/
-
-                bVec.clear();
-                for(int a=0; a<11; ++a) {
-                    for(int b=0; b<11; ++b) {
-                        for(int c=0; c<11; ++c) {
-                            if((a-5.5)*(a-5.5) + (b-5.5)*(b-5.5) + (c-5.5)*(c-5.5) < 11.0*11.0*0.25)
-                                bVec.push_back(Atom(x+a*factor*2.0 - 11.0*factor, y+b*factor*2.0 - 11.0*factor, z+c*factor*2.0 - 11.0*factor, 2, i+1));
-                        }
-                    }
-                }
-
-                clash=false;
-
-                for(int j=0; j<beads.size(); ++j) {
-                    if(beads[j].dist(next) < data.in.p_float["c"] ) {
-                        clash = true;
-                    }
-                }
-
-                if(!clash) {
-                    //beads.insert(this->beads.end(), sp.beads.begin(), sp.beads.end());
-                    beads.insert(this->beads.end(), bVec.begin(), bVec.end());
-                }
-            }
-        }
-
-        sigma[0][0] = bead_size*1.0;
-        sigma[1][1] = bead_size*1.0;
-        sigma[2][2] = bead_size*2.5;
-        sigma_size = 3;
-
-        mixing_rules();
     }
 
 private:
-    void validate_inputs( Data& data )
-    {
-        data.in.p_tensor.validate_keyword("Position_shift", "0 0 0");
-        data.in.p_float.validate_keyword("Scale", "1.0");
-        data.in.p_float.validate_keyword("c", "0.5");
-    }
 
     void mixing_rules() {
         for(int i = 0; i< sigma_size; ++i) {

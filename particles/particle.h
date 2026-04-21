@@ -85,7 +85,7 @@ public:
             }
         }
 
-        data.coll_beads.push_back(beads);
+        add_beads_to_coll(data);
         data.coll_bonds.push_back(bonds);
         data.coll_angles.push_back(angles);
 
@@ -96,6 +96,53 @@ public:
         beads.clear();
         bonds.clear();
         angles.clear();
+    }
+
+    void add_beads_to_coll(Data& data)
+    {
+        cerr << "add_beads_to_coll" << endl;
+        if(data.in.p_int.contains("ID") && data.id_map.contains( data.in.p_int["ID"] ) && !data.coll_beads.empty()) // adding to existing collection
+        {
+            // Happens when: 1. defined ID, 2. loaded (even empty) file, 3. generated a particle
+            if(data.id_map.contains( data.in.p_int["ID"] ))
+            {
+                int sys_id = data.id_map[ data.in.p_int["ID"] ];
+                if(data.coll_beads.size() > sys_id)
+                {
+                    data.coll_beads[sys_id].insert(data.coll_beads[sys_id].end(), beads.begin(), beads.end());
+                }
+                else
+                {
+                    cerr << "ERROR, Particle::add_beads_to_coll data.coll_beads does not contain sys_id index" << endl;
+                    exit(1);
+                }
+            }
+            else
+            {
+                cerr << "ID defined, but not stored in id_map" << endl;
+                exit(1);
+            }
+        }
+        else // adding a new collection
+        {
+            data.coll_beads.push_back(beads);
+
+            if(data.in.p_int.contains("ID")) // ID defined, but not yet used (by data loading)
+            {
+                data.id_map[ data.in.p_int["ID"] ] = data.coll_beads.size()-1;
+            }
+        }
+        /*if(!data.coll_beads.empty())
+        {
+            int offset_N = data.coll_beads.back().back().N;
+            if(!beads.empty() && offset_N+1 != beads[0].N)
+            {
+                for(size_t i=0; i<beads.size(); ++i)
+                {
+                    beads[i].N += offset_N;
+                }
+            }
+        }*/
     }
 
     virtual string help()
