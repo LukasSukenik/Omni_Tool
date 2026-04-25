@@ -71,6 +71,7 @@ public:
 
     void modify( Data& data )
     {
+        cerr << "Particle::modify" << endl;
         if( data.in.p_float.contains("Scale") )          { scale( data.in.p_float["Scale"] ); }
         if( data.in.p_tensor.contains("Position_shift")) { move(  data.in.p_tensor["Position_shift"] ); }
     }
@@ -273,13 +274,13 @@ private:
     void move(Atom move)
     {
     	beads.move(move);
-    	cerr << "move " << move.pos.x << " " << move.pos.y << " " << move.pos.z << endl;
+        cerr << "move: " << move.pos << endl;
     }
 
     void scale(double scale)
     {
     	beads.scale(scale);
-    	cerr << "scale " << scale << endl;
+        cerr << "scale: " << scale << endl;
     }
 };
 

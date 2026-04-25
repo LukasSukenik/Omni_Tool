@@ -223,6 +223,7 @@ public:
         p_bool.clear();
         p_int.clear();
         p_float.clear();
+        p_tensor.clear();
         p_vec_int.clear();
 
         in.clear();

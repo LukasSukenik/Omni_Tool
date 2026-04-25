@@ -153,9 +153,9 @@ public:
             for(int j=0; j<row; ++j) {
                 for(int k=0; k<1; ++k) {
                     if( j==0 || i == 0 || i == row-1 || j == row-1 )
-                        beads.push_back(Atom(N, Tensor_xyz(i, k, j), data.in.p_vec_int["Atom_type"][1], data.in.p_int["Mol_tag"]));
+                        beads.push_back(Atom(N, Tensor_xyz(i, j, k), data.in.p_vec_int["Atom_type"][1], data.in.p_int["Mol_tag"]));
                     else
-                        beads.push_back(Atom(N, Tensor_xyz(i, k, j), data.in.p_vec_int["Atom_type"][0], data.in.p_int["Mol_tag"]));
+                        beads.push_back(Atom(N, Tensor_xyz(i, j, k), data.in.p_vec_int["Atom_type"][0], data.in.p_int["Mol_tag"]));
                     ++N;
                 }
             }
