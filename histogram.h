@@ -33,7 +33,7 @@ public:
         hist[index]++;
     }
 
-    int size()
+    size_t size()
     {
         return hist.size();
     }
@@ -116,12 +116,14 @@ public:
     const double pi = 3.141592653589793;
     const double deg_to_rad = 0.0174532925199;
     const double rad_to_deg = 57.2957795131;
+    int size1;
+    int size2;
 
     Histogram inclination;
     Histogram azimuth;
     Histogram_2D h_2D;
 
-    Histogram_Spherical(int size1, int size2)
+    Histogram_Spherical(int size1, int size2) : size1(size1), size2(size2)
     {
         inclination = Histogram(size1, 0, pi);
         azimuth = Histogram(size2, -pi, pi);
@@ -139,26 +141,6 @@ public:
         azimuth.add(calc_phi(temp));
         inclination.add(calc_theta(temp));
         h_2D.add(temp.z,calc_phi(temp));
-    }
-
-    /**
-     * @brief is_planar
-     * Planar memrane has 2 peaks in the 2D spherical histogram
-     * - the direction of lipids is highly ordered
-     * - while other directions are highly unlikely
-     * - so lets say 80% of direction contain less than 20% of lipids
-     */
-    bool is_planar(int total_size)
-    {
-        double dirs_fraction = 0.8;
-        double lipid_fraction = 0.2;
-        vector<int> array = get_ordered_array();
-        int sum=0;
-        for(size_t i=0; i<array.size()*dirs_fraction; ++i)
-        {
-            sum += array[i];
-        }
-        return sum < lipid_fraction*total_size;
     }
 
     Tensor_xyz get_highest()
@@ -249,6 +231,46 @@ public:
             }
         }
         fs.close();
+    }
+
+    /**
+     * @brief get_Normalized_Entropy
+     *
+     * Reduce a histogram to a single value representing randomness
+     * - 1 represents maximum randomness (a continuous Uniform distribution)
+     * - 0 represents total certainty (a Dirac delta distribution)
+     *
+     * H_norm = ( SUM p_i log(p_i) ) / (log K)
+     * - K number of histogram bins
+     * - p_i = count_i / total_count
+     *
+     */
+    double get_Normalized_Entropy(int total_count)
+    {
+        if(!h_2D.hist.empty())
+        {
+            double K = size1*size2;
+            double count_i = 0.0;
+            double p_i = 0.0;
+            double H_norm = 0.0;
+
+            size_t size_1 = h_2D.hist.size();
+            size_t size_2 = h_2D.hist[0].size();
+            for(size_t i=0; i<size_1; ++i)
+            {
+                for(size_t j=0; j<size_2; ++j)
+                {
+                    if(h_2D.hist[i][j] > 0)
+                    {
+                        count_i = h_2D.hist[i][j];
+                        p_i = count_i / total_count;
+                        H_norm -= p_i * log(p_i) / log(K);
+                    }
+                }
+            }
+            return H_norm;
+        }
+        return -1.0;
     }
 
     void test_uniformity()

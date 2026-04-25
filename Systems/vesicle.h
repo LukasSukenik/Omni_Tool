@@ -250,7 +250,9 @@ private:
         int r_max = data.in.p_vec_int["Histo_settings"][2];
         string outfile = data.in.param["Histo_outfile"];
 
-        rdf(topo, r_min, r_max, hist_size, outfile);
+        RDF rdf(r_min, r_max, hist_size);
+        rdf.calc(topo);
+        rdf.print(outfile);
     }
 
 

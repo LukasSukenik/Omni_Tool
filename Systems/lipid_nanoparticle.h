@@ -125,6 +125,7 @@ private:
         ss << "Input_type: lammps_full" << endl;
         ss << "Load_file: data.start" << endl;
         ss << "Trajectory_file: traj_1.xtc" << endl;
+        ss << "RDF_outfile: clust_rdf" << endl;
         ss << "Atom_type: 2 3 5 6" << endl;
         ss << "Cluster_cutoff: 2.0" << endl;
         ss << "Only_last_frame: true" << endl;
@@ -137,6 +138,7 @@ private:
     {
         data.in.param.validate_keyword("Load_file", "data.start");
         data.in.param.validate_keyword("Trajectory_file", "traj_1.xtc");
+        data.in.param.validate_keyword("RDF_outfile", "clust_rdf");
         data.in.p_vec_int.validate_keyword("Atom_type", "2 3 5 6");
         data.in.p_float.validate_keyword("Cluster_cutoff", "2.0");
     }
@@ -152,12 +154,12 @@ private:
         Atoms clust_topo;
         Atoms mol_1;
         Atoms mol_2;
+        RDF rdf(0.0, 60.0, 30);
 
         for(size_t i=0; i<traj.frame_count(); ++i)
         {
             topo.set_frame(traj[i]);
             clusters.analyze(topo, data.in.sim_box, data.in.p_float["Cluster_cutoff"]);
-
             cout << i << " " << traj.get_step(i) << " " << clusters.size() << " ";
 
             for(Cluster& cluster : clusters)
@@ -168,11 +170,12 @@ private:
                 mol_1 = clust_topo.get_molecule(1);
                 mol_2 = clust_topo.get_molecule(2);
 
-                rdf(clust_topo, 0.0, 60.0, 30, "clust_rdf_all");
-                rdf(mol_1, 0.0, 60.0, 30, "clust_rdf_ionizable");
-                rdf(mol_2, 0.0, 60.0, 30, "clust_rdf_helper");
-                // gnuplot -e "plot 'clust_rdf_all' u 1:2 w l t 'All', 'clust_rdf_ionizable' u 1:2 w l t 'Ionizable', 'clust_rdf_helper' u 1:2 w l t 'Helper'; pause -1"
+                rdf.calc(clust_topo);
+                rdf.calc(mol_1);
+                rdf.calc(mol_2);
+                rdf.print(data.in.param["RDF_outfile"]);
             }
+
             cout << endl;
             clusters.clear();
         }
@@ -258,10 +261,13 @@ private:
         Atoms& topo = data.coll_beads[sys_id];
 
         Trajectory traj(data);
-        string phase = "";
 
-        phase.append( analyze_dirs(data, topo, traj, data.in.p_int["Averaged_frame_count"]) ); // Dirs analysis identifies planar membrane
-        cout << phase << endl;
+        Histogram_Spherical h_sp = analyze_dirs(data, topo, traj, data.in.p_int["Averaged_frame_count"]);
+        h_sp.print(data.in.param["Histo_2D_dirs_outfile"]);
+        h_sp.print_ordered_cumulative(data.in.param["Histo_1D_dirs_outfile"]);
+
+        cout << "Enthropy " << h_sp.get_Normalized_Entropy(topo.size()/4);
+        cout << endl;
     }
 
     ///
@@ -448,7 +454,7 @@ private:
         }
     }
 
-    string analyze_dirs(Data& data, Atoms& topo, Trajectory& traj, int number_of_averaged_frames)
+    Histogram_Spherical analyze_dirs(Data& data, Atoms& topo, Trajectory& traj, int number_of_averaged_frames)
     {
         vector<Tensor_xyz> dirs(topo.size() / 4, Tensor_xyz(0.0, 0.0, 0.0));
         get_frame_averaged_dirs(data, dirs, topo, traj, number_of_averaged_frames);
@@ -459,17 +465,8 @@ private:
         {
             h_sp.add(a, Tensor_xyz(0.0,0.0,1.0), 0.0);
         }
-        h_sp.print(data.in.param["Histo_2D_dirs_outfile"]);
-        h_sp.print_ordered_cumulative(data.in.param["Histo_1D_dirs_outfile"]);
 
-        if( h_sp.is_planar(dirs.size()) )
-        {
-            return "planar";
-        }
-        else
-        {
-            return "UNK";
-        }
+        return h_sp;
 
         /*Histogram_Spherical h_rot(20,40);
         Tensor_xyz dir_highest = h_sp.get_highest();
