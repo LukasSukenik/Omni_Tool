@@ -262,11 +262,19 @@ private:
 
         Trajectory traj(data);
 
+        // lipid direction randomness
         Histogram_Spherical h_sp = analyze_dirs(data, topo, traj, data.in.p_int["Averaged_frame_count"]);
         h_sp.print(data.in.param["Histo_2D_dirs_outfile"]);
         h_sp.print_ordered_cumulative(data.in.param["Histo_1D_dirs_outfile"]);
-
         cout << "Enthropy " << h_sp.get_Normalized_Entropy(topo.size()/4);
+
+        // Percolation dimensionality: 0-3
+
+        // Periodic dimensionality: 0-3
+
+        // Amount of Water pockets
+
+
         cout << endl;
     }
 
