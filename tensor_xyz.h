@@ -238,7 +238,8 @@ public:
         return Tensor_xyz(x-o.x, y-o.y, z-o.z);
     }
 
-    friend std::ostream& operator<<(std::ostream& os, const Tensor_xyz& vec) {
+    friend std::ostream& operator<<(std::ostream& os, const Tensor_xyz& vec)
+    {
       os << vec.x << " " << vec.y << " " << vec.z;
       return os;
     }

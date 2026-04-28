@@ -32,6 +32,8 @@ public:
         ss << help_analyze_phase() << endl;
         ss << help_cluster_analysis() << endl;
         ss << help_cluster_rdf() << endl;
+        ss << help_detect_bleb() << endl;
+
         ss << help_optional() << endl;
 
         return ss.str();
@@ -135,20 +137,14 @@ private:
         validate_cluster_analysis_inputs(data);
 
         Atoms& topo = data.coll_beads[  data.id_map[ data.in.p_int["ID"] ]  ];
-        Clusters clusters(topo, data.in.p_vec_int["Atom_type"]); // list of particle indexes
         Trajectory traj(data);
+
 
         for(size_t i=0; i<traj.frame_count(); ++i)
         {
             topo.set_frame(traj[i]);
-            clusters.analyze(topo, data.in.sim_box, data.in.p_float["Cluster_cutoff"]);
-            cout << i << " " << traj.get_step(i) << " " << clusters.size() << " ";
-            for(Cluster& cluster : clusters)
-            {
-                cout << cluster.size()/3 << " "; // dividing by 3 to get the lipid count, assumes we analyze tails only, deserno 4 bead types model
-            }
-            cout << endl;
-            clusters.clear();
+            Clusters clusters(topo, data.in.p_vec_int["Atom_type"], data.in.sim_box, data.in.p_float["Cluster_cutoff"]); // list of particle indexes, constructor is suepr cheap
+            cout << i << " " << traj.get_step(i) << " " << clusters << endl;
         }
     }
 
@@ -189,12 +185,14 @@ private:
         validate_cluster_rdf_inputs(data);
 
         Atoms& topo = data.coll_beads[  data.id_map[ data.in.p_int["ID"] ]  ];
-        Clusters clusters(topo, data.in.p_vec_int["Atom_type"]); // list of particle indexes
         Trajectory traj(data);
+        Clusters clusters(topo, data.in.p_vec_int["Atom_type"]); // list of particle indexes
+        RDF rdf(0.0, 60.0, 30);
+
         Atoms clust_topo;
         Atoms mol_1;
         Atoms mol_2;
-        RDF rdf(0.0, 60.0, 30);
+
 
         for(size_t i=0; i<traj.frame_count(); ++i)
         {

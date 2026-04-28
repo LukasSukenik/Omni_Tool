@@ -108,6 +108,10 @@ public:
 
     Clusters_Cell_List(){}
     Clusters_Cell_List(Atoms& topo, vector<int> types) : types(types) {}
+    Clusters_Cell_List(Atoms& topo, vector<int> types, Simulation_Box& sim_box, double cutoff) : types(types)
+    {
+        analyze(topo, sim_box, cutoff);
+    }
 
     int analyze(Atoms& topo, Simulation_Box& sim_box, double cutoff)
     {
@@ -133,6 +137,17 @@ public:
     }
 
     size_t cluster_count() { return size(); }
+
+    friend std::ostream& operator<<(std::ostream& os, Clusters_Cell_List& clusters)
+    {
+        os << clusters.size() << " ";
+        for(Cluster& cluster : clusters)
+        {
+            os << cluster.size()/3 << " "; // dividing by 3 to get the lipid count, assumes we analyze tails only, deserno 4 bead types model
+        }
+
+        return os;
+    }
 };
 
 
