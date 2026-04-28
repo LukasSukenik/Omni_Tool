@@ -47,6 +47,7 @@ public:
         if(data.in.param["System_execute"].compare("Cluster_Analysis") == 0) { cluster_analysis(data); }
         if(data.in.param["System_execute"].compare("Cluster_RDF") == 0) { cluster_rdf(data); }
         if(data.in.param["System_execute"].compare("Cluster_Surf") == 0) { cluster_surf(data); }
+        if(data.in.param["System_execute"].compare("Detect_Bleb") == 0) { detect_bleb(data); }
     }
 
 private:
@@ -59,6 +60,74 @@ private:
         ss << "Optionally use keyword 'Trajectory_settings: start step stop' , analyze custom frames, like seq" << endl;
 
         return ss.str();
+    }
+
+    ///
+    /// Detect Bleb
+    ///
+    void detect_bleb(Data& data)
+    {
+        Atoms& topo = data.coll_beads[  data.id_map[ data.in.p_int["ID"] ]  ];
+        Cell_List cell_list;
+        Trajectory traj(data);
+        Tensor_xyz dir_a, dir_b;
+        unordered_set<int> lipid_set;
+        double cutoff = 2.0;
+        cutoff *= cutoff;
+        double angle_max = 150;
+        int paired_lipid_head_ID = -1;
+
+        for(size_t ii=0; ii<traj.frame_count(); ++ii)
+        {
+            topo.set_frame(traj[ii]);
+            cell_list.init( data.in.sim_box ); // allocate memory
+            cell_list.add( topo ); // populate the cell list
+
+            for(size_t i=0; i<topo.size(); i+=4) // loop over lipis
+            {
+                angle_max = 150;
+                paired_lipid_head_ID = -1;
+                Atom& lip_head=topo[i];
+                Atom& lip_tail=topo[i+3];
+
+                if(lip_head.type == 4 && lip_tail.type == 6) // select helper lipids
+                {
+                    dir_a = get_dir(data, lip_head.pos, lip_tail.pos); // lip dir
+                    cell_list.set_neighbors_pbc( lip_tail.pos ); // particles close to tail
+                    for(size_t j=0; j<cell_list.neighbors.size(); ++j) // Loop over cells
+                    {
+                        for(size_t nei_ID : (*cell_list.neighbors[j]) ) // Loop over neigbor particles in those cells
+                        {
+                            if(nei_ID-3 >= 0 && topo[nei_ID].type == 6 && lip_tail.pos.distSQ_pbc(topo[nei_ID].pos, cell_list.pbc, cell_list.pbc_inv) < cutoff) // neighbor is last bead of tail
+                            {
+                                Atom& other_head=topo[nei_ID-3];
+                                Atom& other_tail=topo[nei_ID];
+                                dir_b = get_dir(data, other_head.pos, other_tail.pos);
+
+                                if(dir_a.angleToDegrees(dir_b) > angle_max) // find the neighbor with angle above limit, select only the most antiparalell lipid
+                                {
+                                    paired_lipid_head_ID = nei_ID-3;
+                                }
+                            }
+                        }
+                    }
+                }
+                if(paired_lipid_head_ID > -1)
+                {
+                    lipid_set.insert(i); // add lipids head
+                    lipid_set.insert(paired_lipid_head_ID);
+                }
+            }
+            cout << traj.step_traj[ii] << " " << lipid_set.size() << endl;
+            /*cout << "Lipid Head index list:" << endl;
+            for(int ID : lipid_set)
+            {
+                cout << ID << " ";
+            }
+            cout << endl;*/
+            lipid_set.clear();
+            cell_list.delete_all();
+        }
     }
 
     ///
@@ -262,13 +331,14 @@ private:
 
         Trajectory traj(data);
 
-        // lipid direction randomness
+        // lipid direction randomness - 1 max randomness, 0 total certainty (a Dirac delta distribution)
         Histogram_Spherical h_sp = analyze_dirs(data, topo, traj, data.in.p_int["Averaged_frame_count"]);
         h_sp.print(data.in.param["Histo_2D_dirs_outfile"]);
         h_sp.print_ordered_cumulative(data.in.param["Histo_1D_dirs_outfile"]);
         cout << "Enthropy " << h_sp.get_Normalized_Entropy(topo.size()/4);
 
         // Percolation dimensionality: 0-3
+
 
         // Periodic dimensionality: 0-3
 
@@ -424,22 +494,29 @@ private:
         }
     }
 
-    void get_dirs(Data& data, Atoms& frame, vector<Tensor_xyz>& dirs)
+    Tensor_xyz get_dir(Data& data, Tensor_xyz pos_a, Tensor_xyz pos_b)
     {
         Tensor_xyz periodic = Tensor_xyz(data.in.sim_box.xhi - data.in.sim_box.xlo, data.in.sim_box.yhi - data.in.sim_box.ylo, data.in.sim_box.zhi - data.in.sim_box.zlo);
+        Tensor_xyz dir = (pos_a - pos_b);
+
+        // fix for periodic box
+        if(dir.x >  0.5*periodic.x) { dir.x -= periodic.x; }
+        if(dir.x < -0.5*periodic.x) { dir.x += periodic.x; }
+        if(dir.y >  0.5*periodic.y) { dir.y -= periodic.y; }
+        if(dir.y < -0.5*periodic.y) { dir.y += periodic.y; }
+        if(dir.z >  0.5*periodic.z) { dir.z -= periodic.z; }
+        if(dir.z < -0.5*periodic.z) { dir.z += periodic.z; }
+
+        dir.normalise();
+
+        return dir;
+    }
+
+    void get_dirs(Data& data, Atoms& frame, vector<Tensor_xyz>& dirs)
+    {
         for(size_t i=0; i<frame.size(); i+=4)
         {
-            dirs[i/4] = (frame[i].pos - frame[i+3].pos);
-
-            // fix for periodic box
-            if(dirs[i/4].x >  0.5*periodic.x) { dirs[i/4].x -= periodic.x; }
-            if(dirs[i/4].x < -0.5*periodic.x) { dirs[i/4].x += periodic.x; }
-            if(dirs[i/4].y >  0.5*periodic.y) { dirs[i/4].y -= periodic.y; }
-            if(dirs[i/4].y < -0.5*periodic.y) { dirs[i/4].y += periodic.y; }
-            if(dirs[i/4].z >  0.5*periodic.z) { dirs[i/4].z -= periodic.z; }
-            if(dirs[i/4].z < -0.5*periodic.z) { dirs[i/4].z += periodic.z; }
-
-            dirs[i/4].normalise();
+            dirs[i/4] = get_dir(data, frame[i].pos, frame[i+3].pos);
         }
     }
 

@@ -77,7 +77,8 @@ public:
      * @param o
      * @return
      */
-    double dot(const Tensor_xyz& o) const {
+    double dot(const Tensor_xyz& o) const
+    {
         return this->x*o.x + this->y*o.y + this->z*o.z;
     }
 
@@ -86,8 +87,24 @@ public:
      * @param B
      * @return
      */
-    inline Tensor_xyz cross(const Tensor_xyz B) const {
+    inline Tensor_xyz cross(const Tensor_xyz B) const
+    {
         return Tensor_xyz(y*B.z - z*B.y, -x*B.z + z*B.x, x*B.y - y*B.x);
+    }
+
+    double angleTo(const Tensor_xyz& o) const
+    {
+        Tensor_xyz c = this->cross(o);
+
+        double sin_phi = this->cross(o).size(); // |a x b|
+        double cos_phi = this->dot(o); // a . b
+
+        return std::atan2(sin_phi, cos_phi); // no need to divide by size of this and o, atan2 will give same result regardless
+    }
+
+    double angleToDegrees(const Tensor_xyz& o) const
+    {
+        return angleTo(o) * 180.0 / M_PI;
     }
 
     double dist(const Tensor_xyz& o) const {
