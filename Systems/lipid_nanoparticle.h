@@ -65,68 +65,39 @@ private:
     ///
     /// Detect Bleb
     ///
+    string help_detect_bleb()
+    {
+        stringstream ss;
+
+        ss << "*********************************************************" << endl;
+        ss << "System_type: Lipid_Nanoparticle" << endl;
+        ss << "System_execute: Detect_Bleb" << endl;
+        ss << "Input_type: lammps_full" << endl;
+        ss << "Load_file: data.start" << endl;
+        ss << "Trajectory_file: traj_1.xtc" << endl;
+        ss << "ID: 1" << endl;
+
+        return ss.str();
+    }
+
+    void validate_detect_bleb_inputs( Data& data )
+    {
+        data.in.param.validate_keyword("Load_file", "data.start");
+        data.in.param.validate_keyword("Trajectory_file", "traj_1.xtc");
+    }
+
     void detect_bleb(Data& data)
     {
+        cerr << "Lipid_Nanoparticle::detect_bleb" << endl;
+        validate_detect_bleb_inputs(data);
+
         Atoms& topo = data.coll_beads[  data.id_map[ data.in.p_int["ID"] ]  ];
-        Cell_List cell_list;
         Trajectory traj(data);
-        Tensor_xyz dir_a, dir_b;
-        unordered_set<int> lipid_set;
-        double cutoff = 2.0;
-        cutoff *= cutoff;
-        double angle_max = 150;
-        int paired_lipid_head_ID = -1;
 
         for(size_t ii=0; ii<traj.frame_count(); ++ii)
         {
             topo.set_frame(traj[ii]);
-            cell_list.init( data.in.sim_box ); // allocate memory
-            cell_list.add( topo ); // populate the cell list
-
-            for(size_t i=0; i<topo.size(); i+=4) // loop over lipis
-            {
-                angle_max = 150;
-                paired_lipid_head_ID = -1;
-                Atom& lip_head=topo[i];
-                Atom& lip_tail=topo[i+3];
-
-                if(lip_head.type == 4 && lip_tail.type == 6) // select helper lipids
-                {
-                    dir_a = get_dir(data, lip_head.pos, lip_tail.pos); // lip dir
-                    cell_list.set_neighbors_pbc( lip_tail.pos ); // particles close to tail
-                    for(size_t j=0; j<cell_list.neighbors.size(); ++j) // Loop over cells
-                    {
-                        for(size_t nei_ID : (*cell_list.neighbors[j]) ) // Loop over neigbor particles in those cells
-                        {
-                            if(nei_ID-3 >= 0 && topo[nei_ID].type == 6 && lip_tail.pos.distSQ_pbc(topo[nei_ID].pos, cell_list.pbc, cell_list.pbc_inv) < cutoff) // neighbor is last bead of tail
-                            {
-                                Atom& other_head=topo[nei_ID-3];
-                                Atom& other_tail=topo[nei_ID];
-                                dir_b = get_dir(data, other_head.pos, other_tail.pos);
-
-                                if(dir_a.angleToDegrees(dir_b) > angle_max) // find the neighbor with angle above limit, select only the most antiparalell lipid
-                                {
-                                    paired_lipid_head_ID = nei_ID-3;
-                                }
-                            }
-                        }
-                    }
-                }
-                if(paired_lipid_head_ID > -1)
-                {
-                    lipid_set.insert(i); // add lipids head
-                    lipid_set.insert(paired_lipid_head_ID);
-                }
-            }
-            cout << traj.step_traj[ii] << " " << lipid_set.size() << endl;
-            /*cout << "Lipid Head index list:" << endl;
-            for(int ID : lipid_set)
-            {
-                cout << ID << " ";
-            }
-            cout << endl;*/
-            lipid_set.clear();
-            cell_list.delete_all();
+            cout << traj.step_traj[ii] << " " << get_bilayer_lipid_head_set(data, topo).size() << endl;
         }
     }
 
@@ -326,19 +297,32 @@ private:
     void analyze_phase(Data& data)
     {
         validate_analyze_phase_inputs(data);
-        int sys_id = data.id_map[ data.in.p_int["ID"] ];
-        Atoms& topo = data.coll_beads[sys_id];
 
+        Atoms& topo = data.coll_beads[   data.id_map[ data.in.p_int["ID"] ]   ];
         Trajectory traj(data);
+        Cell_List cell_list;
 
+        //
         // lipid direction randomness - 1 max randomness, 0 total certainty (a Dirac delta distribution)
+        //
         Histogram_Spherical h_sp = analyze_dirs(data, topo, traj, data.in.p_int["Averaged_frame_count"]);
         h_sp.print(data.in.param["Histo_2D_dirs_outfile"]);
         h_sp.print_ordered_cumulative(data.in.param["Histo_1D_dirs_outfile"]);
         cout << "Enthropy " << h_sp.get_Normalized_Entropy(topo.size()/4);
 
+        //
         // Percolation dimensionality: 0-3
+        //
+        for(size_t ii=0; ii<traj.frame_count(); ++ii) // loop over trajectory
+        {
+            topo.set_frame(traj[ii]);
+            cell_list.init( data.in.sim_box ); // allocate memory
+            cell_list.add( topo ); // populate the cell list
 
+            // DFS
+
+            cell_list.delete_all();
+        }
 
         // Periodic dimensionality: 0-3
 
@@ -569,6 +553,71 @@ private:
         }
         h_rot.print();
         h_rot.print_ordered();*/
+    }
+
+
+    unordered_set<int> get_bilayer_lipid_head_set(Data& data, Atoms& topo)
+    {
+        unordered_set<int> lipid_head_set;
+        Cell_List cell_list;
+
+        int paired_lipid_head_ID = -1;
+        cell_list.init( data.in.sim_box ); // allocate memory
+        cell_list.add( topo ); // populate the cell list
+
+        for(size_t i=0; i<topo.size(); i+=4) // loop over lipis
+        {
+            paired_lipid_head_ID = get_most_antiparallel_lip_head_ID(data, topo, cell_list, i);
+
+            if(paired_lipid_head_ID > -1)
+            {
+                lipid_head_set.insert(i); // add lipids head, if i already in set, its ignored
+                lipid_head_set.insert(paired_lipid_head_ID);
+            }
+        }
+
+        cell_list.delete_all();
+
+        return lipid_head_set;
+    }
+
+    int get_most_antiparallel_lip_head_ID(Data& data, Atoms& topo, Cell_List& cell_list, size_t i)
+    {
+        double angle_max = 150;
+        double cutoff = 2.0;
+        cutoff *= cutoff;
+
+        int paired_lipid_head_ID = -1;
+        Atom& lip_head=topo[i];
+        Atom& lip_tail=topo[i+3];
+
+        Tensor_xyz dir_a, dir_b;
+
+        if(lip_head.type == 4 && lip_tail.type == 6) // select helper lipids
+        {
+            dir_a = get_dir(data, lip_head.pos, lip_tail.pos); // lip dir
+            cell_list.set_neighbors_pbc( lip_tail.pos ); // particles close to tail
+
+            for(size_t j=0; j<cell_list.neighbors.size(); ++j) // Loop over cells
+            {
+                for(size_t nei_ID : (*cell_list.neighbors[j]) ) // Loop over neigbor particles in those cells
+                {
+                    Atom& other_tail=topo[nei_ID];
+                    if(nei_ID-3 >= 0 && other_tail.type == 6 && lip_tail.pos.distSQ_pbc(other_tail.pos, cell_list.pbc, cell_list.pbc_inv) < cutoff) // neighbor is last bead of tail
+                    {
+                        Atom& other_head=topo[nei_ID-3];
+                        dir_b = get_dir(data, other_head.pos, other_tail.pos);
+
+                        if(dir_a.angleToDegrees(dir_b) > angle_max) // find the neighbor with angle above limit, select only the most antiparallel lipid
+                        {
+                            paired_lipid_head_ID = nei_ID-3;
+                        }
+                    }
+                }
+            }
+        }
+
+        return paired_lipid_head_ID;
     }
 };
 
