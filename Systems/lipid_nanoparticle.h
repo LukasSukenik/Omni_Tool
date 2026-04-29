@@ -294,11 +294,11 @@ private:
 
     void analyze_phase(Data& data)
     {
+        cerr << "Lipid_Nanoparticle::analyze_phase" << endl;
         validate_analyze_phase_inputs(data);
 
         Atoms& topo = data.coll_beads[   data.id_map[ data.in.p_int["ID"] ]   ];
         Trajectory traj(data);
-        Cell_List cell_list;
 
         //
         // lipid direction randomness - 1 max randomness, 0 total certainty (a Dirac delta distribution)
@@ -311,24 +311,48 @@ private:
         //
         // Percolation dimensionality: 0-3
         //
+        double cell_size_presumed = 1.2;
+        int number_of_cells = (data.in.sim_box.xhi - data.in.sim_box.xlo) / cell_size_presumed;
+        double cell_size = (data.in.sim_box.xhi - data.in.sim_box.xlo) / number_of_cells;
+        double inv_cell_size = 1.0 / cell_size;
+
+        Lattice_3D grid_3D( Tensor_xyz_integer(number_of_cells, number_of_cells, number_of_cells) );
+        Tensor_xyz box;
+
         for(size_t ii=0; ii<traj.frame_count(); ++ii) // loop over trajectory
         {
             topo.set_frame(traj[ii]);
-            cell_list.init( data.in.sim_box ); // allocate memory
-            cell_list.add( topo ); // populate the cell list
 
-            // DFS
+            //
+            // fill is_occupied
+            //
+            box = traj.box_traj[ii];
+            cell_size = box.x / number_of_cells;
+            inv_cell_size = number_of_cells / box.x; // box.x == box.y allways (enforced by lammps settings)
 
-            cell_list.delete_all();
+            grid_3D.reset_occupied();
+            for(Atom& a : topo)
+            {
+                if(a.type == 6)
+                {
+                    grid_3D.add_particle(a.pos, box, number_of_cells, inv_cell_size); // occupy cells
+                }
+            }
+
+            //
+            // calc route -X->X, -Y->Y, -Z->Z by DFS graph algo
+            //
+
         }
 
         // Periodic dimensionality: 0-3
 
         // Amount of Water pockets
 
-
         cout << endl;
     }
+
+
 
     ///
     /// Print Last Frame

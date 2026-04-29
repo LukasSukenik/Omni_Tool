@@ -27,7 +27,6 @@ public:
         stringstream ss;
 
         ss << help_cluster_analysis() << endl;
-        ss << help_calc_Z_Dist() << endl;
         ss << help_is_Pore() << endl;
 
         return ss.str();
@@ -38,7 +37,6 @@ public:
         data.in.param.validate_keyword("System_execute", "Copy_Z | Calc_Z_Dist | Calc_Pore | Cluster_Analysis");
         if(data.in.param["System_execute"].compare("Copy_Z") == 0)           { copy_Z(data); }
         if(data.in.param["System_execute"].compare("Cluster_Analysis") == 0) { cluster_analysis(data); }
-        if(data.in.param["System_execute"].compare("Calc_Z_Dist") == 0)      { calc_Z_Dist(data); }
         if(data.in.param["System_execute"].compare("Calc_Pore") == 0)        { is_Pore(data); }
     }
 
@@ -57,89 +55,6 @@ public:
     }
 
 private:
-    ///
-    /// calc_Z_Dist
-    ///
-    string help_calc_Z_Dist()
-    {
-        stringstream ss;
-
-        ss << "***  Calc Dist of two parallel flat membranes - STUB  ***" << endl;
-        ss << "System_type: Flat_Membrane" << endl;
-        ss << "System_execute: Calc_Z_Dist" << endl;
-        ss << "Input_type: lammps_full" << endl;
-        ss << "Load_file: data.start" << endl;
-        ss << "Trajectory_file: traj_1.xtc" << endl;
-        ss << "ID: 1" << endl;
-
-        return ss.str();
-    }
-
-    void validate_calc_Z_Dist( Data& data )
-    {
-        data.in.param.validate_keyword("Input_type", "lammps_full");
-        data.in.param.validate_keyword("Load_file", "data.start");
-        data.in.param.validate_keyword("Trajectory_file", "traj_1.xtc");
-    }
-
-    void calc_Z_Dist(Data& data)
-    {
-        validate_calc_Z_Dist(data);
-        cerr << "Calc Z Dist:" << endl;
-
-        int sys_id = data.id_map[ data.in.p_int["ID"] ];
-        Atoms& mem = data.coll_beads[sys_id];
-
-        //
-        // Calculate distance between 2 peaks of histogram in Z axis
-        //
-        // Histogram is an array of integers initialized to 0, use vector class
-        // - https://www.w3schools.com/cpp/cpp_arrays.asp
-        // - https://www.w3schools.com/cpp/cpp_for_loop.asp
-        // - https://www.w3schools.com/cpp/cpp_operators.asp
-        // - https://www.w3schools.com/cpp/cpp_vectors.asp
-        //
-        // The for loop over particles to determine their Z coordinate and increment the corresponding element in the histogram
-        //
-        // Based on the histogram, determine the distance of the 2 membranes - whether they have stalk or not
-        // - dont bother with periodic boundary conditions at first, use the pulling simulations which do not have moment across the periodic boundary
-        //
-        // Take advantage of LLM, chatGPT, Claude are great for this
-        // - but the most important skill here is learning algorithmic thinking and procedural decomposition
-        // -- i.e. thinking like a computer
-        // --- This will realy help later down the line when you will be analyzing your simulations
-        // ---- you don't want to be the guy who manually types in indexes for energy calculations in gromacs for every simulation
-        //
-        vector<int> histogram;
-        Trajectory traj(data.in.param["Trajectory_file"]);
-
-        for(int i=0; i<traj.frame_count(); ++i) // looping over trajectory frames
-        {
-            mem.set_frame(traj[i]);
-        }
-        // or you can access the trajectory directly
-        cerr << "frame 0, particle 1: " << traj[0][1].x << endl;
-
-        int atom_id = 0;
-        cerr << "accessing atom z coordinate - pos = position: " << mem[atom_id].pos.z << endl;
-        cerr << "Total atom count: " << mem.size() << " or " << traj[atom_id].size() << endl;
-
-        //
-        // You need a binning function for that
-        // - convert continuous Z coordinate of floating point format to discrete integers value for histogram element index
-        // - look up floor function,
-        //
-        int a = (int) floor(0.57);
-        cerr << "a: " << a << endl;
-
-        //
-        // Now we just determine the distance based on the histogram
-        //
-
-        cerr << endl;
-    }
-
-
     ///
     /// cluster_analysis
     ///
@@ -171,11 +86,10 @@ private:
 
     void cluster_analysis(Data& data)
     {
-        validate_cluster_analysis(data);
         cerr << "Flat_Membrane::cluster_analysis" << endl;
+        validate_cluster_analysis(data);
 
-        int sys_id = data.id_map[ data.in.p_int["ID"] ];
-        Atoms& mem = data.coll_beads[sys_id];
+        Atoms& topo = data.coll_beads[   data.id_map[ data.in.p_int["ID"] ]   ];
 
         for(int type : data.in.p_vec_int["Atom_type"])
         {
@@ -183,13 +97,13 @@ private:
         }
         cerr << " | cutoff: " << data.in.p_float["Cluster_cutoff"] << endl;;
 
-        Clusters clusters(mem, data.in.p_vec_int["Atom_type"]); // list of particle indexes
+        Clusters clusters(topo, data.in.p_vec_int["Atom_type"]); // list of particle indexes
         Trajectory traj(data.in.param["Trajectory_file"]);
 
-        for(int i=0; i<traj.frame_count(); ++i)
+        for(size_t i=0; i<traj.frame_count(); ++i)
         {
-            mem.set_frame(traj[i]);
-            cout << i << " " << clusters.analyze(mem, data.in.sim_box, data.in.p_float["Cluster_cutoff"]) << endl;
+            topo.set_frame(traj[i]);
+            cout << i << " " << clusters.analyze(topo, data.in.sim_box, data.in.p_float["Cluster_cutoff"]) << endl;
             clusters.clear();
         }
     }
@@ -235,11 +149,10 @@ private:
 
     void is_Pore(Data& data)
     {
-        validate_is_Pore_inputs(data);
-        int sys_id = data.id_map[ data.in.p_int["ID"] ];
-        Atoms& mem = data.coll_beads[sys_id];
-
         cerr << "Flat_Membrane::is_Pore" << endl;
+        validate_is_Pore_inputs(data);
+
+        Atoms& topo = data.coll_beads[   data.id_map[ data.in.p_int["ID"] ]   ];
         cerr << "- cell size = " << data.in.p_float["Cell_size"] << endl;
         cerr << "- bead size = " << data.in.bead_size << endl;
 
@@ -265,13 +178,13 @@ private:
 
         for(int i=0; i<traj.frame_count(); ++i)
         {
-            mem.set_frame(traj[i]);
+            topo.set_frame(traj[i]);
             box = traj.box_traj[i];
             cell_size = box.x / number_of_cells;
             inv_cell_size = number_of_cells / box.x; // box.x == box.y allways (enforced by lammps settings)
 
             std::memset(lattice, false, sizeof(lattice)); // set all elements of latice to false -> false == no particle in cell
-            for(Atom a : mem)
+            for(Atom& a : topo)
             {
                 for(int type : data.in.p_vec_int["Atom_type"])
                 {

@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <cmath>
+#include <stack>
 
 #include "atom.h"
 #include "sim_box.h"
@@ -13,7 +14,109 @@ class Tensor_xyz_integer
 {
 public:
     Tensor_xyz_integer(){}
+    Tensor_xyz_integer(int x, int y, int z) : x(x), y(y), z(z) {}
     int x,y,z;
+};
+
+class Lattice_3D
+{
+public:
+    vector<vector<vector<bool>>> occupied;
+    vector<vector<vector<bool>>> visited;
+
+    const vector<Tensor_xyz_integer> directions = { {1,0,0},{-1,0,0},{0,1,0},{0,-1,0},{0,0,1},{0,0,-1} };
+
+    Lattice_3D(Tensor_xyz_integer cell_count)
+    {
+        occupied.resize(cell_count.x, vector<vector<bool>>(cell_count.y, vector<bool>(cell_count.z, false)));
+        visited.resize(cell_count.x, vector<vector<bool>>(cell_count.y, vector<bool>(cell_count.z, false)));
+    }
+
+    void set_Occupied(Tensor_xyz_integer i, bool value = true)
+    {
+        if(in_Bounds(i)) {
+            occupied[i.x][i.y][i.z] = value;
+        }
+    }
+
+    void reset_occupied()
+    {
+        set_all(occupied, false);
+    }
+
+    void reset_visited()
+    {
+        set_all(visited, false);
+    }
+
+    void add_particle(Tensor_xyz& pos, Tensor_xyz& box, int number_of_cells, double inv_cell_size)
+    {
+        Tensor_xyz_integer i;
+        i.x = binning_fce(pos.x, box.x, number_of_cells, inv_cell_size); // index of cell, where particle COM hit
+        i.y = binning_fce(pos.y, box.x, number_of_cells, inv_cell_size);
+        i.z = binning_fce(pos.z, box.x, number_of_cells, inv_cell_size);
+        set_Occupied(i);
+    }
+
+    void dfs(Tensor_xyz_integer start)
+    {
+        if(!in_Bounds(start))                   { cout << "Start cell is out of bounds" << endl; return; }
+        if(occupied[start.x][start.y][start.z]) { cout << "Start cell is occupied" << endl; return; }
+        reset_visited();
+
+        stack<Tensor_xyz_integer> st;
+        st.push(start);
+        visited[start.x][start.y][start.z] = true;
+
+        while(!st.empty()) {
+            Tensor_xyz_integer current = st.top();
+            st.pop();
+
+            for(const Tensor_xyz_integer& dir : directions)
+            {
+                Tensor_xyz_integer next{current.x + dir.x, current.y + dir.y, current.z + dir.z};
+
+                if( can_Visit(next) )
+                {
+                    visited[next.x][next.y][next.z] = true;
+                    st.push(next);
+                }
+            }
+        }
+    }
+
+private:
+    bool in_Bounds(Tensor_xyz_integer i) const
+    {
+        return i.x >= 0 && i.x < occupied.size() && i.y >= 0 && i.y < occupied[0].size() && i.z >= 0 && i.z < occupied[0][0].size();
+    }
+
+    bool can_Visit(Tensor_xyz_integer i) const
+    {
+        return in_Bounds(i) && !occupied[i.x][i.y][i.z] && !visited[i.x][i.y][i.z];
+    }
+
+    //
+    // values are distributed from -box_size/2 to box_size/2
+    //
+    inline int binning_fce(double value, double box_size, int number_of_cells, double inv_cell_size)
+    {
+        if(value < -0.5*box_size) return 0;
+        if(value >= 0.5*box_size) return number_of_cells - 1;
+
+        return (value + 0.5*box_size) * inv_cell_size; // value / cell_size, where cell_size = box/number_of_cells
+    }
+
+    void set_all(vector<vector<vector<bool>>>& lattice, bool value=false)
+    {
+        for(auto& plane : lattice)
+        {
+            for(auto& row : plane)
+            {
+                fill(row.begin(), row.end(), value);
+            }
+        }
+    }
 };
 
 /**
