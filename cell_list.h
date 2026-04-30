@@ -7,14 +7,15 @@
 
 #include "atom.h"
 #include "sim_box.h"
+#include "data.h"
 
 using namespace std;
 
-class Tensor_xyz_integer
+class Tensor_xyz_int
 {
 public:
-    Tensor_xyz_integer(){}
-    Tensor_xyz_integer(int x, int y, int z) : x(x), y(y), z(z) {}
+    Tensor_xyz_int(){}
+    Tensor_xyz_int(int x, int y, int z) : x(x), y(y), z(z) {}
     int x,y,z;
 };
 
@@ -23,16 +24,39 @@ class Lattice_3D
 public:
     vector<vector<vector<bool>>> occupied;
     vector<vector<vector<bool>>> visited;
+    Tensor_xyz box;
+    Tensor_xyz_int cell_count;
+    double cell_size;
+    double inv_cell_size;
 
-    const vector<Tensor_xyz_integer> directions = { {1,0,0},{-1,0,0},{0,1,0},{0,-1,0},{0,0,1},{0,0,-1} };
+    const vector<Tensor_xyz_int> directions = { {1,0,0},{-1,0,0},{0,1,0},{0,-1,0},{0,0,1},{0,0,-1} };
 
-    Lattice_3D(Tensor_xyz_integer cell_count)
+    Lattice_3D(){}
+
+    Lattice_3D(Data& data, double cell_size_presumed = 1.2)
     {
+        box.x = data.in.sim_box.xhi - data.in.sim_box.xlo;
+        box.y = data.in.sim_box.yhi - data.in.sim_box.ylo;
+        box.z = data.in.sim_box.zhi - data.in.sim_box.zlo;
+
+        if(box.x != box.y || box.x != box.z)
+        {
+            cerr << "Lattice_3D::Lattice_3D - Non-cube box not implemented " << box << endl;
+            exit(1);
+        }
+
+        cell_count.x = box.x / cell_size_presumed;
+        cell_count.y = box.y / cell_size_presumed;
+        cell_count.z = box.z / cell_size_presumed;
+
+        cell_size = (data.in.sim_box.xhi - data.in.sim_box.xlo) / cell_count.x;
+        inv_cell_size = 1.0 / cell_size;
+
         occupied.resize(cell_count.x, vector<vector<bool>>(cell_count.y, vector<bool>(cell_count.z, false)));
-        visited.resize(cell_count.x, vector<vector<bool>>(cell_count.y, vector<bool>(cell_count.z, false)));
+        visited.resize( cell_count.x, vector<vector<bool>>(cell_count.y, vector<bool>(cell_count.z, false)));
     }
 
-    void set_Occupied(Tensor_xyz_integer i, bool value = true)
+    void set_Occupied(Tensor_xyz_int i, bool value = true)
     {
         if(in_Bounds(i)) {
             occupied[i.x][i.y][i.z] = value;
@@ -49,49 +73,88 @@ public:
         set_all(visited, false);
     }
 
-    void add_particle(Tensor_xyz& pos, Tensor_xyz& box, int number_of_cells, double inv_cell_size)
+    void add_particles(Atoms& topo)
     {
-        Tensor_xyz_integer i;
-        i.x = binning_fce(pos.x, box.x, number_of_cells, inv_cell_size); // index of cell, where particle COM hit
-        i.y = binning_fce(pos.y, box.x, number_of_cells, inv_cell_size);
-        i.z = binning_fce(pos.z, box.x, number_of_cells, inv_cell_size);
+        reset_occupied();
+        for(Atom& a : topo)
+        {
+            if(a.type != 1) // without lipid heads
+            {
+                add_particle(a.pos); // occupy cells
+            }
+        }
+    }
+
+    void add_particle(Tensor_xyz& pos)
+    {
+        Tensor_xyz_int i;
+        i.x = binning_fce(pos.x, box.x, cell_count.x, inv_cell_size); // index of cell, where particle COM hit
+        i.y = binning_fce(pos.y, box.x, cell_count.y, inv_cell_size);
+        i.z = binning_fce(pos.z, box.x, cell_count.z, inv_cell_size);
         set_Occupied(i);
     }
 
-    void dfs(Tensor_xyz_integer start)
+    stack<Tensor_xyz_int> set_start_plane(Tensor_xyz_int dim)
     {
-        if(!in_Bounds(start))                   { cout << "Start cell is out of bounds" << endl; return; }
-        if(occupied[start.x][start.y][start.z]) { cout << "Start cell is occupied" << endl; return; }
+        stack<Tensor_xyz_int> st;
         reset_visited();
 
-        stack<Tensor_xyz_integer> st;
-        st.push(start);
-        visited[start.x][start.y][start.z] = true;
+        for(size_t x=0; x<visited.size(); ++x)
+        {
+            for(size_t y=0; y<visited[x].size(); ++y)
+            {
+                for(size_t z=0; z<visited[x][y].size(); ++z)
+                {
+                    if( !occupied[x][y][z] && ((x==0 && dim.x==1) || (y==0 && dim.y==1) || (z==0 && dim.z==1)) )
+                    {
+                        visited[x][y][z] = true;
+                        st.push( Tensor_xyz_int(x,y,z) );
+                    }
+                }
+            }
+        }
+        return st;
+    }
 
-        while(!st.empty()) {
-            Tensor_xyz_integer current = st.top();
+    /**
+     * @brief is_percolation - dfs algo
+     * @param st
+     * return -> 0 no percolation, 1 == percolation
+     */
+    int is_percolation(stack<Tensor_xyz_int> st, Tensor_xyz_int dim)
+    {
+        while(!st.empty())
+        {
+            Tensor_xyz_int current = st.top();
             st.pop();
 
-            for(const Tensor_xyz_integer& dir : directions)
+            for(const Tensor_xyz_int& dir : directions)
             {
-                Tensor_xyz_integer next{current.x + dir.x, current.y + dir.y, current.z + dir.z};
+                Tensor_xyz_int next{current.x + dir.x, current.y + dir.y, current.z + dir.z};
 
                 if( can_Visit(next) )
                 {
                     visited[next.x][next.y][next.z] = true;
                     st.push(next);
+                    if( ((next.x == cell_count.x-1 && dim.x==1) ||
+                         (next.y == cell_count.y-1 && dim.y==1) ||
+                         (next.z == cell_count.z-1 && dim.z==1)) )
+                    {
+                        return 1;
+                    }
                 }
             }
         }
+        return 0;
     }
 
 private:
-    bool in_Bounds(Tensor_xyz_integer i) const
+    bool in_Bounds(Tensor_xyz_int i) const
     {
         return i.x >= 0 && i.x < occupied.size() && i.y >= 0 && i.y < occupied[0].size() && i.z >= 0 && i.z < occupied[0][0].size();
     }
 
-    bool can_Visit(Tensor_xyz_integer i) const
+    bool can_Visit(Tensor_xyz_int i) const
     {
         return in_Bounds(i) && !occupied[i.x][i.y][i.z] && !visited[i.x][i.y][i.z];
     }
@@ -119,6 +182,9 @@ private:
     }
 };
 
+
+
+
 /**
  * @brief The Cell_List class
  * Usage example in Lipid::populate()
@@ -138,7 +204,7 @@ class Cell_List : public vector<vector<vector< vector<int >* >>> // 3D spatial i
 public:
     Cell_List(){}
 
-    Tensor_xyz_integer number_of_cells;
+    Tensor_xyz_int number_of_cells;
     Tensor_xyz cell_size; // for lipids at leat 4.0
     Tensor_xyz pbc;
     Tensor_xyz pbc_inv;

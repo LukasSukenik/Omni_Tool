@@ -33,6 +33,7 @@ public:
         ss << help_cluster_analysis() << endl;
         ss << help_cluster_rdf() << endl;
         ss << help_detect_bleb() << endl;
+        ss << help_percolation() << endl;
 
         ss << help_optional() << endl;
 
@@ -50,6 +51,7 @@ public:
         if(data.in.param["System_execute"].compare("Cluster_RDF") == 0) { cluster_rdf(data); }
         if(data.in.param["System_execute"].compare("Cluster_Surf") == 0) { cluster_surf(data); }
         if(data.in.param["System_execute"].compare("Detect_Bleb") == 0) { detect_bleb(data); }
+        if(data.in.param["System_execute"].compare("Percolation_Dim") == 0) { percolation(data); }
     }
 
 private:
@@ -100,6 +102,50 @@ private:
         {
             topo.set_frame(traj[ii]);
             cout << traj.step_traj[ii] << " " << get_bilayer_lipid_head_set(data, topo).size() << endl;
+        }
+    }
+
+    ///
+    /// Percolation dimensionality
+    ///
+    string help_percolation()
+    {
+        stringstream ss;
+
+        ss << "*********************************************************" << endl;
+        ss << "System_type: Lipid_Nanoparticle" << endl;
+        ss << "System_execute: Percolation_Dim" << endl;
+        ss << "Input_type: lammps_full" << endl;
+        ss << "Load_file: data.start" << endl;
+        ss << "Trajectory_file: traj_1.xtc" << endl;
+        ss << "Only_last_frame:" << endl;
+        ss << "ID: 1" << endl;
+
+        return ss.str();
+    }
+
+    void validate_percolation_inputs( Data& data )
+    {
+        data.in.param.validate_keyword("Load_file",             "data.start");
+        data.in.param.validate_keyword("Trajectory_file",       "traj_1.xtc");
+    }
+
+    void percolation(Data& data)
+    {
+        cerr << "Lipid_Nanoparticle::percolation" << endl;
+        validate_percolation_inputs(data);
+
+        Atoms& topo = data.coll_beads[   data.id_map[ data.in.p_int["ID"] ]   ];
+        Trajectory traj(data);
+        Lattice_3D grid_3D(data, 1.2);
+
+        for(size_t ii=0; ii<traj.frame_count(); ++ii) // loop over trajectory
+        {
+            topo.set_frame(traj[ii]);
+            grid_3D.add_particles(topo);
+            cout << "percolation_dim " << grid_3D.is_percolation( grid_3D.set_start_plane( Tensor_xyz_int(1,0,0) ), Tensor_xyz_int(1,0,0) )+
+                                              grid_3D.is_percolation( grid_3D.set_start_plane( Tensor_xyz_int(0,1,0) ), Tensor_xyz_int(0,1,0) )+
+                                              grid_3D.is_percolation( grid_3D.set_start_plane( Tensor_xyz_int(0,0,1) ), Tensor_xyz_int(0,0,1) ) << endl;
         }
     }
 
@@ -303,47 +349,10 @@ private:
         //
         // lipid direction randomness - 1 max randomness, 0 total certainty (a Dirac delta distribution)
         //
-        Histogram_Spherical h_sp = analyze_dirs(data, topo, traj, data.in.p_int["Averaged_frame_count"]);
+        /*Histogram_Spherical h_sp = analyze_dirs(data, topo, traj, data.in.p_int["Averaged_frame_count"]);
         h_sp.print(data.in.param["Histo_2D_dirs_outfile"]);
         h_sp.print_ordered_cumulative(data.in.param["Histo_1D_dirs_outfile"]);
-        cout << "Enthropy " << h_sp.get_Normalized_Entropy(topo.size()/4);
-
-        //
-        // Percolation dimensionality: 0-3
-        //
-        double cell_size_presumed = 1.2;
-        int number_of_cells = (data.in.sim_box.xhi - data.in.sim_box.xlo) / cell_size_presumed;
-        double cell_size = (data.in.sim_box.xhi - data.in.sim_box.xlo) / number_of_cells;
-        double inv_cell_size = 1.0 / cell_size;
-
-        Lattice_3D grid_3D( Tensor_xyz_integer(number_of_cells, number_of_cells, number_of_cells) );
-        Tensor_xyz box;
-
-        for(size_t ii=0; ii<traj.frame_count(); ++ii) // loop over trajectory
-        {
-            topo.set_frame(traj[ii]);
-
-            //
-            // fill is_occupied
-            //
-            box = traj.box_traj[ii];
-            cell_size = box.x / number_of_cells;
-            inv_cell_size = number_of_cells / box.x; // box.x == box.y allways (enforced by lammps settings)
-
-            grid_3D.reset_occupied();
-            for(Atom& a : topo)
-            {
-                if(a.type == 6)
-                {
-                    grid_3D.add_particle(a.pos, box, number_of_cells, inv_cell_size); // occupy cells
-                }
-            }
-
-            //
-            // calc route -X->X, -Y->Y, -Z->Z by DFS graph algo
-            //
-
-        }
+        cout << "Enthropy " << h_sp.get_Normalized_Entropy(topo.size()/4);*/
 
         // Periodic dimensionality: 0-3
 
@@ -351,8 +360,6 @@ private:
 
         cout << endl;
     }
-
-
 
     ///
     /// Print Last Frame
