@@ -20,6 +20,8 @@ public:
         stringstream ss;
 
         //ss << help_fix_gcmc_xtc() << endl;
+        ss << help_traj_to_pdb() << endl;
+
 
         return ss.str();
     }
@@ -28,12 +30,50 @@ public:
     {
         data.in.param.validate_keyword("System_execute", "");
 
-
         // Fixing a gcmc xtc is not possible, xtc format cannot be written with variable per frame natoms
         //if(data.in.param["System_execute"].compare("Fix_GCMC_xtc") == 0) { fix_gcmc_xtc(data); }
+        if(data.in.param["System_execute"].compare("Traj_to_pdb") == 0) { traj_to_pdb(data); }
     }
 
 private:
+    ///
+    /// Traj last frame to pdb
+    ///
+    string help_traj_to_pdb()
+    {
+        stringstream ss;
+
+        ss << "System_type: Generic" << endl;
+        ss << "System_execute: Traj_to_pdb" << endl;
+        ss << "Input_type: lammps_full" << endl;
+        ss << "Load_file: data.start" << endl;
+        ss << "Trajectory_file: traj_1.xtc" << endl;
+        ss << "Only_last_frame:" << endl;
+        ss << "Output_type: pdb" << endl;
+        ss << "ID: 1" << endl;
+
+        return ss.str();
+    }
+
+    void validate_traj_to_pdb_inputs( Data& data )
+    {
+        data.in.param.validate_keyword("Load_file", "data.start");
+        data.in.param.validate_keyword("Trajectory_file", "traj_1.xtc");
+    }
+
+    void traj_to_pdb(Data& data)
+    {
+        cerr << "Generic::traj_to_pdb" << endl;
+        validate_traj_to_pdb_inputs(data);
+
+        Trajectory traj(data);
+        Atoms& topo = data.coll_beads[  data.id_map[ data.in.p_int["ID"] ]  ];
+        topo.set_frame(traj[0]);
+    }
+
+    ///
+    /// Fix GCMC trajectory -> cant be done for xtc
+    ///
     string help_fix_gcmc_xtc()
     {
         stringstream ss;
