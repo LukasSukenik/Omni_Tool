@@ -211,10 +211,22 @@ public:
 
     void set_frame(vector<Tensor_xyz>& frame)
     {
-        for(unsigned int i=0; i<frame.size(); ++i)
+        for(size_t i=0; i<frame.size(); ++i)
         {
             (*this)[i].pos = frame[i];
         }
+    }
+
+    vector<Tensor_xyz> get_all_pos()
+    {
+        vector<Tensor_xyz> poss(size());
+
+        for(size_t i=0; i<size(); ++i)
+        {
+            poss[i] = (*this)[i].pos;
+        }
+
+        return poss;
     }
 
     //
