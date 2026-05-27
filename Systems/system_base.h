@@ -38,4 +38,14 @@ public:
     }
 };
 
+class System_Method
+{
+public:
+    System_Method(){}
+
+    virtual string help() = 0;
+    virtual void validate(Data& data) = 0;
+    virtual void execute(Data& data) = 0;
+};
+
 #endif // SYSTEM_BASE_H

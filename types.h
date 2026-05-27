@@ -26,11 +26,10 @@ public:
 };
 
 
-
-
-ostream& operator<<(ostream& os, const vector<int>& values)
+template <typename T>
+ostream& operator<<(ostream& os, const vector<T>& values)
 {
-    for(const auto& val : values)
+    for (const auto& val : values)
     {
         os << val << ' ';
     }

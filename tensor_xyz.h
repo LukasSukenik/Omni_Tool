@@ -72,6 +72,17 @@ public:
         return true;
     }
 
+    bool within(const Tensor_xyz& o, const Tensor_xyz& within)
+    {
+        if(!(x < o.x+within.x && x > o.x - within.x))
+            return false;
+        if(!(y < o.y+within.y && y > o.y - within.y))
+            return false;
+        if(!(z < o.z+within.z && z > o.z - within.z))
+            return false;
+        return true;
+    }
+
     /**
      * @brief dot - a . b = |a| |b| cos (phi)
      * @param o

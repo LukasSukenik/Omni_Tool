@@ -156,17 +156,17 @@ public:
         //
         cout << "\nMasses\n\n";
 
-        if(!in.p_vec_int.contains("Atom_mass") && num_a_types != in.p_vec_int["Atom_type"].size())
+        if(!in.p_vec_float.contains("Atom_mass") && num_a_types != in.p_vec_int["Atom_type"].size())
         {
             for(int i=0; i<num_a_types; ++i )
                 cout << i+1 << " mass_" << i+1 << "\n";
         }
         else
         {
-            if(in.p_vec_int["Atom_type"].size() == in.p_vec_int["Atom_mass"].size()) // this is only implemented for single file generation, if 2 files are used then this will be broken, working for flat membrane
+            if(in.p_vec_int["Atom_type"].size() == in.p_vec_float["Atom_mass"].size()) // this is only implemented for single file generation, if 2 files are used then this will be broken, working for flat membrane
             {
-                for(size_t i=0; i<in.p_vec_int["Atom_mass"].size(); ++i)
-                    cout << i+1 << " " << in.p_vec_int["Atom_mass"][i] << "\n";
+                for(size_t i=0; i<in.p_vec_float["Atom_mass"].size(); ++i)
+                    cout << i+1 << " " << in.p_vec_float["Atom_mass"][i] << "\n";
             }
         }
 

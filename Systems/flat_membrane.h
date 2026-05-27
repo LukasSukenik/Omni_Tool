@@ -12,53 +12,12 @@
 
 
 
-
-
-class Flat_Membrane : public System_Base, public Particle
+class Cluster_Analysis : public System_Method
 {
 public:
-    inline static const string keyword = "Flat_Membrane";
-    const string name = "Flat_Membrane";
-
-    Flat_Membrane() : System_Base("Flat_Membrane"), Particle("Flat_Membrane")  {}
+    Cluster_Analysis() : System_Method() {}
 
     string help()
-    {
-        stringstream ss;
-
-        ss << help_cluster_analysis() << endl;
-        ss << help_is_Pore() << endl;
-
-        return ss.str();
-    }
-
-    void execute(Data& data)
-    {
-        data.in.param.validate_keyword("System_execute", "Copy_Z | Calc_Z_Dist | Calc_Pore | Cluster_Analysis");
-        if(data.in.param["System_execute"].compare("Copy_Z") == 0)           { copy_Z(data); }
-        if(data.in.param["System_execute"].compare("Cluster_Analysis") == 0) { cluster_analysis(data); }
-        if(data.in.param["System_execute"].compare("Calc_Pore") == 0)        { is_Pore(data); }
-    }
-
-
-    void generate( Data& data )
-    {
-        Lipids membrane = gen_flat_membrane(data.in.p_int["Num_lipids"], data.in.p_int["Number_of_receptors"], data.in.p_int["Mol_tag"]);
-
-        for(Lipid& lip : membrane)
-        {
-            beads.insert(beads.end(), lip.part.begin(), lip.part.end());
-            bonds.insert(bonds.end(), lip.bond.begin(), lip.bond.end());
-        }
-
-        cerr << "suggesting box size: " << - 0.5*(sqrt(data.in.p_int["Num_lipids"]/2)+1) << " to " << 0.5*(sqrt(data.in.p_int["Num_lipids"]/2)+1) << endl;
-    }
-
-private:
-    ///
-    /// cluster_analysis
-    ///
-    string help_cluster_analysis()
     {
         stringstream ss;
 
@@ -75,7 +34,7 @@ private:
         return ss.str();
     }
 
-    void validate_cluster_analysis( Data& data )
+    void validate(Data& data)
     {
         data.in.param.validate_keyword("Input_type", "lammps_full");
         data.in.param.validate_keyword("Load_file", "data.start");
@@ -84,19 +43,12 @@ private:
         data.in.p_float.validate_keyword("Cluster_cutoff", "2.6");
     }
 
-    void cluster_analysis(Data& data)
+    void execute(Data& data)
     {
         cerr << "Flat_Membrane::cluster_analysis" << endl;
-        validate_cluster_analysis(data);
+        validate(data);
 
         Atoms& topo = data.coll_beads[   data.id_map[ data.in.p_int["ID"] ]   ];
-
-        for(int type : data.in.p_vec_int["Atom_type"])
-        {
-            cerr << type << ", ";
-        }
-        cerr << " | cutoff: " << data.in.p_float["Cluster_cutoff"] << endl;;
-
         Clusters clusters(topo, data.in.p_vec_int["Atom_type"]); // list of particle indexes
         Trajectory traj(data.in.param["Trajectory_file"]);
 
@@ -107,12 +59,17 @@ private:
             clusters.clear();
         }
     }
+};
 
 
-    ///
-    /// is_Pore
-    ///
-    string help_is_Pore()
+
+
+class Detect_Pore : public System_Method
+{
+public:
+    Detect_Pore() : System_Method() {}
+
+    string help()
     {
         stringstream ss;
 
@@ -128,8 +85,7 @@ private:
         return ss.str();
     }
 
-
-    void validate_is_Pore_inputs(Data& data)
+    void validate(Data& data)
     {
         bool is_correct = true;
         data.in.p_float.validate_keyword("Cell_size", "0.15");
@@ -147,10 +103,10 @@ private:
         }
     }
 
-    void is_Pore(Data& data)
+    void execute(Data& data)
     {
         cerr << "Flat_Membrane::is_Pore" << endl;
-        validate_is_Pore_inputs(data);
+        validate(data);
 
         Atoms& topo = data.coll_beads[   data.id_map[ data.in.p_int["ID"] ]   ];
         cerr << "- cell size = " << data.in.p_float["Cell_size"] << endl;
@@ -278,17 +234,103 @@ private:
     {
         return (index + count) % count; // index can be -1, or >count
     }
+};
 
 
-    Lipids gen_flat_membrane(int num_lipids, int num_receptors, int mol_tag)
+
+
+class Flat_Membrane : public System_Base, public Particle
+{
+public:
+    inline static const string keyword = "Flat_Membrane";
+    const string name = "Flat_Membrane";
+
+    Flat_Membrane() : System_Base("Flat_Membrane"), Particle("Flat_Membrane")  {}
+
+    string help()
     {
+        stringstream ss;
+
+        ss << cluster_analysis.help() << endl;
+        ss << detect_pore.help() << endl;
+
+        return ss.str();
+    }
+
+    void execute(Data& data)
+    {
+        data.in.param.validate_keyword("System_execute", "Copy_Z | Calc_Z_Dist | Calc_Pore | Cluster_Analysis");
+        if(data.in.param["System_execute"].compare("Copy_Z") == 0)           { copy_Z(data); }
+        if(data.in.param["System_execute"].compare("Cluster_Analysis") == 0) { cluster_analysis.execute(data); }
+        if(data.in.param["System_execute"].compare("Calc_Pore") == 0)        { detect_pore.execute(data); }
+    }
+
+
+    void generate( Data& data )
+    {
+        Lipids membrane = gen_flat_membrane(data);
+
+        for(Lipid& lip : membrane)
+        {
+            beads.insert(beads.end(), lip.part.begin(), lip.part.end());
+            bonds.insert(bonds.end(), lip.bond.begin(), lip.bond.end());
+        }
+
+        cerr << "suggesting box size: " << - 0.5*(sqrt(data.in.p_int["Num_lipids"]/2)+1) << " to " << 0.5*(sqrt(data.in.p_int["Num_lipids"]/2)+1) << endl;
+    }
+
+private:
+    Cluster_Analysis cluster_analysis;
+    Detect_Pore detect_pore;
+
+    ///
+    ///
+    ///
+    string help_gen_flat_membrane()
+    {
+        stringstream ss;
+
+        ss << "*********************************************************" << endl;
+        ss << "Particle_type: Flat_Membrane" << endl;
+        ss << "Num_lipids: 100" << endl;
+        ss << "Number_of_receptors: 50" << endl;
+        ss << "Mol_tag: 1" << endl;
+        ss << "Leaflet_type: Upper Lower" << endl;
+        ss << "ID: 1" << endl;
+
+        return ss.str();
+    }
+
+    void validate_gen_flat_membrane_input(Data& data)
+    {
+        data.in.p_int.validate_keyword("Num_lipids", "1000");
+        data.in.p_int.validate_keyword("Number_of_receptors", "500");
+        data.in.p_int.validate_keyword("Mol_tag", "1");
+        data.in.p_int.validate_keyword("Receptor_type", "7");
+        data.in.p_vec_string.validate_keyword("Leaflet_type", "Upper Lower");
+        data.in.p_int.validate_keyword("ID", "1");
+    }
+
+    Lipids gen_flat_membrane(Data& data)
+    {
+        validate_gen_flat_membrane_input(data);
+
+        int num_lipids = data.in.p_int["Num_lipids"];
+        int num_receptors = data.in.p_int["Number_of_receptors"];
+        int mol_tag = data.in.p_int["Mol_tag"];
+        size_t size=0;
+        if(!data.coll_beads.empty())
+        {
+            Atoms& topo = data.coll_beads[   data.id_map[ data.in.p_int["ID"] ]   ];
+            size = topo.size();
+        }
+
         Lipids mem;
-
         int side_len = sqrt(num_lipids/2) +1;
-
         int count=0;
         double x=0.0,y=0.0;
         double z_up = 3.5, z_down=-3.5;
+        double factor = pow(2.0, 1.0 / 6.0);
 
         Tensor_xyz pos_up = Tensor_xyz(0,0,z_up);
         Tensor_xyz pos_down = Tensor_xyz(0,0,z_down);
@@ -305,21 +347,69 @@ private:
                     x = i - 0.5*side_len;
                     y = j - 0.5*side_len;
 
-                    pos_up =   Tensor_xyz(x,y,z_up);
-                    pos_down = Tensor_xyz(x,y,z_down);
+                    if( !exclude_XY(x,y,data) )
+                    {
+                        pos_up =   Tensor_xyz(x*factor, y*factor, z_up);
+                        pos_down = Tensor_xyz(x*factor, y*factor, z_down);
 
-                    mem.push_back(Lipid(pos_up,   dir_down, count,   mol_tag, Lipid::Leaflet::upper));
-                    mem.push_back(Lipid(pos_down, dir_up,   count+1, mol_tag, Lipid::Leaflet::lower));
-                    count+=2;
+                        mem.push_back(Lipid(pos_up,   dir_down, count,   mol_tag, get_leaflet_type( data.in.p_vec_string["Leaflet_type"][0] ) ));
+                        mem.back().bond.offset(0, size);
+                        mem.push_back(Lipid(pos_down, dir_up,   count+1, mol_tag, get_leaflet_type( data.in.p_vec_string["Leaflet_type"][1] ) ));
+                        mem.back().bond.offset(0, size);
+                        count+=2;
+                    }
                 }
             }
         }
 
+        mem.set_receptor_type(data.in.p_int["Receptor_type"]);
         mem.convert_receptors(num_receptors);
 
         return mem;
     }
 
+    Lipid::Leaflet get_leaflet_type(string type)
+    {
+        if(type.compare("Lower") == 0)
+            return Lipid::Leaflet::lower;
+        return Lipid::Leaflet::upper;
+    }
+
+    ///
+    /// \brief exclude_XY - exclude point if its withing existing structure in XY plane
+    /// \param data
+    /// \return true if within structure
+    ///
+    bool exclude_XY(double x, double y, Data& data)
+    {
+        if(data.coll_beads.empty())
+        {
+            return false;
+        }
+
+        Atoms& topo = data.coll_beads[   data.id_map[ data.in.p_int["ID"] ]   ];
+        double mil = 1000.0*1000.0;
+        double patch = 1.0;
+        Tensor_xyz o(x,y,0.0);
+
+        for(Atom& a : topo)
+        {
+            if(a.pos.within(o, Tensor_xyz(patch, patch, mil)) ) // a is on the same X patch
+            {
+                return true;
+            }
+        }
+
+        if(x*x + y*y < 5.0)
+            return true;
+
+        return false;
+    }
+
+
+    ///
+    ///
+    ///
     void copy_Z(Data& data)
     {
         cerr << "Flat_Membrane::execute -> Copy_Z" << endl;

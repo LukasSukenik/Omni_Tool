@@ -444,6 +444,14 @@ public:
         return at;
     }
 
+    void set_receptor_type(int type_receptor)
+    {
+        for(Lipid& lip : (*this))
+        {
+            lip.type_receptor = type_receptor;
+        }
+    }
+
     void convert_receptors(int receptor_count)
     {
         int lipid_count = size();

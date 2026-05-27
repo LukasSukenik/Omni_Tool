@@ -42,17 +42,22 @@ public:
     unordered_set<string> files2 = {"Histo_2D_dirs_outfile:", "Histo_1D_dirs_outfile:", "Histo_outfile:", "RDF_outfile:"};
     Param_Dictionary<string> param = Param_Dictionary<string>(keys + files + files2);
 
-    unordered_set<string> counts1 = {"Number_of_beads:", "Number_of_ligands:", "Num_lipids:", "Number_of_receptors:", "Subdiv_of_beads:", "Subdiv_of_ligands:"};
+    unordered_set<string> counts1 = {"Number_of_floors:", "Number_of_beads:", "Number_of_ligands:", "Num_lipids:", "Number_of_receptors:", "Subdiv_of_beads:", "Subdiv_of_ligands:"};
     unordered_set<string> counts2 = {"Averaged_frame_count:"};
-    unordered_set<string> types = {"Mol_tag:", "Chain_type:"};
+    unordered_set<string> types = {"Mol_tag:", "Chain_type:", "Receptor_type:"};
     unordered_set<string> other = {"ID:", "Seed:"};
     Param_Dictionary<int> p_int = Param_Dictionary<int>(counts1 + counts2 + types + other);
 
     Param_Dictionary<bool> p_bool = Param_Dictionary<bool>({"Fit:", "Center:", "Only_last_frame:"});
     Param_Dictionary<Tensor_xyz> p_tensor = Param_Dictionary<Tensor_xyz>({"Position_shift:", "Impact_vector:"});
-    Param_Dictionary<double> p_float = Param_Dictionary<double>({"Cluster_cutoff:", "Radius:", "Scale:", "b:", "c:", "Cell_size:", "Beads_per_area:", "Ligands_per_area:"});
 
-    Param_Dictionary<vector<int>> p_vec_int = Param_Dictionary<vector<int>>({"Atom_type:", "Atom_mass:", "Histo_settings:", "Histo_spherical_settings:", "Trajectory_settings:"});
+    unordered_set<string> generic = {"z_dist:", "z_rotation_deg:"};
+    unordered_set<string> other2 = {"Cluster_cutoff:", "Radius:", "Scale:", "b:", "c:", "Cell_size:", "Beads_per_area:", "Ligands_per_area:"};
+    Param_Dictionary<double> p_float = Param_Dictionary<double>(generic + other2);
+
+    Param_Dictionary<vector<int>> p_vec_int = Param_Dictionary<vector<int>>({"Atom_type:", "Histo_settings:", "Histo_spherical_settings:", "Trajectory_settings:"});
+    Param_Dictionary<vector<double>> p_vec_float = Param_Dictionary<vector<double>>({"Atom_mass:"});
+    Param_Dictionary<vector<string>> p_vec_string = Param_Dictionary<vector<string>>({"Leaflet_type:"});
 
     IO out; /// Output type - none, pdb, lammps_full, xyz
     IO in;  /// Input type  - none, pdb, lammps_full
@@ -112,7 +117,9 @@ public:
             if(  p_int.is_key_valid(key) )     { ss >> value_int;   p_int[key.substr(0, key.find(':'))] = value_int; }
             if(  p_float.is_key_valid(key) )   { ss >> value_float; p_float[key.substr(0, key.find(':'))] = value_float; }
             if(  p_tensor.is_key_valid(key) )  { ss >> v_tensor;    p_tensor[key.substr(0, key.find(':'))] = v_tensor; }
-            if(  p_vec_int.is_key_valid(key) ) { p_vec_int[key.substr(0, key.find(':'))] = load_int_array(ss); }
+            if(  p_vec_int.is_key_valid(key) ) { p_vec_int[key.substr(0, key.find(':'))] = load_array<int>(ss); }
+            if(  p_vec_float.is_key_valid(key) ) { p_vec_float[key.substr(0, key.find(':'))] = load_array<double>(ss); }
+            if(  p_vec_string.is_key_valid(key) ) { p_vec_string[key.substr(0, key.find(':'))] = load_array<string>(ss); }
 
             // Load io
             if( key.compare("Output_type:") == 0 )       { ss >> out; }
@@ -158,15 +165,16 @@ public:
         return true;
     }
 
-    vector<int> load_int_array(stringstream& ss)
+    template <typename T>
+    vector<T> load_array(stringstream& ss)
     {
-        vector<int> int_array;
-        int temp;
+        vector<T> array;
+        T temp;
         while( ss >> temp )
         {
-            int_array.push_back(temp);
+            array.push_back(temp);
         }
-        return int_array;
+        return array;
     }
 
     string toString()
@@ -179,6 +187,8 @@ public:
         for (const auto& [key, value] : p_float)    { ss << key << ": " << value << '\n'; }
         for (const auto& [key, value] : p_tensor)   { ss << key << ": " << value << '\n'; }
         for (const auto& [key, values] : p_vec_int) { ss << key << ": " << values << '\n'; }
+        for (const auto& [key, values] : p_vec_float) { ss << key << ": " << values << '\n'; }
+        for (const auto& [key, values] : p_vec_string) { ss << key << ": " << values << '\n'; }
 
         // Loading a file
         ss << "Input_type: " << in << endl;
@@ -225,6 +235,8 @@ public:
         p_float.clear();
         p_tensor.clear();
         p_vec_int.clear();
+        p_vec_float.clear();
+        p_vec_string.clear();
 
         in.clear();
         system_var_a=0.0;
