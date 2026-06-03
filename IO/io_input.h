@@ -55,7 +55,10 @@ public:
     unordered_set<string> other2 = {"Cluster_cutoff:", "Radius:", "Scale:", "b:", "c:", "Cell_size:", "Beads_per_area:", "Ligands_per_area:", "Exclude_radius:"};
     Param_Dictionary<double> p_float = Param_Dictionary<double>(generic + other2);
 
-    Param_Dictionary<vector<int>> p_vec_int = Param_Dictionary<vector<int>>({"Atom_type:", "Bond_type:", "Histo_settings:", "Histo_spherical_settings:", "Trajectory_settings:"});
+    unordered_set<string> type_vec = {"Atom_type:", "Bond_type:"};
+    unordered_set<string> settings = {"Histo_settings:", "Histo_spherical_settings:", "Trajectory_settings:", "Slab_size:"};
+    Param_Dictionary<vector<int>> p_vec_int = Param_Dictionary<vector<int>>(type_vec + settings);
+
     Param_Dictionary<vector<double>> p_vec_float = Param_Dictionary<vector<double>>({"Atom_mass:"});
     Param_Dictionary<vector<string>> p_vec_string = Param_Dictionary<vector<string>>({"Leaflet_type:"});
 
