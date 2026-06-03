@@ -87,7 +87,7 @@ public:
         }
 
         add_beads_to_coll(data);
-        data.coll_bonds.push_back(bonds);
+        data.coll_bonds.push_back(bonds); // TODO: Inconsistent handling of bonds and particle offsets
         data.coll_angles.push_back(angles);
 
         data.all_sigma = this->sigma;
@@ -101,7 +101,7 @@ public:
 
     void add_beads_to_coll(Data& data)
     {
-        beads.offset_N(get_coll_N(data));
+        beads.offset_N(get_coll_part_N(data));
 
         if(data.in.p_int.contains("ID") && data.id_map.contains( data.in.p_int["ID"] ) && !data.coll_beads.empty()) // adding to existing collection
         {
@@ -136,13 +136,31 @@ public:
         }
     }
 
-    int get_coll_N(Data& data)
+    int get_coll_part_N(Data& data)
     {
         int offset_N = 0;
 
         if(!data.coll_beads.empty())
         {
             for(Atoms& coll : data.coll_beads)
+            {
+                if(!coll.empty() && coll.back().N > offset_N)
+                {
+                    offset_N = coll.back().N;
+                }
+            }
+        }
+
+        return offset_N;
+    }
+
+    int get_coll_bond_N(Data& data)
+    {
+        int offset_N = 0;
+
+        if(!data.coll_bonds.empty())
+        {
+            for(Bonds& coll : data.coll_bonds)
             {
                 if(!coll.empty() && coll.back().N > offset_N)
                 {

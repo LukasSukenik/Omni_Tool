@@ -140,28 +140,67 @@ public:
         data.in.p_int.validate_keyword("Number_of_beads", "100");
         data.in.p_int.validate_keyword("Mol_tag", "1");
         data.in.p_vec_int.validate_keyword("Atom_type", "1 2");
+        data.in.p_vec_int.validate_keyword("Bond_type", "1 2");
     }
 
     void generate( Data& data )
     {
         validate_inputs(data);
 
+        Atoms slab;
         int row = sqrt(data.in.p_int["Number_of_beads"]);
-        int N = 1;
+        int N = 1; // offset handled by make persistent
+        bool generated = false;
 
         for(int i=0; i<row; ++i) {
             for(int j=0; j<row; ++j) {
                 for(int k=0; k<1; ++k) {
-                    if( j==0 || i == 0 || i == row-1 || j == row-1 )
-                        beads.push_back(Atom(N, Tensor_xyz(i, j, k), data.in.p_vec_int["Atom_type"][1], data.in.p_int["Mol_tag"]));
-                    else
-                        beads.push_back(Atom(N, Tensor_xyz(i, j, k), data.in.p_vec_int["Atom_type"][0], data.in.p_int["Mol_tag"]));
+                    if( j==0 || i == 0 || i == row-1 || j == row-1 ) // edges
+                    {
+                        if(data.in.p_vec_int["Atom_type"].size() == 2)
+                        {
+                            slab.push_back(Atom(N, Tensor_xyz(i, j, k), data.in.p_vec_int["Atom_type"][1], data.in.p_int["Mol_tag"]));
+                            generated = true;
+                        }
+                        if(data.in.p_vec_int["Atom_type"].size() == 5)
+                        {
+                            if(i == 0)     slab.push_back(Atom(N, Tensor_xyz(i, j, k), data.in.p_vec_int["Atom_type"][1], data.in.p_int["Mol_tag"]));
+                            if(i == row-1) slab.push_back(Atom(N, Tensor_xyz(i, j, k), data.in.p_vec_int["Atom_type"][2], data.in.p_int["Mol_tag"]));
+                            if(j == 0     && i != 0 && i != row-1) slab.push_back(Atom(N, Tensor_xyz(i, j, k), data.in.p_vec_int["Atom_type"][3], data.in.p_int["Mol_tag"]));
+                            if(j == row-1 && i != 0 && i != row-1) slab.push_back(Atom(N, Tensor_xyz(i, j, k), data.in.p_vec_int["Atom_type"][4], data.in.p_int["Mol_tag"]));
+                            generated = true;
+                        }
+                    }
+                    else // body
+                        slab.push_back(Atom(N, Tensor_xyz(i, j, k), data.in.p_vec_int["Atom_type"][0], data.in.p_int["Mol_tag"]));
                     ++N;
                 }
             }
         }
 
-        gen_bonds(row);
+        if(!generated)
+        {
+            cerr << "Missing edge atom type, Specify edge type, aka Atom_type: 1 2" << endl;
+            exit(-1);
+        }
+
+        double radius = data.in.p_float["Radius"];
+        double x,y;
+        for(Atom& a : slab)
+        {
+            x = a.pos.x + (1.0/data.in.p_float["Scale"]) * data.in.p_tensor["Position_shift"].x;
+            y = a.pos.y + (1.0/data.in.p_float["Scale"]) * data.in.p_tensor["Position_shift"].y;
+            if(x*x + y*y < radius*radius)
+            {
+                a.type = 9;
+                a.mol_tag = 1;
+            }
+        }
+
+        gen_bonds(row, slab, data.in.p_vec_int["Atom_type"], data.in.p_vec_int["Bond_type"]);
+
+        bonds.offset(get_coll_bond_N(data), get_coll_part_N(data));
+        beads.insert(beads.end(), slab.begin(), slab.end());
     }
 
 private:
@@ -175,23 +214,35 @@ private:
         }
     }
 
-    void gen_bonds(int row, int bond_type=1) {
-        int actual;
-        for(int i=0; i<row; ++i) {
-            for(int j=0; j<row; ++j) {
-                actual = i*row + j;
-                if(j > 0)     bonds.push_back(    Bond(bonds.size()+1, bond_type, (i)*row + j-1, actual)    );
-                if(i > 0)     bonds.push_back(    Bond(bonds.size()+1, bond_type, (i-1)*row + j, actual)    );
-                if(j < row-1) bonds.push_back(    Bond(bonds.size()+1, bond_type, (i)*row + j+1, actual)    );
-                if(i < row-1) bonds.push_back(    Bond(bonds.size()+1, bond_type, (i+1)*row + j, actual)    );
+    void gen_bonds(int row, Atoms& slab, vector<int> type_gen, vector<int> bond_type)
+    {
+        int part_ID;
+        for(int i=0; i<row; ++i)
+        {
+            for(int j=0; j<row; ++j)
+            {
+                part_ID = i*row + j;
+
+                if(is_bond_type(slab[part_ID].type, slab[(i+1)*row + j  ].type, type_gen) && i < row-1) bonds.push_back(    Bond(bonds.size()+1, bond_type[0], slab[(i+1)*row + j  ].N, slab[part_ID].N)    );
+                if(is_bond_type(slab[part_ID].type, slab[(i  )*row + j+1].type, type_gen) && j < row-1) bonds.push_back(    Bond(bonds.size()+1, bond_type[0], slab[(i  )*row + j+1].N, slab[part_ID].N)    );
+
+                if(bond_type.size() >= 2)
+                {
+                    if(is_bond_type(slab[part_ID].type, slab[(i+2)*row + j  ].type, type_gen) && i < row-2) bonds.push_back(    Bond(bonds.size()+1, bond_type[1], slab[(i+2)*row + j  ].N, slab[part_ID].N)    );
+                    if(is_bond_type(slab[part_ID].type, slab[(i  )*row + j+2].type, type_gen) && j < row-2) bonds.push_back(    Bond(bonds.size()+1, bond_type[1], slab[(i  )*row + j+2].N, slab[part_ID].N)    );
+                }
             }
         }
+    }
 
-        // Correct for offset -> lammps starts at 1 not 0
-        for(int i=0; i<bonds.size(); ++i) {
-            ++bonds[i].at1;
-            ++bonds[i].at2;
+    bool is_bond_type(int type, int type_next, vector<int> type_gen)
+    {
+        for(int tg : type_gen)
+        {
+            if(tg == type || tg == type_next)
+                return true;
         }
+        return false;
     }
 };
 

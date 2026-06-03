@@ -275,8 +275,6 @@ public:
             beads.insert(beads.end(), lip.part.begin(), lip.part.end());
             bonds.insert(bonds.end(), lip.bond.begin(), lip.bond.end());
         }
-
-        cerr << "suggesting box size: " << - 0.5*(sqrt(data.in.p_int["Num_lipids"]/2)+1) << " to " << 0.5*(sqrt(data.in.p_int["Num_lipids"]/2)+1) << endl;
     }
 
 private:
@@ -362,8 +360,20 @@ private:
             }
         }
 
+        if(data.in.sim_box.xlo == 0.0)
+        {
+            data.in.sim_box.xlo = -0.5*side_len*factor + 0.5*factor;
+            data.in.sim_box.xhi =  0.5*side_len*factor - 0.5*factor;
+            data.in.sim_box.ylo = -0.5*side_len*factor + 0.5*factor;
+            data.in.sim_box.yhi =  0.5*side_len*factor - 0.5*factor;
+            data.in.sim_box.zlo = -0.5*side_len*factor + 0.5*factor;
+            data.in.sim_box.zhi =  0.5*side_len*factor - 0.5*factor;
+        }
+
         mem.set_receptor_type(data.in.p_int["Receptor_type"]);
         mem.convert_receptors(num_receptors);
+
+
 
         return mem;
     }
@@ -387,9 +397,9 @@ private:
             return false;
         }
 
-        Atoms& topo = data.coll_beads[   data.id_map[ data.in.p_int["ID"] ]   ];
+        /*Atoms& topo = data.coll_beads[   data.id_map[ data.in.p_int["ID"] ]   ];
         double mil = 1000.0*1000.0;
-        double patch = 1.0;
+        double patch = 0.5;
         Tensor_xyz o(x,y,0.0);
 
         for(Atom& a : topo)
@@ -398,9 +408,9 @@ private:
             {
                 return true;
             }
-        }
+        }*/
 
-        if(x*x + y*y < 5.0)
+        if(x*x + y*y < data.in.p_float["Exclude_radius"] * data.in.p_float["Exclude_radius"])
             return true;
 
         return false;

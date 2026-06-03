@@ -86,6 +86,21 @@ private:
             }
         }
 
+        double radius = 4.0;
+        double z_pos = 0.0;// -0.5* data.in.p_float["z_dist"] * data.in.p_int["Number_of_floors"];
+        for(int x=-5; x<6; ++x)
+        {
+            for(int y=-5; y<6; ++y)
+            {
+                if(x*x + y*y < radius*radius)
+                {
+                    temp_pos = Tensor_xyz(x,y,z_pos);
+                    temp.push_back( Atom(i, temp_pos, data.in.p_vec_int["Atom_type"][0], data.in.p_int["Mol_tag"]) );
+                    ++i;
+                }
+            }
+        }
+
         topo.clear();
         topo = temp;
         topo.move(data.in.p_tensor["Position_shift"]); // position shift is not applied for type system.
