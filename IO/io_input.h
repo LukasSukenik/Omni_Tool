@@ -44,7 +44,7 @@ public:
 
     unordered_set<string> counts1 = {"Number_of_floors:", "Number_of_beads:", "Number_of_ligands:", "Num_lipids:", "Number_of_receptors:", "Subdiv_of_beads:", "Subdiv_of_ligands:"};
     unordered_set<string> counts2 = {"Averaged_frame_count:"};
-    unordered_set<string> types = {"Mol_tag:", "Chain_type:", "Receptor_type:"};
+    unordered_set<string> types = {"Mol_tag:", "Chain_type:", "Receptor_type:", "Exclude_mol_tag:", "Exclude_type:"};
     unordered_set<string> other = {"ID:", "Seed:"};
     Param_Dictionary<int> p_int = Param_Dictionary<int>(counts1 + counts2 + types + other);
 

@@ -193,16 +193,20 @@ public:
             }
         }
 
-        double radius = data.in.p_float["Radius"];
+        double radius = 0.0;
         double x,y;
+        if(data.in.p_float.contains("Radius"))
+        {
+            radius = data.in.p_float["Radius"];
+        }
         for(Atom& a : slab)
         {
             x = a.pos.x + (1.0/data.in.p_float["Scale"]) * data.in.p_tensor["Position_shift"].x;
             y = a.pos.y + (1.0/data.in.p_float["Scale"]) * data.in.p_tensor["Position_shift"].y;
-            if(x*x + y*y < radius*radius)
+            if(data.in.p_int.contains("Exclude_type") && data.in.p_int.contains("Exclude_mol_tag") && x*x + y*y < radius*radius)
             {
-                a.type = 9;
-                a.mol_tag = 1;
+                a.type = data.in.p_int["Exclude_type"];
+                a.mol_tag = data.in.p_int["Exclude_mol_tag"];
             }
         }
 
