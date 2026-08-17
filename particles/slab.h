@@ -107,6 +107,10 @@ public:
         int m_tag = data.in.p_int["Mol_tag"];
         int a_type = -1;
 
+        int rr = 1;
+        vector<int> x = {0+rr, 0+rr,     0+rr,        x_size/2, x_size/2,    x_size-rr-1, x_size-rr-1, x_size-rr-1};
+        vector<int> y = {0+rr, y_size/2, y_size-rr-1, 0+rr,     y_size-rr-1, 0+rr,        y_size/2,    y_size-rr-1};
+
         for(int k=0; k<z_size; ++k)
         {
             for(int i=0; i<x_size; ++i)
@@ -116,17 +120,35 @@ public:
                     pos = Tensor_xyz(i, j, k);
                     a_type = data.in.p_vec_int["Atom_type"][0];
 
-                    if(data.in.p_vec_int["Atom_type"].size() == 2 && k==0) // edges
+                    if(k==0) // ground floor
                     {
-                        if(j==0 || i==0 || i==x_size-1 || j==y_size-1) a_type = data.in.p_vec_int["Atom_type"][1];
+                        if(data.in.p_vec_int["Atom_type"].size() == 2) // 2 atom type have to be specified edges type
+                        {
+                            if(data.in.param["Type"].compare("edge") == 0)
+                            {
+                                if(j==0 || i==0 || i==x_size-1 || j==y_size-1) a_type = data.in.p_vec_int["Atom_type"][1];
+                            }
+                            if(data.in.param["Type"].compare("8point") == 0)
+                            {
+                                for(int index=0; index < 8; ++index)
+                                {
+                                    if( ((i-x[index])*(i-x[index]) + (j-y[index])*(j-y[index])) < rr*rr+0.1 )
+                                    {
+                                        a_type = data.in.p_vec_int["Atom_type"][1];
+                                    }
+                                }
+                            }
+                        }
+                        if(data.in.p_vec_int["Atom_type"].size() == 5) // edge type, each edge different atom type
+                        {
+                            if(i == 0)                                   a_type = data.in.p_vec_int["Atom_type"][1];
+                            if(i == x_size-1)                            a_type = data.in.p_vec_int["Atom_type"][2];
+                            if(j == 0     && i != 0 && i != x_size-1)    a_type = data.in.p_vec_int["Atom_type"][3];
+                            if(j == y_size-1 && i != 0 && i != x_size-1) a_type = data.in.p_vec_int["Atom_type"][4];
+                        }
                     }
-                    if(data.in.p_vec_int["Atom_type"].size() == 5 && k==0)
-                    {
-                        if(i == 0)                                   a_type = data.in.p_vec_int["Atom_type"][1];
-                        if(i == x_size-1)                            a_type = data.in.p_vec_int["Atom_type"][2];
-                        if(j == 0     && i != 0 && i != x_size-1)    a_type = data.in.p_vec_int["Atom_type"][3];
-                        if(j == y_size-1 && i != 0 && i != x_size-1) a_type = data.in.p_vec_int["Atom_type"][4];
-                    }
+
+
 
                     slab.push_back(Atom(N, pos, a_type, m_tag));
                     ++N;
