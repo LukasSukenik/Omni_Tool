@@ -78,27 +78,14 @@ public:
         cerr << "Loading box parameters" << endl;
         loadBox();
 
-        // THROW AWAY VELOCITIES
-
         cerr << "Parsing bonds parameters" << endl;
         loadBonds(in_file);
 
-        // TEST FOR CONSECCUTIVE INDEXES
-        cerr << "Sorting lipids by index" << endl;
+        cerr << "Sorting partisles by N" << endl;
         std::sort(beads.begin(), beads.end(), sortN);
-        cerr << "Testing index duplicity" << endl;
-        for(int i=0; i<beads.size(); i++) {
-            if(i%(beads.size()/10) == 0)
-            {
-                cerr << i << " : " << beads.size() << endl;
-            }
-            if(i+1 != beads[i].N) {
-                cerr << "ERROR, missing index, " << i << " != " << beads[i].N << endl;
-            }
-        }
-        cerr << "Load done" << endl;
 
         loadAngles(in_file);
+        cerr << "Load done" << endl;
     }
 
     void print(IO_Input& in)

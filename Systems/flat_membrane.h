@@ -67,6 +67,9 @@ public:
 class Detect_Pore : public System_Method
 {
 public:
+    int number_of_cells;
+    vector< vector<bool>> lattice;
+
     Detect_Pore() : System_Method() {}
 
     string help()
@@ -109,109 +112,137 @@ public:
         validate(data);
 
         Atoms& topo = data.coll_beads[   data.id_map[ data.in.p_int["ID"] ]   ];
+        Tensor_xyz box = data.in.sim_box.get_box();
+        Trajectory traj;
+        if(data.in.param.contains("Trajectory_file"))
+        {
+            traj.load(data.in.param["Trajectory_file"]);
+        }
+
+
+
         cerr << "- cell size = " << data.in.p_float["Cell_size"] << endl;
         cerr << "- bead size = " << data.in.bead_size << endl;
 
-        int number_of_cells = (data.in.sim_box.xhi - data.in.sim_box.xlo) / data.in.p_float["Cell_size"];
-        double cell_size = (data.in.sim_box.xhi - data.in.sim_box.xlo) / number_of_cells;
-        double inv_cell_size = 1.0 / cell_size;
+        number_of_cells = box.x / data.in.p_float["Cell_size"];
+        lattice = vector<vector<bool>>(number_of_cells, vector<bool>(number_of_cells, false));
+
+        if(!data.in.param.contains("Trajectory_file"))
+        {
+            fill_lattice(data, topo, box);
+            cout << is_pore() << endl; // true == 1
+        }
+        else
+        {
+            for(int i=0; i<traj.frame_count(); ++i)
+            {
+                topo.set_frame(traj[i]);
+                box = traj.box_traj[i];
+
+                fill_lattice(data, topo, box);
+                cout << i << " " << is_pore() << endl; // true == 1
+            }
+        }
+    }
+
+    void set_lattice_false()
+    {
+        for(auto& row : lattice)
+        {
+            fill(row.begin(), row.end(), false);
+        }
+    }
+
+    void fill_lattice(Data& data, Atoms& topo, Tensor_xyz& box)
+    {
+        double cell_size = box.x / number_of_cells;
+        double inv_cell_size = number_of_cells / box.x; // box.x == box.y allways (enforced by lammps settings)
 
         bool do_iterations = (data.in.p_float["Cell_size"] < data.in.bead_size);
         int iterations = (0.5*data.in.bead_size / data.in.p_float["Cell_size"]) +1;
         double R2 = 0.5*data.in.bead_size * 0.5*data.in.bead_size;
-
-        bool is_pore = false;
-        bool lattice[number_of_cells][number_of_cells];
-        std::memset(lattice, false, sizeof(lattice)); // set all elements of latice to false -> false == no particle in cell
-
-        Trajectory traj(data.in.param["Trajectory_file"]);
-        Tensor_xyz box;
 
         int cx=0, cy=0;
         int cell_ix=0, cell_iy=0;
         double cell_x_pos=0.0, cell_y_pos=0.0;
         double rx=0.0, ry=0.0;
 
-        for(int i=0; i<traj.frame_count(); ++i)
+        set_lattice_false(); // set all elements of latice to false -> false == no particle in cell
+
+        for(Atom& a : topo)
         {
-            topo.set_frame(traj[i]);
-            box = traj.box_traj[i];
-            cell_size = box.x / number_of_cells;
-            inv_cell_size = number_of_cells / box.x; // box.x == box.y allways (enforced by lammps settings)
-
-            std::memset(lattice, false, sizeof(lattice)); // set all elements of latice to false -> false == no particle in cell
-            for(Atom& a : topo)
+            for(int type : data.in.p_vec_int["Atom_type"])
             {
-                for(int type : data.in.p_vec_int["Atom_type"])
+                if(a.type == type)
                 {
-                    if(a.type == type)
+                    //
+                    // Object crosses cell border == cell is occupied
+                    // - for every single cell ID "HIT" -> 4 cells are occupied [0,0][0,-1][-1,0][-1,-1] -> we are flooring the position to nearest cell
+                    //
+                    cx = binning_fce(a.pos.x, box.x, number_of_cells, inv_cell_size); // index of cell, where particle COM hit
+                    cy = binning_fce(a.pos.y, box.x, number_of_cells, inv_cell_size);
+
+                    if(do_iterations)
                     {
-                        //
-                        // Object crosses cell border == cell is occupied
-                        // - for every single cell ID "HIT" -> 4 cells are occupied [0,0][0,-1][-1,0][-1,-1] -> we are flooring the position to nearest cell
-                        //
-                        cx = binning_fce(a.pos.x, box.x, number_of_cells, inv_cell_size); // index of cell, where particle COM hit
-                        cy = binning_fce(a.pos.y, box.x, number_of_cells, inv_cell_size);
-
-                        if(do_iterations)
+                        for(int dx=-iterations; dx<=iterations; ++dx) // iterate neighboring cells
                         {
-                            for(int dx=-iterations; dx<=iterations; ++dx) // iterate neighboring cells
+                            for(int dy=-iterations; dy<=iterations; ++dy)
                             {
-                                for(int dy=-iterations; dy<=iterations; ++dy)
-                                {
-                                    cell_ix = cx+dx;
-                                    cell_iy = cy+dy;
-                                    cell_x_pos = cell_ix*cell_size;
-                                    cell_y_pos = cell_iy*cell_size;
-                                    rx = cell_x_pos - (a.pos.x + 0.5*box.x); // distance of cell to particle + correct the position
-                                    ry = cell_y_pos - (a.pos.y + 0.5*box.y);
+                                cell_ix = cx+dx;
+                                cell_iy = cy+dy;
+                                cell_x_pos = cell_ix*cell_size;
+                                cell_y_pos = cell_iy*cell_size;
+                                rx = cell_x_pos - (a.pos.x + 0.5*box.x); // distance of cell to particle + correct the position
+                                ry = cell_y_pos - (a.pos.y + 0.5*box.y);
 
-                                    if(rx*rx + ry*ry <= R2) // only cells whose center fall inside the bead
-                                    {
-                                        lattice[ wrap(cell_ix,   number_of_cells) ][ wrap(cell_iy,     number_of_cells) ] = true;
-                                        lattice[ wrap(cell_ix,   number_of_cells) ][ wrap(cell_iy-1,   number_of_cells) ] = true;
-                                        lattice[ wrap(cell_ix-1, number_of_cells) ][ wrap(cell_iy,     number_of_cells) ] = true;
-                                        lattice[ wrap(cell_ix-1, number_of_cells) ][ wrap(cell_iy-1,   number_of_cells) ] = true;
-                                    }
+                                if(rx*rx + ry*ry <= R2) // only cells whose center fall inside the bead
+                                {
+                                    lattice[ wrap(cell_ix,   number_of_cells) ][ wrap(cell_iy,     number_of_cells) ] = true;
+                                    lattice[ wrap(cell_ix,   number_of_cells) ][ wrap(cell_iy-1,   number_of_cells) ] = true;
+                                    lattice[ wrap(cell_ix-1, number_of_cells) ][ wrap(cell_iy,     number_of_cells) ] = true;
+                                    lattice[ wrap(cell_ix-1, number_of_cells) ][ wrap(cell_iy-1,   number_of_cells) ] = true;
                                 }
                             }
                         }
-                        else
-                        {
-                            lattice[cx][cy] = true;
-                        }
-                        break;
                     }
+                    else
+                    {
+                        lattice[cx][cy] = true;
+                    }
+                    break;
                 }
             }
+        }
+    }
 
-            is_pore = false;
-            for(int j=0; j<number_of_cells && !is_pore; ++j)
+    bool is_pore()
+    {
+        for(int j=0; j<number_of_cells; ++j)
+        {
+            for(int k=0; k<number_of_cells; ++k)
+            {
+                if( lattice[j][k] == false )
+                {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    void debug(int i)
+    {
+        if(true || i==1107) // debug
+        {
+            for(int j=0; j<number_of_cells; ++j)
             {
                 for(int k=0; k<number_of_cells; ++k)
                 {
-                    if( lattice[j][k] == false )
-                    {
-                        is_pore = true;
-                        break;
-                    }
+                    cout << ( lattice[j][k] ? "█" : " " );
                 }
+                cout << endl;
             }
-
-            cout << i << " " << is_pore << endl; // true == 1
-
-            /*if(true || i==1107) // debug
-            {
-                for(int j=0; j<number_of_cells; ++j)
-                {
-                    for(int k=0; k<number_of_cells; ++k)
-                    {
-                        cout << ( lattice[j][k] ? "█" : " " );
-                    }
-                    cout << endl;
-                }
-                //std::cout << "\033[" << number_of_cells << "A";
-            }*/
+            //std::cout << "\033[" << number_of_cells << "A";
         }
     }
 

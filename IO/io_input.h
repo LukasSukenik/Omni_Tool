@@ -48,7 +48,7 @@ public:
     unordered_set<string> other = {"ID:", "Seed:"};
     Param_Dictionary<int> p_int = Param_Dictionary<int>(counts1 + counts2 + types + other);
 
-    Param_Dictionary<bool> p_bool = Param_Dictionary<bool>({"Fit:", "Center:", "Only_last_frame:"});
+    Param_Dictionary<bool> p_bool = Param_Dictionary<bool>({"Fit:", "Center:", "Only_last_frame:", "No_report:"});
     Param_Dictionary<Tensor_xyz> p_tensor = Param_Dictionary<Tensor_xyz>({"Position_shift:", "Impact_vector:"});
 
     unordered_set<string> generic = {"z_dist:", "z_rotation_deg:"};

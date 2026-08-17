@@ -62,47 +62,97 @@ public:
     string help()
     {
         stringstream ss;
+
         ss << "Particle_type: slab\n";
+        ss << "Output_type: lammps_full\n";
+        ss << "Position_shift: 0 0 0\n";
+        ss << "Scale: 1.0\n";
+        ss << "Slab_size: 10 10 2\n";
+        ss << "Mol_tag: 1\n";
+        ss << "Atom_type: 1\n";
+        ss << "Atom_type: (3 options):\n";
+        ss << "define single type for body: 1\n";
+        ss << "define 2 types: 1->body 2->edges\n";
+        ss << "define 5 types: 1->body 2, 3, 4, 5->for each edge\n";
+
         return ss.str();
+    }
+
+    void validate_inputs( Data& data )
+    {
+        data.in.p_tensor.validate_keyword("Position_shift", "0 0 0");
+        data.in.p_float.validate_keyword("Scale", "1.0");
+        data.in.p_int.validate_keyword("Mol_tag", "1");
+        data.in.p_vec_int.validate_keyword("Atom_type", "1 2");
+        data.in.p_vec_int.validate_keyword("Slab_size", "10 10 2");
+
+        if(data.in.p_vec_int["Slab_size"].size() != 3)
+        {
+            cerr << "Slab_size need to define 3 numbers. Slab_size: 10 10 2" << endl;
+            exit(-1);
+        }
     }
 
     void generate( Data& data )
     {
         validate_inputs(data);
-        double factor = data.in.p_float["Scale"];
 
-        sigma[0][0] = 5*factor;
-        sigma[0][1] = 3*factor;
-        sigma[1][1] = factor;
-        sigma_size = 2;
-        factor /= 4.0;
+        Atoms slab;
+        int x_size = data.in.p_vec_int["Slab_size"][0];
+        int y_size = data.in.p_vec_int["Slab_size"][1];
+        int z_size = data.in.p_vec_int["Slab_size"][2];
 
-        vector<Atom> bVec;
-        int size = data.in.p_int["Number_of_beads"];
-        for(int a=0; a<size; ++a) {
-            for(int b=0; b<size; ++b) {
-                for(int c=0; c<size; ++c) {
-                    if((a-size/2.0)*(a-size/2.0) + (b-size/2.0)*(b-size/2.0) + (c-size/2.0)*(c-size/2.0) < size*size*0.25)
-                        bVec.push_back(Atom(a*factor*2.0 - size/2.0*factor, b*factor*2.0 - size/2.0*factor, c*factor*2.0 - size/2.0*factor, 1, 1));
+        int N = 1; // offset handled by make persistent
+        Tensor_xyz pos;
+        int m_tag = data.in.p_int["Mol_tag"];
+        int a_type = -1;
+
+        for(int k=0; k<z_size; ++k)
+        {
+            for(int i=0; i<x_size; ++i)
+            {
+                for(int j=0; j<y_size; ++j)
+                {
+                    pos = Tensor_xyz(i, j, k);
+                    a_type = data.in.p_vec_int["Atom_type"][0];
+
+                    if(data.in.p_vec_int["Atom_type"].size() == 2 && k==0) // edges
+                    {
+                        if(j==0 || i==0 || i==x_size-1 || j==y_size-1) a_type = data.in.p_vec_int["Atom_type"][1];
+                    }
+                    if(data.in.p_vec_int["Atom_type"].size() == 5 && k==0)
+                    {
+                        if(i == 0)                                   a_type = data.in.p_vec_int["Atom_type"][1];
+                        if(i == x_size-1)                            a_type = data.in.p_vec_int["Atom_type"][2];
+                        if(j == 0     && i != 0 && i != x_size-1)    a_type = data.in.p_vec_int["Atom_type"][3];
+                        if(j == y_size-1 && i != 0 && i != x_size-1) a_type = data.in.p_vec_int["Atom_type"][4];
+                    }
+
+                    slab.push_back(Atom(N, pos, a_type, m_tag));
+                    ++N;
                 }
             }
         }
 
-        Atom move = Atom( 14, 14, 14, 1, 1);
-        for(Atom& item : bVec)
-            item += move;
 
-        beads.insert(this->beads.end(), bVec.begin(), bVec.end());
-    }
-
-private:
-    void validate_inputs( Data& data )
-    {
-        if( !data.in.p_float.contains("Scale") )
+        if(data.in.p_float.contains("Radius"))
         {
-            cerr << "Missing keyword; Scale: 1.0" << endl;
-            exit(-1);
+            double radius = data.in.p_float["Radius"];
+            double x,y;
+
+            for(Atom& a : slab)
+            {
+                x = a.pos.x + (1.0/data.in.p_float["Scale"]) * data.in.p_tensor["Position_shift"].x;
+                y = a.pos.y + (1.0/data.in.p_float["Scale"]) * data.in.p_tensor["Position_shift"].y;
+                if(data.in.p_int.contains("Exclude_type") && data.in.p_int.contains("Exclude_mol_tag") && x*x + y*y < radius*radius)
+                {
+                    a.type = data.in.p_int["Exclude_type"];
+                    a.mol_tag = data.in.p_int["Exclude_mol_tag"];
+                }
+            }
         }
+
+        beads.insert(beads.end(), slab.begin(), slab.end());
     }
 };
 

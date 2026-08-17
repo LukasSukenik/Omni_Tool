@@ -225,7 +225,10 @@ public:
             }
         }
 
-        report(all_beads);
+        if(!in.p_bool.contains("No_report"))
+        {
+            report(all_beads);
+        }
     }
 
     void report(Atoms all_beads)

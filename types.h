@@ -1,7 +1,7 @@
 #ifndef TYPES_H
 #define TYPES_H
 
-#include <algorithm>>
+#include <algorithm>
 #include <vector>
 #include <unordered_map>
 #include <unordered_set>
