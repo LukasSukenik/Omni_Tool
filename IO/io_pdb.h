@@ -103,7 +103,7 @@ public:
              << std::setw(2)               << atom.charge << "\n"; // 79-80 Charge (optional)
     }
 
-    void print_lammps_atom(Atom& atom)
+    void print_lammps_atom(Atom& atom, double temp_factor = 1.0)
     {
         vector<string> type_to_name = {" H", " P", " C", " N", " O", " F", " B", " K"}; // atom.type -> atom_name
         vector<string> molTag_to_chainID = {"A", "B", "C", "D", "E", "F", "G", "H", "I", "J"};
@@ -124,8 +124,8 @@ public:
              << std::setw(8) << std::fixed << std::setprecision(3) << atom.pos.x // 31-38                           Real
              << std::setw(8) << std::fixed << std::setprecision(3) << atom.pos.y // 39-46                           Real
              << std::setw(8) << std::fixed << std::setprecision(3) << atom.pos.z // 47-54                           Real
-             << std::setw(6) << std::right << "  1.00"                          // 55-60: Occupancy                     Real
-             << std::setw(6) << std::right << "  1.00"                          // 61-66: Temperature factor            Real
+             << setw(6) << right << "  1.00"                                     // 55-60: Occupancy                     Real
+             << setw(6) << fixed << right << setw(6) << setprecision(2) << temp_factor   // 61-66: Temperature factor            Real
              << "      "                                                        // 67-72: Empty
              << std::setw(4) << std::left  << "    "                            // 73-76: Segment identifier (optional) Character
              << std::setw(2) << std::right << type_to_name[atom.type]           // 77-78 Element symbol                 Character
@@ -180,12 +180,12 @@ public:
         exit(-1);
     }
 
-    void print_lammps_data(Atoms& all_beads)
+    void print_lammps_data(Atoms& all_beads, double temp_factor = 1.0)
     {
 
         for (Atom& atom : all_beads)
         {
-            print_lammps_atom(atom);
+            print_lammps_atom(atom, temp_factor);
         }
     }
 };

@@ -51,7 +51,7 @@ public:
     Param_Dictionary<bool> p_bool = Param_Dictionary<bool>({"Fit:", "Center:", "Only_last_frame:", "No_report:"});
     Param_Dictionary<Tensor_xyz> p_tensor = Param_Dictionary<Tensor_xyz>({"Position_shift:", "Impact_vector:"});
 
-    unordered_set<string> generic = {"z_dist:", "z_rotation_deg:"};
+    unordered_set<string> generic = {"z_dist:", "z_rotation_deg:", "custom_bfactor:"};
     unordered_set<string> other2 = {"Cluster_cutoff:", "Radius:", "Scale:", "b:", "c:", "Cell_size:", "Beads_per_area:", "Ligands_per_area:", "Exclude_radius:"};
     Param_Dictionary<double> p_float = Param_Dictionary<double>(generic + other2);
 

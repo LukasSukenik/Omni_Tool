@@ -210,7 +210,14 @@ public:
             pdb.beads = all_beads;
             if(in.in.type == IO_Type::lammps_full)
             {
-                pdb.print_lammps_data(all_beads);
+                if(in.p_float.contains("custom_bfactor"))
+                {
+                    pdb.print_lammps_data(all_beads, in.p_float["custom_bfactor"]);
+                }
+                else
+                {
+                    pdb.print_lammps_data(all_beads);
+                }
             }
             else
             {
