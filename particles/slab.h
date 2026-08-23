@@ -105,11 +105,9 @@ public:
         int N = 1; // offset handled by make persistent
         Tensor_xyz pos;
         int m_tag = data.in.p_int["Mol_tag"];
-        int a_type = -1;
 
-        int rr = 1;
-        vector<int> x = {0+rr, 0+rr,     0+rr,        x_size/2, x_size/2,    x_size-rr-1, x_size-rr-1, x_size-rr-1};
-        vector<int> y = {0+rr, y_size/2, y_size-rr-1, 0+rr,     y_size-rr-1, 0+rr,        y_size/2,    y_size-rr-1};
+        vector<int> pos_int = {0,0,0};
+        vector<int> size = {x_size, y_size, z_size};
 
         for(int k=0; k<z_size; ++k)
         {
@@ -117,45 +115,12 @@ public:
             {
                 for(int j=0; j<y_size; ++j)
                 {
-                    pos = Tensor_xyz(i, j, k);
-                    a_type = data.in.p_vec_int["Atom_type"][0];
-
-                    if(k==0) // ground floor
-                    {
-                        if(data.in.p_vec_int["Atom_type"].size() == 2) // 2 atom type have to be specified edges type
-                        {
-                            if(data.in.param["Type"].compare("edge") == 0)
-                            {
-                                if(j==0 || i==0 || i==x_size-1 || j==y_size-1) a_type = data.in.p_vec_int["Atom_type"][1];
-                            }
-                            if(data.in.param["Type"].compare("8point") == 0)
-                            {
-                                for(int index=0; index < 8; ++index)
-                                {
-                                    if( ((i-x[index])*(i-x[index]) + (j-y[index])*(j-y[index])) < rr*rr+0.1 )
-                                    {
-                                        a_type = data.in.p_vec_int["Atom_type"][1];
-                                    }
-                                }
-                            }
-                        }
-                        if(data.in.p_vec_int["Atom_type"].size() == 5) // edge type, each edge different atom type
-                        {
-                            if(i == 0)                                   a_type = data.in.p_vec_int["Atom_type"][1];
-                            if(i == x_size-1)                            a_type = data.in.p_vec_int["Atom_type"][2];
-                            if(j == 0     && i != 0 && i != x_size-1)    a_type = data.in.p_vec_int["Atom_type"][3];
-                            if(j == y_size-1 && i != 0 && i != x_size-1) a_type = data.in.p_vec_int["Atom_type"][4];
-                        }
-                    }
-
-
-
-                    slab.push_back(Atom(N, pos, a_type, m_tag));
+                    pos_int = {i, j, k};
+                    slab.push_back(Atom(N, Tensor_xyz(i, j, k), get_atom_type(data, pos_int, size), m_tag));
                     ++N;
                 }
             }
         }
-
 
         if(data.in.p_float.contains("Radius"))
         {
@@ -175,6 +140,66 @@ public:
         }
 
         beads.insert(beads.end(), slab.begin(), slab.end());
+    }
+
+    int get_atom_type(Data& data, vector<int>& p, vector<int>& size)
+    {
+        if(p[2]==0) // ground floor
+        {
+            if(data.in.p_vec_int["Atom_type"].size() == 2) // 2 atom type have to be specified edges type
+            {
+                if(data.in.param["Type"].compare("edge") == 0)
+                {
+                    if(p[1]==0 || p[0]==0 || p[0]==size[0]-1 || p[1]==size[1]-1)
+                        return data.in.p_vec_int["Atom_type"][1];
+                }
+                if(data.in.param["Type"].compare("8point") == 0)
+                {
+                    if(is_8point(p, size, data.in.p_int["Point_count"]))
+                    {
+                        return data.in.p_vec_int["Atom_type"][1];
+                    }
+                }
+            }
+            if(data.in.p_vec_int["Atom_type"].size() == 5) // edge type, each edge different atom type
+            {
+                if(p[0] == 0)                                   return data.in.p_vec_int["Atom_type"][1];
+                if(p[0] == size[0]-1)                            return data.in.p_vec_int["Atom_type"][2];
+                if(p[1] == 0     && p[0] != 0 && p[0] != size[0]-1)    return data.in.p_vec_int["Atom_type"][3];
+                if(p[1] == size[1]-1 && p[0] != 0 && p[0] != size[0]-1) return data.in.p_vec_int["Atom_type"][4];
+            }
+        }
+        return data.in.p_vec_int["Atom_type"][0];
+    }
+
+    bool is_8point(vector<int>& p, vector<int>& size, int num=3)
+    {
+        int rr = 1;
+        int xx=0;
+        int yy=0;
+
+        for(int i=0; i<num; ++i)
+        {
+            for(int j=0; j<num; ++j)
+            {
+                if( (i!=0 && i!=num-1) && (j!=0 && j!=num-1) )
+                    continue;
+
+                xx = i * size[0]/(num-1);
+                yy = j * size[1]/(num-1);
+                if(i == 0) xx = rr;
+                if(j == 0) yy = rr;
+                if(i == num-1) xx = size[0]-rr-1;
+                if(j == num-1) yy = size[1]-rr-1;
+
+                if( ((p[0]-xx)*(p[0]-xx) + (p[1]-yy)*(p[1]-yy)) < rr*rr+0.1 )
+                {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 };
 
