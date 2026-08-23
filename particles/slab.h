@@ -153,7 +153,7 @@ public:
                     if(p[1]==0 || p[0]==0 || p[0]==size[0]-1 || p[1]==size[1]-1)
                         return data.in.p_vec_int["Atom_type"][1];
                 }
-                if(data.in.param["Type"].compare("8point") == 0)
+                if(data.in.param["Type"].compare("point") == 0)
                 {
                     if(is_8point(p, size, data.in.p_int["Point_count"]))
                     {
