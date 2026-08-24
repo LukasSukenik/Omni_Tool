@@ -396,13 +396,13 @@ private:
         //
         if(data.in.sim_box.xlo == 0.0)
         {
-            double safe_border=1.0;
-            data.in.sim_box.xlo = -0.5*side_len*factor + safe_border*factor;
-            data.in.sim_box.xhi =  0.5*side_len*factor - safe_border*factor;
-            data.in.sim_box.ylo = -0.5*side_len*factor + safe_border*factor;
-            data.in.sim_box.yhi =  0.5*side_len*factor - safe_border*factor;
-            data.in.sim_box.zlo = -0.5*side_len*factor + safe_border*factor;
-            data.in.sim_box.zhi =  0.5*side_len*factor - safe_border*factor;
+            double safe_border=0.5;
+            data.in.sim_box.xlo = -0.5*side_len*factor - safe_border*factor;
+            data.in.sim_box.xhi =  0.5*side_len*factor + safe_border*factor;
+            data.in.sim_box.ylo = -0.5*side_len*factor - safe_border*factor;
+            data.in.sim_box.yhi =  0.5*side_len*factor + safe_border*factor;
+            data.in.sim_box.zlo = -0.5*side_len*factor - safe_border*factor;
+            data.in.sim_box.zhi =  0.5*side_len*factor + safe_border*factor;
         }
 
         mem.set_receptor_type(data.in.p_int["Receptor_type"]);
