@@ -98,6 +98,7 @@ public:
         validate_inputs(data);
 
         Atoms slab;
+        Atoms lipid;
         int x_size = data.in.p_vec_int["Slab_size"][0];
         int y_size = data.in.p_vec_int["Slab_size"][1];
         int z_size = data.in.p_vec_int["Slab_size"][2];
@@ -118,6 +119,13 @@ public:
                     pos_int = {i, j, k};
                     slab.push_back(Atom(N, Tensor_xyz(i, j, k), get_atom_type(data, pos_int, size), m_tag));
                     ++N;
+                    if(data.in.param["Type"].compare("lipid") == 0 && slab.back().type == data.in.p_vec_int["Atom_type"][2])
+                    {
+                        make_lipid(data, lipid, N, slab.back());
+                        slab.insert(slab.end(), lipid.begin(), lipid.end());
+                        lipid.clear();
+                    }
+
                 }
             }
         }
@@ -142,6 +150,18 @@ public:
         beads.insert(beads.end(), slab.begin(), slab.end());
     }
 
+    void make_lipid(Data& data, Atoms& lipid, int& N, Atom last)
+    {
+        int hydro_beads_N=5;
+        lipid.push_back( Atom(N, Tensor_xyz(last.pos.x, last.pos.y, last.pos.z-1), data.in.p_vec_int["Atom_type"][2], data.in.p_int["Mol_tag"]) );
+        for(int i=0; i<hydro_beads_N; ++i)
+        {
+            lipid.push_back( Atom(N+1+i, Tensor_xyz(last.pos.x, last.pos.y, last.pos.z-(2+i)), data.in.p_vec_int["Atom_type"][3], data.in.p_int["Mol_tag"]) );
+        }
+        lipid.push_back( Atom(N+1+hydro_beads_N, Tensor_xyz(last.pos.x, last.pos.y, last.pos.z-(hydro_beads_N+2)), data.in.p_vec_int["Atom_type"][2], data.in.p_int["Mol_tag"]) );
+        N+=(hydro_beads_N+2);
+    }
+
     int get_atom_type(Data& data, vector<int>& p, vector<int>& size)
     {
         if(p[2]==0) // ground floor
@@ -155,9 +175,19 @@ public:
                 }
                 if(data.in.param["Type"].compare("point") == 0)
                 {
-                    if(is_8point(p, size, data.in.p_int["Point_count"]))
+                    if(is_point(p, size, data.in.p_int["Point_count"], 1))
                     {
                         return data.in.p_vec_int["Atom_type"][1];
+                    }
+                }
+            }
+            if(data.in.p_vec_int["Atom_type"].size() == 4) // edge type, each edge different atom type
+            {
+                if(data.in.param["Type"].compare("lipid") == 0)
+                {
+                    if(is_point(p, size, data.in.p_int["Point_count"], 1))
+                    {
+                        return data.in.p_vec_int["Atom_type"][2];
                     }
                 }
             }
@@ -172,9 +202,8 @@ public:
         return data.in.p_vec_int["Atom_type"][0];
     }
 
-    bool is_8point(vector<int>& p, vector<int>& size, int num=3)
+    bool is_point(vector<int>& p, vector<int>& size, int num=3, int rr = 1)
     {
-        int rr = 1;
         int xx=0;
         int yy=0;
 
