@@ -80,29 +80,34 @@ public:
         int upper_leaflet_lipid_count = data.in.p_int["Num_lipids"] * sphere_surface_relative_increase / (1.0 + sphere_surface_relative_increase);
         int upper_leaflet_receptor_count = data.in.p_int["Number_of_receptors"] * sphere_surface_relative_increase / (1.0 + sphere_surface_relative_increase);
 
-        Lipids lower_leaflet = gen_lower_leaflet(lower_leaflet_lipid_count, data.in.p_int["Mol_tag"], data.in.p_float["Radius"]);
-        lower_leaflet.convert_receptors(lower_leaflet_receptor_count);
+        beads.reserve(beads.size() + 4*(lower_leaflet_lipid_count+upper_leaflet_lipid_count));
+        bonds.reserve(bonds.size() + 5*(lower_leaflet_lipid_count+upper_leaflet_lipid_count));
 
-        Lipids upper_leaflet = gen_upper_leaflet(upper_leaflet_lipid_count, data.in.p_int["Mol_tag"], outer_leaflet_radius, lower_leaflet_lipid_count);
-        upper_leaflet.convert_receptors(upper_leaflet_receptor_count);
+        Lipids lower_leaflet;
+        lower_leaflet.reserve(lower_leaflet_lipid_count);
+        lower_leaflet = gen_lower_leaflet(lower_leaflet_lipid_count, data.in.p_int["Mol_tag"], data.in.p_float["Radius"]);
+        lower_leaflet.convert_receptors(lower_leaflet_receptor_count);
 
         for(Lipid& lip : lower_leaflet)
         {
             beads.insert(beads.end(), lip.part.begin(), lip.part.end());
             bonds.insert(bonds.end(), lip.bond.begin(), lip.bond.end());
         }
+        lower_leaflet.clear();
+        lower_leaflet = Lipids();
+
+        Lipids upper_leaflet;
+        upper_leaflet.reserve(upper_leaflet_lipid_count);
+        upper_leaflet = gen_upper_leaflet(upper_leaflet_lipid_count, data.in.p_int["Mol_tag"], outer_leaflet_radius, lower_leaflet_lipid_count);
+        upper_leaflet.convert_receptors(upper_leaflet_receptor_count);
 
         for(Lipid& lip : upper_leaflet)
         {
             beads.insert(beads.end(), lip.part.begin(), lip.part.end());
             bonds.insert(bonds.end(), lip.bond.begin(), lip.bond.end());
         }
-
-        if(lower_leaflet.empty() || upper_leaflet.empty())
-        {
-            cerr << "Vesicle::generate nothing generated" << endl;
-            exit(1);
-        }
+        upper_leaflet.clear();
+        upper_leaflet = Lipids();
 
         set_box_size(data);
     }

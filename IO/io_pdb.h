@@ -47,9 +47,9 @@ public:
                 // string indexed from 0
                 if( string("ATOM  ").compare( line.substr(0, 6) ) == 0 ||  string("HETATM ").compare( line.substr(0, 6) ) == 0 )
                 {
-                    part.atom_serial_N = line.substr(6, 5);              // char  : 7-11: atom serial number (not decadic, contains letters)
-                    part.atom_name = line.substr(12, 4);                 // char  : 13-16: atom name
-                    part.res_name = line.substr(17, 3);                  // char  : 18-20: Residue name
+                    str_char(line.substr(6, 5), part.atom_serial_N, 5);  // char  : 7-11: atom serial number (not decadic, contains letters)
+                    str_char(line.substr(12, 4), part.atom_name, 4);     // char  : 13-16: atom name
+                    str_char(line.substr(17, 3), part.res_name, 3);      // char  : 18-20: Residue name
                     part.chain_id = line[21];                            // char  : 22: chain identifier
                     part.res_seq_N = std::stoi(line.substr(22, 4));      // int   : 23-26: Residue sequence number,
                     part.code = line[26];                                // char  : 27:code for insertion of residues
@@ -76,6 +76,12 @@ public:
         }
 
         in.close();
+    }
+
+    void str_char(string str, char* c_str, int n)
+    {
+        for (int i = 0; i < n; ++i)
+            c_str[i] = str[i];
     }
 
     void print_atom(Atom& atom)

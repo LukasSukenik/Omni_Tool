@@ -76,7 +76,7 @@ private:
         {
             for(Atom& a : topo)
             {
-                if(a.atom_name.compare(" CA ") == 0)
+                if(strcmp(a.atom_name, " CA ") == 0)
                 {
                     temp_pos = a.pos;
                     temp_pos.rotate(Tensor_xyz(0.0, 0.0, 1.0), j*deg_to_rad*data.in.p_float["z_rotation_deg"]);

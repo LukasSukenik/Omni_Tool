@@ -26,11 +26,11 @@ public:
     //
     // 1-4 ATOM, HETATM, 5-6:empty
     // 7-11: atom serial number
-    string atom_serial_N = "    1"; // right, 7 8 9 10 11
+    char atom_serial_N[5] = {' ', ' ', ' ', ' ', '1'}; // right, 7 8 9 10 11
     // 13-16:atom name
-    string atom_name = " C  "; // left, 13 14 15 16
+    char atom_name[4] = {' ', 'C', ' ', ' '}; // left, 13 14 15 16
     // 18-20: Residue name
-    string res_name = "THR";  // right
+    char res_name[3] = {'T', 'H', 'R'};  // right
     // 22: chain identifier
     char chain_id = '1';
     // 23-26: Residue sequence number
