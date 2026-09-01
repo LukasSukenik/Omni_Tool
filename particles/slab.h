@@ -59,7 +59,7 @@ public:
 
     Slab() : Particle("slab") {}
 
-    string help()
+    string help() // TODO: WRITE GUIDE FOR ALL SLAB OPTIONS
     {
         stringstream ss;
 
@@ -152,7 +152,7 @@ public:
 
     void make_lipid(Data& data, Atoms& lipid, int& N, Atom last)
     {
-        int hydro_beads_N=5;
+        int hydro_beads_N=data.in.p_int["Lipid_hydrophobic_length"];
         lipid.push_back( Atom(N, Tensor_xyz(last.pos.x, last.pos.y, last.pos.z-1), data.in.p_vec_int["Atom_type"][2], data.in.p_int["Mol_tag"]) );
         for(int i=0; i<hydro_beads_N; ++i)
         {
@@ -185,7 +185,7 @@ public:
             {
                 if(data.in.param["Type"].compare("lipid") == 0)
                 {
-                    if(is_point(p, size, data.in.p_int["Point_count"], 1))
+                    if(is_point(p, size, data.in.p_int["Point_count"], 0))
                     {
                         return data.in.p_vec_int["Atom_type"][2];
                     }

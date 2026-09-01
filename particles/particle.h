@@ -69,6 +69,16 @@ public:
      */
     virtual void generate( Data& data )=0;
 
+    void set_box_size( Data& data )
+    {
+        data.in.sim_box.xlo = -0.5*data.in.p_tensor["Box_size"].x;
+        data.in.sim_box.xhi =  0.5*data.in.p_tensor["Box_size"].x;
+        data.in.sim_box.ylo = -0.5*data.in.p_tensor["Box_size"].y;
+        data.in.sim_box.yhi =  0.5*data.in.p_tensor["Box_size"].y;
+        data.in.sim_box.zlo = -0.5*data.in.p_tensor["Box_size"].z;
+        data.in.sim_box.zhi =  0.5*data.in.p_tensor["Box_size"].z;
+    }
+
     void modify( Data& data )
     {
         cerr << "Particle::modify" << endl;
@@ -80,7 +90,7 @@ public:
     {
         for(Atoms& bds : data.coll_beads)
         {
-            if(bds.is_overlap(beads, data.in.ff))
+            if(false && bds.is_overlap(beads, data.in.ff))
             {
                 cerr << "WARNING: overlap detected" << endl;
             }

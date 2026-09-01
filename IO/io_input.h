@@ -44,13 +44,13 @@ public:
     Param_Dictionary<string> param = Param_Dictionary<string>(keys + files + files2 + options);
 
     unordered_set<string> counts1 = {"Number_of_floors:", "Number_of_beads:", "Number_of_ligands:", "Num_lipids:", "Number_of_receptors:", "Subdiv_of_beads:", "Subdiv_of_ligands:"};
-    unordered_set<string> counts2 = {"Averaged_frame_count:", "Point_count:"};
+    unordered_set<string> counts2 = {"Averaged_frame_count:", "Point_count:", "Lipid_hydrophobic_length:"};
     unordered_set<string> types = {"Mol_tag:", "Chain_type:", "Receptor_type:", "Exclude_mol_tag:", "Exclude_type:"};
     unordered_set<string> other = {"ID:", "Seed:"};
     Param_Dictionary<int> p_int = Param_Dictionary<int>(counts1 + counts2 + types + other);
 
     Param_Dictionary<bool> p_bool = Param_Dictionary<bool>({"Fit:", "Center:", "Only_last_frame:", "No_report:"});
-    Param_Dictionary<Tensor_xyz> p_tensor = Param_Dictionary<Tensor_xyz>({"Position_shift:", "Impact_vector:"});
+    Param_Dictionary<Tensor_xyz> p_tensor = Param_Dictionary<Tensor_xyz>({"Position_shift:", "Impact_vector:", "Box_size:"});
 
     unordered_set<string> generic = {"z_dist:", "z_rotation_deg:", "custom_bfactor:"};
     unordered_set<string> other2 = {"Cluster_cutoff:", "Radius:", "Scale:", "b:", "c:", "Cell_size:", "Beads_per_area:", "Ligands_per_area:", "Exclude_radius:"};

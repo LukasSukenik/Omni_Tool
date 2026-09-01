@@ -100,9 +100,11 @@ public:
 
         if(lower_leaflet.empty() || upper_leaflet.empty())
         {
-            cerr << "Vesicle::generate leaflet empty" << endl;
+            cerr << "Vesicle::generate nothing generated" << endl;
             exit(1);
         }
+
+        set_box_size(data);
     }
 
 

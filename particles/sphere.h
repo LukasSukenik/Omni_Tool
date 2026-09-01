@@ -20,8 +20,8 @@ public:
 
         ss << "Particle_type: sphere\n";
         ss << "Output_type: pdb # other keywords: xyz pdb lammps_full\n";
-        ss << "Num_of_beads: 500\n";
-        ss << "Scale: 5.0\n";
+        ss << "Number_of_beads: 500\n";
+        ss << "Radius: 5.0\n";
         ss << "Number_of_ligands: 50\n";
         ss << "Mol_tag: 2\n";
 
@@ -38,25 +38,32 @@ public:
     {
         validate_inputs(data);
 
-        vector<Atom> ligand;
-        //int nano_start = beads.size();
+        size_t existing_size = 0;
+        for(auto& col : data.coll_beads)
+        {
+            existing_size += col.size();
+        }
+
+        Atoms sphere;
+        Atoms guiding_sphere;
         data.in.p_float["c"] = 1.0;
 
-        fibonacci_sphere( beads, data.in.p_int["Number_of_beads"], typeNano);
-        fibonacci_sphere_z_distrib_linear( ligand, data.in.p_int["Number_of_ligands"], data.in.p_float["c"], typeTemp); // second fib.
+        fibonacci_sphere( sphere, data.in.p_int["Number_of_beads"], typeNano);
+        fibonacci_sphere_z_distrib_linear( guiding_sphere, data.in.p_int["Number_of_ligands"], data.in.p_float["c"], typeTemp); // second fib.
 
         for(auto& patch : data.in.patches)
         {
-            gen_ligands_2( data, ligand, patch, typeNano); // find closest spheres on first fib. sphere and change their type
+            gen_ligands_2( data, sphere, guiding_sphere, patch, typeNano); // find closest spheres on first fib. sphere and change their type
         }
 
-        beads.erase(beads.begin()+data.in.p_int["Number_of_beads"], beads.end()); // erase second fib sphere
-
-        //int nano_end = beads.size();
-        for(auto& atom : ligand)
+        for(size_t i=0; i<sphere.size(); ++i)
         {
-            atom.mol_tag = data.in.p_int["Mol_tag"];
+            sphere[i].mol_tag = data.in.p_int["Mol_tag"];
+            sphere[i].N = 1+i + existing_size;
         }
+
+        sphere.scale(data.in.p_float["Radius"]);
+        beads.insert(beads.begin(), sphere.begin(), sphere.end());
     }
 
 
@@ -125,23 +132,26 @@ protected:
         }
     }
 
-    void gen_ligands_2( Data& data, vector<Atom>& ligand, Atom patch, int type_from, int type_temp=-1)
+    void gen_ligands_2( Data& data, Atoms& sphere, Atoms& ligand, Atom patch, int type_from, int type_temp=-1)
     {
-        for(auto& lig : ligand)
+        if(!ligand.empty())
         {
-            // plane equation a*x-x_coord + ... > 0
-            if( (patch.pos.x*(lig.pos.x - patch.vel.x)) + (patch.pos.y*(lig.pos.y - patch.vel.y)) + (patch.pos.z*(lig.pos.z - patch.vel.z)) > 0 )
+            for(auto& lig : ligand)
             {
-                Atom* select = &beads[0];
-                for(auto& item : beads)
+                // plane equation a*x-x_coord + ... > 0
+                if( !sphere.empty() && (patch.pos.x*(lig.pos.x - patch.vel.x)) + (patch.pos.y*(lig.pos.y - patch.vel.y)) + (patch.pos.z*(lig.pos.z - patch.vel.z)) > 0 )
                 {
-                    if(select->dist(lig) > item.dist(lig) && item.type == type_from )
+                    Atom* select = &sphere[0];
+                    for(auto& item : sphere)
                     {
-                        select = &item;
+                        if(select->dist(lig) > item.dist(lig) && item.type == type_from )
+                        {
+                            select = &item;
+                        }
                     }
+                    if( select->type == type_from )
+                        select->type = patch.type;
                 }
-                if( select->type == type_from )
-                    select->type = patch.type;
             }
         }
     }
