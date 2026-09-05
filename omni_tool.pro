@@ -15,6 +15,7 @@ SOURCES += main.cpp \
     xdrfile-1.1.4/src/xdrfile_xtc.c
 
 HEADERS += \
+    Systems/capsid317.h \
     Systems/generic.h \
     angle.h \
     atom.h \

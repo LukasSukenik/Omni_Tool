@@ -408,6 +408,19 @@ public:
         return temp;
     }
 
+    Atoms get_type(int type) const
+    {
+        Atoms temp;
+        for(auto& a : (*this))
+        {
+            if(type == a.type)
+            {
+                temp.push_back(a);
+            }
+        }
+        return temp;
+    }
+
     double get_molecule_radius(int mol_tag) const
     {
         Atoms molecule = get_molecule(mol_tag);

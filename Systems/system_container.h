@@ -10,6 +10,7 @@
 #include "vesicle.h"
 #include "flat_membrane.h"
 #include "generic.h"
+#include "capsid317.h"
 
 using namespace std;
 
@@ -30,6 +31,7 @@ public:
         (*this)[Lipid_Nanoparticle::keyword] = new Lipid_Nanoparticle();
         (*this)[Flat_Membrane::keyword] = new Flat_Membrane();
         (*this)[Generic::keyword] = new Generic();
+        (*this)[Capsid317::keyword] = new Capsid317();
         //(*this)[Icosahedron<Surface>::keyword] = new Icosahedron<Surface>();
     }
 

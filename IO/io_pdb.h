@@ -88,11 +88,11 @@ public:
     {
         cout << "ATOM"                                             // 1-4
              << "  "                                               // 5-6: empty
-             << std::setw(5) << std::right << atom.atom_serial_N   // 7-11: atom serial number,
+             << std::setw(5) << std::right << string_view(atom.atom_serial_N, 5) // 7-11: atom serial number,
              << " "                                                // 12: empty
-             << std::setw(4) << std::left  << atom.atom_name       // 13-16: atom name
+             << std::setw(4) << std::left  << string_view(atom.atom_name, 4)       // 13-16: atom name
              << " "                                                // 17: empty
-             << std::setw(3) << std::right << atom.res_name        // 18-20: Residue name
+             << std::setw(3) << std::right << string_view(atom.res_name, 3)        // 18-20: Residue name
              << " "                                                // 21: empty
              << std::setw(1)               << atom.chain_id        // 22: chain identifier
              << std::setw(4) << std::right << atom.res_seq_N       // 23-26: Residue sequence number
@@ -246,6 +246,18 @@ public:
         for (const Atom& atom : beads)
         {
             cout << type << " " << atom.pos << "\n";
+        }
+    }
+
+    void print_to_file(string filename, char type = 'C')
+    {
+        std::ofstream file(filename);
+
+        file << beads.size() << "\nparticle\n";
+
+        for (const Atom& atom : beads)
+        {
+            file << type << " " << atom.pos << "\n";
         }
     }
 
