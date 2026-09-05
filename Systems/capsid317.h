@@ -44,7 +44,7 @@ public:
 private:
     void Convert_Blender(Data& data)
     {
-        /*cerr << "Capsid317::execute -> Convert_Blender" << endl;
+        cerr << "Capsid317::execute -> Convert_Blender" << endl;
         int sys_id = data.id_map[ data.in.p_int["ID"] ];
         Atoms& topo = data.coll_beads[sys_id];
         Trajectory traj(data);
@@ -75,9 +75,8 @@ private:
         penta_dir_up.print_to_file("penta_dir_up");
         penta_dir_side.print_to_file("penta_dir_side");
 
-        cerr << data.coll_beads.size() << " " << topo.size() << endl;
-        //topo = topo.get_molecule(12); // remove pentamers, keep only chain
-        cerr << data.coll_beads.size() << " " << topo.size() << endl;*/
+        topo = topo.get_molecule(12); // remove pentamers, keep only chain
+        topo.set_N(1);
     }
 };
 

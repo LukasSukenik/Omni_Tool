@@ -299,6 +299,14 @@ public:
         }
     }
 
+    void set_N(int N)
+    {
+        for(size_t i=0; i<this->size(); ++i)
+        {
+            (*this)[i].N = i+N;
+        }
+    }
+
     void scale(double scale)
     {
         for(Atom& item : (*this))
