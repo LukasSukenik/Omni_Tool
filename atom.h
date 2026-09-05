@@ -26,11 +26,11 @@ public:
     //
     // 1-4 ATOM, HETATM, 5-6:empty
     // 7-11: atom serial number
-    char atom_serial_N[5] = {' ', ' ', ' ', ' ', '1'}; // right, 7 8 9 10 11
+    char atom_serial_N[5+1] = {' ', ' ', ' ', ' ', '1', '\0'}; // right, 7 8 9 10 11
     // 13-16:atom name
-    char atom_name[4] = {' ', 'C', ' ', ' '}; // left, 13 14 15 16
+    char atom_name[4+1] = {' ', 'C', ' ', ' ', '\0'}; // left, 13 14 15 16
     // 18-20: Residue name
-    char res_name[3] = {'T', 'H', 'R'};  // right
+    char res_name[3+1] = {'T', 'H', 'R', '\0'};  // right
     // 22: chain identifier
     char chain_id = '1';
     // 23-26: Residue sequence number

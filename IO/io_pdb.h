@@ -22,6 +22,10 @@ public:
 
     Atoms beads;
 
+    vector<string> type_to_name = {" H", "HE", "LI", "BE", " B", " C", " N", " O", " F", "NE", "NA", "MG", "AL", "SI", " P", "S", "CL", "AR", " K", "CA", "SC", "TI", "V", "CR", "MN"}; // atom.type -> atom_name
+    vector<string> molTag_to_chainID = {"A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"};
+    vector<string> type_to_resName = {"ALA", "CYS", "ASP", "GLU", "PHE", "GLY", "HIS", "ILE", "LYS", "LEU", "MET", "ASN", "PRO", "GLN", "ARG", "SER", "THR", "VAL", "TRP", "TYR"};
+
     void load(string in_file)
     {
         if(in_file.empty())
@@ -47,28 +51,27 @@ public:
                 // string indexed from 0
                 if( string("ATOM  ").compare( line.substr(0, 6) ) == 0 ||  string("HETATM ").compare( line.substr(0, 6) ) == 0 )
                 {
-                    str_char(line.substr(6, 5), part.atom_serial_N, 5);  // char  : 7-11: atom serial number (not decadic, contains letters)
-                    str_char(line.substr(12, 4), part.atom_name, 4);     // char  : 13-16: atom name
-                    str_char(line.substr(17, 3), part.res_name, 3);      // char  : 18-20: Residue name
-                    part.chain_id = line[21];                            // char  : 22: chain identifier
-                    part.res_seq_N = std::stoi(line.substr(22, 4));      // int   : 23-26: Residue sequence number,
-                    part.code = line[26];                                // char  : 27:code for insertion of residues
-                    part.pos.x = std::stof(line.substr(30, 8));          // float : 31-38
-                    part.pos.y = std::stof(line.substr(38, 8));          // float : 39-46
-                    part.pos.z = std::stof(line.substr(46, 8));          // float : 47-54
-                    part.occupancy = std::stof(line.substr(54, 6));      // float : 55-60: Occupancy
-                    part.temp_factor = std::stof(line.substr(60, 6));    // float : 61-66: Temperature factor
-                    part.seg_id = line.substr(72, 4);                    // char : 73-76: Segment identifier (optional)
-                    part.element = line.substr(76, 2);                   // char : 77-78 Element symbol
-                    part.charge = line.substr(78, 2);                    // char : 79-80 Charge (optional)
+                    // 5 characters starting at pos 6 // terminating character of atom_serial_N at end already initiated
+                    line.copy(part.atom_serial_N, 5, 6);               // char  : 7-11: atom serial number (not decadic, contains letters)
+                    line.copy(part.atom_name, 4, 12);                  // char  : 13-16: atom name
+                    line.copy(part.res_name, 3, 17);                   // char  : 18-20: Residue name
+                    part.chain_id = line[21];                          // char  : 22: chain identifier
+                    part.res_seq_N = std::stoi(line.substr(22, 4));    // int   : 23-26: Residue sequence number,
+                    part.code = line[26];                              // char  : 27:code for insertion of residues
+                    part.pos.x = std::stof(line.substr(30, 8));        // float : 31-38
+                    part.pos.y = std::stof(line.substr(38, 8));        // float : 39-46
+                    part.pos.z = std::stof(line.substr(46, 8));        // float : 47-54
+                    part.occupancy = std::stof(line.substr(54, 6));    // float : 55-60: Occupancy
+                    part.temp_factor = std::stof(line.substr(60, 6));  // float : 61-66: Temperature factor
+                    part.seg_id = line.substr(72, 4);                  // char : 73-76: Segment identifier (optional)
+                    part.element = line.substr(76, 2);                 // char : 77-78 Element symbol
+                    part.charge = line.substr(78, 2);                  // char : 79-80 Charge (optional)
 
                     beads.push_back(part);
                 }
 
                 ss.flush();
                 ss.clear();
-
-
             }
             cerr << "  Added " << beads.size() << " beads" << endl;
         } else {
@@ -78,21 +81,15 @@ public:
         in.close();
     }
 
-    void str_char(string str, char* c_str, int n)
-    {
-        for (int i = 0; i < n; ++i)
-            c_str[i] = str[i];
-    }
-
     void print_atom(Atom& atom)
     {
         cout << "ATOM"                                             // 1-4
              << "  "                                               // 5-6: empty
-             << std::setw(5) << std::right << string_view(atom.atom_serial_N, 5) // 7-11: atom serial number,
+             << std::setw(5) << std::right << atom.atom_serial_N   // 7-11: atom serial number,
              << " "                                                // 12: empty
-             << std::setw(4) << std::left  << string_view(atom.atom_name, 4)       // 13-16: atom name
+             << std::setw(4) << std::left  << atom.atom_name       // 13-16: atom name
              << " "                                                // 17: empty
-             << std::setw(3) << std::right << string_view(atom.res_name, 3)        // 18-20: Residue name
+             << std::setw(3) << std::right << atom.res_name        // 18-20: Residue name
              << " "                                                // 21: empty
              << std::setw(1)               << atom.chain_id        // 22: chain identifier
              << std::setw(4) << std::right << atom.res_seq_N       // 23-26: Residue sequence number
@@ -111,9 +108,23 @@ public:
 
     void print_lammps_atom(Atom& atom, double temp_factor = 1.0)
     {
-        vector<string> type_to_name = {" H", " P", " C", " N", " O", " F", " B", " K"}; // atom.type -> atom_name
-        vector<string> molTag_to_chainID = {"A", "B", "C", "D", "E", "F", "G", "H", "I", "J"};
-        vector<string> type_to_resName = {"ALA", "CYS", "ASP", "GLU", "PHE", "GLY", "HIS", "ILE", "LYS", "LEU", "MET", "ASN", "PRO", "GLN", "ARG", "SER", "THR", "VAL", "TRP", "TYR"};
+        if(atom.type >= type_to_name.size())
+        {
+            cerr << "Type ID:" << atom.type << " >=" << " type_to_name.size():" << type_to_name.size() << endl;
+            exit(-1);
+        }
+
+        if(atom.mol_tag >= molTag_to_chainID.size())
+        {
+            cerr << "Mol_tag ID:" << atom.mol_tag << " >=" << " molTag_to_chainID.size():" << molTag_to_chainID.size() << endl;
+            exit(-1);
+        }
+
+        if(atom.type >= type_to_resName.size())
+        {
+            cerr << "Type ID:" << atom.type << " >=" << " type_to_resName.size():" << type_to_resName.size() << endl;
+            exit(-1);
+        }
 
         cout << "ATOM"                                                          // 1-4                                  Character
              << "  "                                                            // 5-6: empty
@@ -136,6 +147,7 @@ public:
              << std::setw(4) << std::left  << "    "                            // 73-76: Segment identifier (optional) Character
              << std::setw(2) << std::right << type_to_name[atom.type]           // 77-78 Element symbol                 Character
              << std::setw(2)               << "  " << "\n";                     // 79-80 Charge (optional)              Character
+
     }
 
     void print()
