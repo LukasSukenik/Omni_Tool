@@ -633,23 +633,19 @@ public:
     /**
      * @brief center_of_mass - function computes Center-Of-Mass (COM) of particles with a given mol_tag
      * @param mtag - mol_tag of particles for COM calculation, -1 = all particles regardless of mol_tag
+     * @param start_N, stop_N -> include only Atoms with N in defined range: start_N <= N < stop_N
      */
-    Atom center_of_mass(int mtag, int start, int stop) const
+    Atom center_of_mass(int mtag, int start_N, int stop_N) const
     {
         int count=0;
-        int total=0;
         Atom cm;
         for(const Atom& item : (*this))
         { 
-            if( (item.mol_tag == mtag || mtag == -1) && total >= start && (total < stop || stop == -1) )
+            if( (item.mol_tag == mtag || mtag == -1) && start_N <= item.N && (item.N < stop_N || stop_N == -1) )
             {
-
                 cm += item;
                 ++count;
             }
-
-            if(item.mol_tag == mtag || mtag == -1)
-                ++total;
         }
         cm *= 1.0/count;
         return cm;

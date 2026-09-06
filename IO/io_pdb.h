@@ -81,9 +81,10 @@ public:
         in.close();
     }
 
-    void print_atom(Atom& atom)
+    string pdb_string(Atom& atom)
     {
-        cout << "ATOM"                                             // 1-4
+        stringstream ss;
+        ss << "ATOM"                                             // 1-4
              << "  "                                               // 5-6: empty
              << std::setw(5) << std::right << atom.atom_serial_N   // 7-11: atom serial number,
              << " "                                                // 12: empty
@@ -104,9 +105,10 @@ public:
              << std::setw(4) << std::left  << atom.seg_id          // 73-76: Segment identifier (optional)
              << std::setw(2) << std::right << atom.element         // 77-78 Element symbol
              << std::setw(2)               << atom.charge << "\n"; // 79-80 Charge (optional)
+        return ss.str();
     }
 
-    void print_lammps_atom(Atom& atom, double temp_factor = 1.0)
+    string lammps_atom_to_pdb_string(const Atom& atom, double temp_factor = 1.0)
     {
         if(atom.type >= type_to_name.size())
         {
@@ -126,7 +128,8 @@ public:
             exit(-1);
         }
 
-        cout << "ATOM"                                                          // 1-4                                  Character
+        stringstream ss;
+        ss << "ATOM"                                                          // 1-4                                  Character
              << "  "                                                            // 5-6: empty
              << std::setw(5) << std::right << encode_hybrid36(atom.N)           // 7-11: atom serial number,            Integer -> hybrid36 format
              << " "                                                             // 12: empty
@@ -147,14 +150,14 @@ public:
              << std::setw(4) << std::left  << "    "                            // 73-76: Segment identifier (optional) Character
              << std::setw(2) << std::right << type_to_name[atom.type]           // 77-78 Element symbol                 Character
              << std::setw(2)               << "  " << "\n";                     // 79-80 Charge (optional)              Character
-
+        return ss.str();
     }
 
     void print()
     {
         for (Atom& atom : beads)
         {
-            print_atom(atom); // assume we loaded pdb had hybrid36 serial N -> stored as string
+            cout << pdb_string(atom); // assume we loaded pdb had hybrid36 serial N -> stored as string
         }
     }
 
@@ -198,12 +201,21 @@ public:
         exit(-1);
     }
 
+    void print_to_file(string filename)
+    {
+        std::ofstream file(filename);
+        for (Atom& atom : beads)
+        {
+            file << lammps_atom_to_pdb_string(atom);
+        }
+    }
+
     void print_lammps_data(Atoms& all_beads, double temp_factor = 1.0)
     {
 
         for (Atom& atom : all_beads)
         {
-            print_lammps_atom(atom, temp_factor);
+            cout << lammps_atom_to_pdb_string(atom, temp_factor);
         }
     }
 };
