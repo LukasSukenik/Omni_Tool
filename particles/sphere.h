@@ -63,6 +63,7 @@ public:
         }
 
         sphere.scale(data.in.p_float["Radius"]);
+        sphere.move(data.in.p_tensor["Position"]);
         beads.insert(beads.begin(), sphere.begin(), sphere.end());
     }
 
