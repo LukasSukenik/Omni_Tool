@@ -206,6 +206,7 @@ private:
     {
         data.in.param.validate_keyword("Load_file", "data.start");
         data.in.param.validate_keyword("Trajectory_file", "traj_1.xtc");
+        data.in.p_int.validate_keyword("Trajectory_frame", "5");
     }
 
     void traj_to_file(Data& data)
@@ -215,7 +216,7 @@ private:
 
         Trajectory traj(data);
         Atoms& topo = data.coll_beads[  data.id_map[ data.in.p_int["ID"] ]  ];
-        topo.set_frame(traj[0]);
+        topo.set_frame(traj[ data.in.p_int["Trajectory_frame"] ]);
     }
 
     ///
