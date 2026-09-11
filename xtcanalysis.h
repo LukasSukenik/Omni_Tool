@@ -94,25 +94,26 @@ public:
     {
         string_to_char(inName); // inName -> fileName
         status = read_xtc_natoms(fileName, &natoms);
+        //cerr << "Trajectory::load status - " << status << endl;
 
         if (status == exdrOK)
         {
             XDRFILE* xfp = xdrfile_open(fileName, "r");
             if (xfp != NULL)
             {
-                rvec conf[natoms];
+                vector<rvec> conf(natoms);
                 int frame_count = 0; // for start, stop, modulo
                 while(status == exdrOK && (frame_count<1000*1000) ) // Load frame
                 {
-                    status = read_xtc(xfp, natoms, &step, &time, temp_box, conf, &prec);
+                    status = read_xtc(xfp, natoms, &step, &time, temp_box, conf.data(), &prec);
 
                     if(only_last)
                     {
-                        save_last(conf);
+                        save_last(conf.data());
                     }
                     else
                     {
-                        save(conf); // step, time, temp_box are global
+                        save(conf.data()); // step, time, temp_box are global
                     }
                     ++frame_count;
                 }

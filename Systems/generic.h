@@ -211,7 +211,6 @@ private:
 
     void traj_to_file(Data& data)
     {
-        cerr << "Generic::traj_to_file" << endl;
         validate_traj_to_file_inputs(data);
 
         Trajectory traj(data);

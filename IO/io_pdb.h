@@ -197,7 +197,7 @@ public:
             // ATOM  a0000 - ... - ATOM  zzzzz
             ;
         }
-        cerr << "IO_PDB::encode_hybrid36 too many particles" << endl;
+        cerr << "IO_PDB::encode_hybrid36 too many particles, num of particles: " << N << endl;
         exit(-1);
     }
 
