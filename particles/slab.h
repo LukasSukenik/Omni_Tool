@@ -119,13 +119,16 @@ public:
                     pos_int = {i, j, k};
                     slab.push_back(Atom(N, Tensor_xyz(i, j, k), get_atom_type(data, pos_int, size), m_tag));
                     ++N;
+
+                    //
+                    // Add transmembrane anchor
+                    //
                     if(data.in.param["Type"].compare("lipid") == 0 && slab.back().type == data.in.p_vec_int["Atom_type"][2])
                     {
                         make_lipid(data, lipid, N, slab.back());
                         slab.insert(slab.end(), lipid.begin(), lipid.end());
                         lipid.clear();
                     }
-
                 }
             }
         }
@@ -189,6 +192,8 @@ public:
                     {
                         return data.in.p_vec_int["Atom_type"][2];
                     }
+                    if(p[1]==0 || p[0]==0 || p[0]==size[0]-1 || p[1]==size[1]-1)
+                        return data.in.p_vec_int["Atom_type"][1];
                 }
             }
             if(data.in.p_vec_int["Atom_type"].size() == 5) // edge type, each edge different atom type
