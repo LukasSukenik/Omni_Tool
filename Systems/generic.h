@@ -20,7 +20,7 @@ public:
         stringstream ss;
 
         //ss << help_fix_gcmc_xtc() << endl;
-        ss << help_traj_to_file() << endl;
+        ss << help_load_traj() << endl;
         ss << help_file_to_traj() << endl;
 
         return ss.str();
@@ -32,7 +32,7 @@ public:
 
         // Fixing a gcmc xtc is not possible, xtc format cannot be written with variable per frame natoms
         //if(data.in.param["System_execute"].compare("Fix_GCMC_xtc") == 0) { fix_gcmc_xtc(data); }
-        if(data.in.param["System_execute"].compare("Traj_to_file") == 0) { traj_to_file(data); }
+        if(data.in.param["System_execute"].compare("Load_traj") == 0) { load_traj(data); }
         if(data.in.param["System_execute"].compare("Coarse_grain") == 0) { coarse_grain(data); }
     }
 
@@ -183,35 +183,34 @@ private:
     }
 
 
-    ///
-    /// Traj last frame of trajectory to standard output (file)
-    ///
-    string help_traj_to_file()
+
+
+    string help_load_traj()
     {
         stringstream ss;
 
         ss << "System_type: Generic" << endl;
-        ss << "System_execute: Traj_to_file" << endl;
+        ss << "System_execute: Load_traj" << endl;
         ss << "Input_type: lammps_full" << endl;
         ss << "Load_file: data.start" << endl;
         ss << "Trajectory_file: traj_1.xtc" << endl;
-        ss << "Only_last_frame:" << endl;
+        ss << "Trajectory_frame: 5" << endl;
         ss << "Output_type: pdb" << endl;
         ss << "ID: 1" << endl;
 
         return ss.str();
     }
 
-    void validate_traj_to_file_inputs( Data& data )
+    void validate_load_traj_inputs( Data& data )
     {
         data.in.param.validate_keyword("Load_file", "data.start");
         data.in.param.validate_keyword("Trajectory_file", "traj_1.xtc");
         data.in.p_int.validate_keyword("Trajectory_frame", "5");
     }
 
-    void traj_to_file(Data& data)
+    void load_traj(Data& data)
     {
-        validate_traj_to_file_inputs(data);
+        validate_load_traj_inputs(data);
 
         Trajectory traj(data);
         Atoms& topo = data.coll_beads[  data.id_map[ data.in.p_int["ID"] ]  ];

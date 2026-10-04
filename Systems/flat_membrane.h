@@ -294,6 +294,7 @@ public:
         if(data.in.param["System_execute"].compare("Copy_Z") == 0)           { copy_Z(data); }
         if(data.in.param["System_execute"].compare("Cluster_Analysis") == 0) { cluster_analysis.execute(data); }
         if(data.in.param["System_execute"].compare("Calc_Pore") == 0)        { detect_pore.execute(data); }
+        if(data.in.param["System_execute"].compare("Convert_Blender") == 0)        { convert_blender(data); }
     }
 
 
@@ -311,6 +312,36 @@ public:
 private:
     Cluster_Analysis cluster_analysis;
     Detect_Pore detect_pore;
+
+    void convert_blender( Data& data )
+    {
+        cerr << "Flat_Membrane::convert_blender" << endl;
+        Atoms& topo = data.coll_beads[  data.id_map[ data.in.p_int["ID"] ]  ];
+
+        cerr << topo.size() << endl;
+
+        IO_PDB head_pos;
+        IO_PDB normal;
+
+        head_pos.beads = topo.get_type(1);
+        normal.beads  = topo.get_type(3);
+
+        Atom vec;
+
+        for(size_t i=0; i<normal.beads.size(); ++i)
+        {
+            vec = normal.beads[i] - head_pos.beads[i];
+            vec.normalise();
+            normal.beads[i] = vec;
+        }
+
+        head_pos.print_to_file("mem_head_pos.pdb");
+
+        normal.beads.set_mol_tag(1);
+        normal.print_to_file("mem_normal.pdb");
+
+        topo.clear();
+    }
 
     ///
     ///

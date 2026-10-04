@@ -112,19 +112,19 @@ public:
     {
         if(atom.type >= type_to_name.size())
         {
-            cerr << "Type ID:" << atom.type << " >=" << " type_to_name.size():" << type_to_name.size() << endl;
+            cerr << "Type:" << atom.type << " >=" << " type_to_name.size():" << type_to_name.size() << endl;
             exit(-1);
         }
 
         if(atom.mol_tag >= molTag_to_chainID.size())
         {
-            cerr << "Mol_tag ID:" << atom.mol_tag << " >=" << " molTag_to_chainID.size():" << molTag_to_chainID.size() << endl;
+            cerr << "Mol_tag:" << atom.mol_tag << " >=" << " molTag_to_chainID.size():" << molTag_to_chainID.size() << endl;
             exit(-1);
         }
 
         if(atom.type >= type_to_resName.size())
         {
-            cerr << "Type ID:" << atom.type << " >=" << " type_to_resName.size():" << type_to_resName.size() << endl;
+            cerr << "Type:" << atom.type << " >=" << " type_to_resName.size():" << type_to_resName.size() << endl;
             exit(-1);
         }
 
@@ -161,7 +161,7 @@ public:
         }
     }
 
-    inline string encode_base36(int N, string& digits)
+    inline string encode_base36(int N, string& digits, string& digits_5)
     {
         string number="A0000";
         for(int i=4; i>0; --i)
@@ -169,13 +169,15 @@ public:
             number[i] = digits[N%36];
             N /= 36;
         }
+        number[0] = digits_5[N];
+
         return number;
     }
 
     inline string encode_hybrid36(int N)
     {
-
         string digits_upper="0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        string digits_upper_5="ABCDEFGHIJKLMNOPQRSTUVWXYZ";
         string digits_lower="0123456789abcdefghijklmnopqrstuvwxyz";
 
         if(N < 100*1000)
@@ -183,22 +185,18 @@ public:
             // ATOM      1 - ... - ATOM  99999
             return to_string(N);
         }
-        if(N < 99999 + 1679616) // 36^4 = 1 679 616
-        {
-            return encode_base36(N - 100*1000, digits_upper);
-        }
-        if(N < 43770015) // 99 999+43 670 016 = 99999 + 26*36^4
+        if(N < 43770015) // "A0000" -> 36^4 = 1 679 616, // 99 999+43 670 016 = 99999 + 26*36^4
         {
             // ATOM  A0000 - ATOM  A0001 - ... - ATOM  A0009 - ATOM  A000A - ... - ATOM  A000Z - ... - ATOM  ZZZZZ
-            ;
+            return encode_base36(N - 100*1000, digits_upper, digits_upper_5);
         }
-        if(N < 87440031 )
+        /*if(N < 87440031 )
         {
             // ATOM  a0000 - ... - ATOM  zzzzz
             ;
         }
-        cerr << "IO_PDB::encode_hybrid36 too many particles, num of particles: " << N << endl;
-        exit(-1);
+        cerr << "IO_PDB::encode_hybrid36 too many particles, num of particles: " << N << endl;*/
+        return "";
     }
 
     void print_to_file(string filename)
