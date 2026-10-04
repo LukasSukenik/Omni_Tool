@@ -156,13 +156,27 @@ public:
     void make_lipid(Data& data, Atoms& lipid, int& N, Atom last)
     {
         int hydro_beads_N=data.in.p_int["Lipid_hydrophobic_length"];
+
         lipid.push_back( Atom(N, Tensor_xyz(last.pos.x, last.pos.y, last.pos.z-1), data.in.p_vec_int["Atom_type"][2], data.in.p_int["Mol_tag"]) );
+        N++;
+
         for(int i=0; i<hydro_beads_N; ++i)
         {
-            lipid.push_back( Atom(N+1+i, Tensor_xyz(last.pos.x, last.pos.y, last.pos.z-(2+i)), data.in.p_vec_int["Atom_type"][3], data.in.p_int["Mol_tag"]) );
+            lipid.push_back( Atom(N+i, Tensor_xyz(last.pos.x, last.pos.y, last.pos.z-(2+i)), data.in.p_vec_int["Atom_type"][3], data.in.p_int["Mol_tag"]) );
         }
-        lipid.push_back( Atom(N+1+hydro_beads_N, Tensor_xyz(last.pos.x, last.pos.y, last.pos.z-(hydro_beads_N+2)), data.in.p_vec_int["Atom_type"][2], data.in.p_int["Mol_tag"]) );
-        N+=(hydro_beads_N+2);
+        N+=hydro_beads_N;
+
+        lipid.push_back( Atom(N, Tensor_xyz(last.pos.x, last.pos.y, last.pos.z-(hydro_beads_N+2) ), data.in.p_vec_int["Atom_type"][2], data.in.p_int["Mol_tag"]) );
+        N++;
+
+        for(int i=-1; i<=1; ++i)
+        {
+            for(int j=-1; j<=1; ++j)
+            {
+                lipid.push_back( Atom(N, Tensor_xyz(last.pos.x+i, last.pos.y+j, last.pos.z-(hydro_beads_N+3) ), data.in.p_vec_int["Atom_type"][2], data.in.p_int["Mol_tag"]) );
+                N++;
+            }
+        }
     }
 
     int get_atom_type(Data& data, vector<int>& p, vector<int>& size)
