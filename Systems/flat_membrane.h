@@ -119,8 +119,10 @@ public:
             traj.load(data.in.param["Trajectory_file"]);
         }
 
-
-
+        if(data.in.p_float.contains("Bead_size"))
+        {
+            data.in.bead_size = data.in.p_float["Bead_size"];
+        }
         cerr << "- cell size = " << data.in.p_float["Cell_size"] << endl;
         cerr << "- bead size = " << data.in.bead_size << endl;
 
@@ -130,7 +132,18 @@ public:
         if(!data.in.param.contains("Trajectory_file"))
         {
             fill_lattice(data, topo, box);
-            cout << is_pore() << endl; // true == 1
+            if(data.in.p_bool.contains("Verbose"))
+            {
+                debug();
+                if(is_pore())
+                    cout << "is_Pore :: true" << endl;
+                else
+                    cout << "is_Pore :: false" << endl;
+            }
+            else
+            {
+                cout << is_pore() << endl; // true == 1
+            }
         }
         else
         {
@@ -230,9 +243,9 @@ public:
         return false;
     }
 
-    void debug(int i)
+    void debug(int i=0, int frame=0)
     {
-        if(true || i==1107) // debug
+        if(i==frame) // debug
         {
             for(int j=0; j<number_of_cells; ++j)
             {
