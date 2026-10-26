@@ -61,7 +61,7 @@ public:
     Param_Dictionary<vector<int>> p_vec_int = Param_Dictionary<vector<int>>(type_vec + settings);
 
     Param_Dictionary<vector<double>> p_vec_float = Param_Dictionary<vector<double>>({"Atom_mass:"});
-    Param_Dictionary<vector<string>> p_vec_string = Param_Dictionary<vector<string>>({"Leaflet_type:"});
+    Param_Dictionary<vector<string>> p_vec_string = Param_Dictionary<vector<string>>({"Leaflet_type:", "Load_files:"});
 
     IO out; /// Output type - none, pdb, lammps_full, xyz
     IO in;  /// Input type  - none, pdb, lammps_full

@@ -34,9 +34,102 @@ public:
         //if(data.in.param["System_execute"].compare("Fix_GCMC_xtc") == 0) { fix_gcmc_xtc(data); }
         if(data.in.param["System_execute"].compare("Load_traj") == 0) { load_traj(data); }
         if(data.in.param["System_execute"].compare("Coarse_grain") == 0) { coarse_grain(data); }
+        if(data.in.param["System_execute"].compare("Get_boundaries") == 0) { get_boundaries(data); }
     }
 
 private:
+
+    string help_get_boundaries()
+    {
+
+    }
+
+    void validate_get_boundaries_inputs( Data& data )
+    {
+        if(data.in.p_vec_int["Atom_type"].empty())
+        {
+            cerr << "Atom_type empty" << endl;
+            cerr << "add Atom_type: integer_1 interger_2 ... to input script, for example Atom_type: 2 3" << endl;
+            exit(-1);
+        }
+    }
+
+    void get_boundaries(Data& data)
+    {
+        cerr << "Generic::get_boundaries" << endl;
+
+        Atoms& topo = data.coll_beads[   data.id_map[ data.in.p_int["ID"] ]   ];
+        Atoms min20, max20;
+        min20.reserve(20);
+        max20.reserve(20);
+
+        for(Atom& a : topo)
+        {
+            if(a.type == data.in.p_vec_int["Atom_type"][0])
+            {
+                if(min20.size() < 20) { min20.push_back(a); }
+                else
+                    replace_max_w_min(min20, a);
+
+                if(max20.size() < 20) { max20.push_back(a); }
+                else
+                    replace_min_w_max(max20, a);
+            }
+        }
+
+        cout << average_z(min20) << " " << average_z(max20) << endl;
+    }
+
+    void replace_max_w_min(Atoms& o, Atom a)
+    {
+        double min=999.9;
+        int index=-1;
+
+        for(int i=0; i<o.size(); ++i)
+        {
+            if(min > o[i].pos.z && o[i].pos.z > a.pos.z)
+            {
+                min = o[i].pos.z;
+                index = i;
+            }
+        }
+
+        if(index != -1)
+        {
+            o[index].pos.z = a.pos.z;
+        }
+    }
+
+    void replace_min_w_max(Atoms& o, Atom a)
+    {
+        double max=-999.9;
+        int index=-1;
+
+        for(int i=0; i<o.size(); ++i)
+        {
+            if(max < o[i].pos.z && o[i].pos.z < a.pos.z)
+            {
+                max = o[i].pos.z;
+                index = i;
+            }
+        }
+
+        if(index != -1)
+        {
+            o[index].pos.z = a.pos.z;
+        }
+    }
+
+    double average_z(Atoms& o)
+    {
+        double sum_z = 0.0;
+        for(Atom& a : o)
+        {
+            sum_z += a.pos.z;
+        }
+        return sum_z;
+    }
+
     ///
     ///
     ///
