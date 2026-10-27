@@ -102,6 +102,17 @@ public:
             pdb.beads.clear();
         }
 
+        if(in.in.type == IO_Type::xyz)
+        {
+            xyz.load(in_file);
+
+            coll_beads.push_back(xyz.beads);
+            coll_bonds.push_back(Bonds());
+            coll_angles.push_back(Angles());
+
+            xyz.beads.clear();
+        }
+
         id_map[ in.p_int["ID"] ] = coll_beads.size()-1;
 
         if(coll_beads.empty())

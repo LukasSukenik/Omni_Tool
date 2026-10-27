@@ -262,6 +262,42 @@ public:
 
     Atoms beads;
 
+    void load(string in_file)
+    {
+        if(in_file.empty())
+        {
+            return;
+        }
+
+        int i=0;
+        int size=0;
+        std::fstream in;
+        std::stringstream ss;
+
+        in.open(in_file, std::fstream::in);
+
+        if(in.is_open())
+        {
+            in >> size; // number of atoms
+            beads.resize(size);
+
+            in >> std::ws;
+            in.ignore(numeric_limits<streamsize>::max(), '\n'); // comment line throw away
+
+            while(in.good())
+            {
+                in >> beads[i].type >> beads[i].pos.x >> beads[i].pos.y >> beads[i].pos.z;
+                //cerr << beads.size() << " " << i << " " << beads[i].type << " " << beads[i].pos.x << " " << beads[i].pos.y << " " << beads[i].pos.z << endl;
+                ++i;
+            }
+            cerr << "  Added " << beads.size() << " beads" << endl;
+        } else {
+            cerr << "File " << in_file << " file not opened" << endl;
+        }
+
+        in.close();
+    }
+
     void print(char type='C')
     {
         cout << beads.size() << "\nparticle\n";

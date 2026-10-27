@@ -127,7 +127,7 @@ private:
         {
             sum_z += a.pos.z;
         }
-        return sum_z;
+        return sum_z / o.size();
     }
 
     ///
