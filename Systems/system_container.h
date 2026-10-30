@@ -11,6 +11,7 @@
 #include "flat_membrane.h"
 #include "generic.h"
 #include "capsid317.h"
+#include "phage_mem_closure.h"
 
 using namespace std;
 
@@ -32,6 +33,7 @@ public:
         (*this)[Flat_Membrane::keyword] = new Flat_Membrane();
         (*this)[Generic::keyword] = new Generic();
         (*this)[Capsid317::keyword] = new Capsid317();
+        (*this)[Phage_Mem_Closure::keyword] = new Phage_Mem_Closure();
         //(*this)[Icosahedron<Surface>::keyword] = new Icosahedron<Surface>();
     }
 

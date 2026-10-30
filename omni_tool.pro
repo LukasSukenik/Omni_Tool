@@ -17,6 +17,7 @@ SOURCES += main.cpp \
 HEADERS += \
     Systems/capsid317.h \
     Systems/generic.h \
+    Systems/phage_mem_closure.h \
     angle.h \
     atom.h \
     bond.h \

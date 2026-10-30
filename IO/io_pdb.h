@@ -122,12 +122,6 @@ public:
             exit(-1);
         }
 
-        if(atom.type >= type_to_resName.size())
-        {
-            cerr << "Type:" << atom.type << " >=" << " type_to_resName.size():" << type_to_resName.size() << endl;
-            exit(-1);
-        }
-
         stringstream ss;
         ss << "ATOM"                                                          // 1-4                                  Character
              << "  "                                                            // 5-6: empty
@@ -135,7 +129,7 @@ public:
              << " "                                                             // 12: empty
              << std::setw(4) << std::left  << type_to_name[atom.type]           // 13-16: atom name                     Character
              << " "                                                             // 17: empty
-             << std::setw(3) << std::right << type_to_resName[atom.type]        // 18-20: Residue name                  Character
+             << std::setw(3) << std::right << type_to_resName[atom.type % type_to_resName.size()]        // 18-20: Residue name                  Character
              << " "                                                             // 21: empty
              << std::setw(1)               << molTag_to_chainID[atom.mol_tag]   // 22: chain identifier                 Character
              << std::setw(4) << std::right << atom.type                         // 23-26: Residue sequence number       Integer

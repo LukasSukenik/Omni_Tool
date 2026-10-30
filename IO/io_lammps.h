@@ -81,7 +81,7 @@ public:
         cerr << "Parsing bonds parameters" << endl;
         loadBonds(in_file);
 
-        cerr << "Sorting partisles by N" << endl;
+        cerr << "Sorting particles by N" << endl;
         std::sort(beads.begin(), beads.end(), sortN);
 
         loadAngles(in_file);
