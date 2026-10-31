@@ -8,6 +8,7 @@
 #include <string>
 
 #include "atom.h"
+#include "bond.h"
 
 using namespace std;
 
@@ -202,13 +203,25 @@ public:
         }
     }
 
-    void print_lammps_data(Atoms& all_beads, double temp_factor = 1.0)
+    void print_lammps_data(Atoms& all_beads, Bonds& all_bonds, double temp_factor = 1.0)
     {
-
         for (Atom& atom : all_beads)
         {
             cout << lammps_atom_to_pdb_string(atom, temp_factor);
         }
+
+        for (Bond& bond : all_bonds)
+        {
+            cout << "CONECT"
+                 << std::setw(5) << std::right << encode_hybrid36(bond.at1)
+                 << std::setw(5) << std::right << encode_hybrid36(bond.at2)
+                 << "\n";
+            cout << "CONECT"
+                 << std::setw(5) << std::right << encode_hybrid36(bond.at2)
+                 << std::setw(5) << std::right << encode_hybrid36(bond.at1)
+                 << "\n";
+        }
+        cout << "END" << endl;
     }
 };
 

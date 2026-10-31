@@ -223,11 +223,11 @@ public:
             {
                 if(in.p_float.contains("custom_bfactor"))
                 {
-                    pdb.print_lammps_data(all_beads, in.p_float["custom_bfactor"]);
+                    pdb.print_lammps_data(all_beads, all_bonds, in.p_float["custom_bfactor"]);
                 }
                 else
                 {
-                    pdb.print_lammps_data(all_beads);
+                    pdb.print_lammps_data(all_beads, all_bonds);
                 }
             }
             else
