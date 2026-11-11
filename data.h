@@ -117,7 +117,7 @@ public:
 
         if(coll_beads.empty())
         {
-            cerr << "Data::load_data coll_beads is empty, nothing was loded" << endl;
+            cerr << "Data::load_data coll_beads is empty, nothing was loaded" << endl;
             exit(1);
         }
     }

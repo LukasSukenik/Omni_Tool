@@ -3,6 +3,235 @@
 
 #include "system_base.h"
 #include "xtcanalysis.h"
+#include "dsu.h"
+
+#include <set>
+
+
+
+
+class Make_Molecules_Whole : public System_Method
+{
+public:
+    double h_b_x;
+    double h_b_y;
+    double h_b_z;
+    Simulation_Box box;
+    unordered_map<int, int> map_N; // [N] = index
+
+    Make_Molecules_Whole() : System_Method() {}
+
+    string help()
+    {
+        stringstream ss;
+
+        ss << "*********************************************************" << endl;
+        ss << "System_type: Generic" << endl;
+        ss << "System_execute: Make_mol_whole" << endl;
+        ss << "Input_type: lammps_full" << endl;
+        ss << "Load_file: data.start" << endl;
+        ss << "ID: 1" << endl;
+
+        return ss.str();
+    }
+
+    void validate(Data& data)
+    {
+        data.in.param.validate_keyword("Input_type", "lammps_full");
+        data.in.param.validate_keyword("Load_file", "data.start");
+    }
+
+    void execute(Data& data)
+    {
+        cerr << "Generic::make_molecules_whole" << endl;
+
+        Atoms& topo = data.coll_beads[   data.id_map[ data.in.p_int["ID"] ]   ];
+        Bonds& t_bo = data.coll_bonds[   data.id_map[ data.in.p_int["ID"] ]   ];
+        box = data.in.sim_box;
+        h_b_x = 0.5*(box.xhi - box.xlo);
+        h_b_y = 0.5*(box.yhi - box.ylo);
+        h_b_z = 0.5*(box.zhi - box.zlo);
+
+        DSU dsu;
+        unordered_map<int, set<int>> map_Bond; // bond [at1] = [at2], [at2 of second bond] && at1 < at2, ...
+
+        for(Atom& a : topo) { box.set_central_image(a.pos); }
+        map_N = topo.get_N_to_index_map();
+
+        for(Bond& b : t_bo)
+        {
+            dsu.unite(b.at1, b.at2);
+            map_Bond[ b.at1 ].insert( b.at2 );
+            map_Bond[ b.at2 ].insert( b.at1 ); // every atom needs a list of all bonds
+        }
+
+        //for (const auto& [at1, at2_list] : map_Bond)
+        for (const auto& [rN, molecule] : dsu.groups())
+        {
+            if(molecule.size() < 10)
+            {
+                for (int aN : molecule)
+                {
+                    make_whole(topo, rN, aN);
+                }
+            }
+            else
+            {
+                dfs(topo, molecule, map_Bond);
+            }
+        }
+
+        if(!is_molecules_whole(data))
+        {
+            cerr << "is_molecules_whole() failed" << endl;
+            exit(-11);
+        }
+    }
+
+    void make_rigid_whole()
+    {
+        /*cerr << "Generic::make_rigid_molecules_whole" << endl;
+        cerr << "Asuming phage system, with cell wall types 8 9" << endl;
+        cerr << "Works by assuming neighbors in incremental index" << endl;
+
+        //Tensor_xyz pbc, pbc_inv;
+        //pbc.x = box.xhi - box.xlo;
+        //pbc.x = box.yhi - box.ylo;
+        //pbc.x = box.zhi - box.zlo;
+
+        //pbc_inv.x = 1.0 / pbc.x;
+        //pbc_inv.y = 1.0 / pbc.y;
+        //pbc_inv.z = 1.0 / pbc.z;
+        //a.distSQ_pbc(a, pbc, pbc_inv);
+
+        //Info) index: 45657
+        //Info) x: 8.306784
+        //Info) y: 15.927391
+        //Info) z: 20.920244
+        size_t origin = 45657; // topo index, N=45658 -> should be the same for all
+
+        size_t curr = origin;
+        for(size_t i=origin-1; i>=0; ++i)
+        {
+            if(topo[i].type == 8 || topo[i].type == 9)
+            {
+                make_whole(topo, topo[curr].N, topo[i].N);
+                curr = i;
+            }
+        }
+
+        curr = origin;
+        for(size_t i=origin+1; i<topo.size(); ++i)
+        {
+            if(topo[i].type == 8 || topo[i].type == 9)
+            {
+                make_whole(topo, topo[curr].N, topo[i].N);
+                curr = i;
+            }
+        }*/
+    }
+
+    void make_whole(Atoms& topo, int rN, int aN)
+    {
+        int i;
+        int j;
+        Tensor_xyz dir;
+        Tensor_xyz fix;
+        Tensor_xyz o;
+
+        if(rN != aN)
+        {
+            i = map_N[ rN ];
+            j = map_N[ aN ];
+
+            o = topo[j].pos;
+
+            dir = topo[i].pos - topo[j].pos;
+            fix.x = (abs(dir.x) > h_b_x) ? box.xhi-box.xlo : 0.0;
+            fix.y = (abs(dir.y) > h_b_y) ? box.yhi-box.ylo : 0.0;
+            fix.z = (abs(dir.z) > h_b_z) ? box.zhi-box.zlo : 0.0;
+
+            //  dir > 0.0 ? (+i;-j) : (+i;+j)    dir < 0.0 ? (-i;+j) : (-i;-j)
+            topo[j].pos.x += (dir.x > 0.0) ? fix.x : -fix.x;
+            topo[j].pos.y += (dir.y > 0.0) ? fix.y : -fix.y;
+            topo[j].pos.z += (dir.z > 0.0) ? fix.z : -fix.z;
+
+            dir = topo[i].pos - topo[j].pos;
+            if(abs(dir.x) > h_b_x || abs(dir.y) > h_b_y || abs(dir.z) > h_b_z)
+            {
+                cerr << topo[i].pos << endl;
+                cerr << o << endl;
+                cerr << "->" << endl;
+                cerr << topo[j].pos << endl;
+                exit(1);
+            }
+        }
+    }
+
+    ///
+    /// Depth First graph algo
+    ///
+    void dfs(Atoms& topo,
+             const set<int>& molecule,
+             unordered_map<int, set<int>>& map_Bond)
+    {
+        if(molecule.empty())
+            return;
+
+        unordered_set<int> seen;
+        vector<int> stack;
+
+        int curr = *molecule.begin();
+        stack.push_back(curr);
+
+        while(!stack.empty())
+        {
+            curr = stack.back();
+            stack.pop_back();
+
+            if(seen.contains(curr))
+                continue;      // already visited, skip
+            seen.insert(curr);
+
+            if(map_Bond.contains(curr)) // true if to found
+            {
+                for(int next : map_Bond[curr] ) // loop over set<int>>&
+                {
+                    if(!seen.contains(next))
+                    {
+                        make_whole(topo, curr, next);
+                        stack.push_back(next);
+                    }
+                }
+            }
+        }
+        if(molecule.size() != seen.size())
+        {
+            cerr << "Molecules size: " << molecule.size() << ", seen: " << seen.size() << endl;
+            exit(-1);
+        }
+    }
+
+    bool is_molecules_whole(Data& data)
+    {
+        Atoms& topo = data.coll_beads[   data.id_map[ data.in.p_int["ID"] ]   ];
+        Bonds& t_bo = data.coll_bonds[   data.id_map[ data.in.p_int["ID"] ]   ];
+        int i,j;
+
+        for(Bond& b : t_bo)
+        {
+            i = map_N[b.at1];
+            j = map_N[b.at2];
+
+            if(topo[i].dist(topo[j]) > h_b_x)
+            {
+                cerr << "Bond huge " << b.at1 << " : " << b.at2 << " = " << topo[i].dist(topo[j]) << endl;
+                return false;
+            }
+        }
+        return true;
+    }
+};
 
 
 
@@ -35,9 +264,11 @@ public:
         if(data.in.param["System_execute"].compare("Load_traj") == 0) { load_traj(data); }
         if(data.in.param["System_execute"].compare("Coarse_grain") == 0) { coarse_grain(data); }
         if(data.in.param["System_execute"].compare("Get_boundaries") == 0) { get_boundaries(data); }
+        if(data.in.param["System_execute"].compare("Make_mol_whole") == 0) { m_M_W.execute(data); }
     }
 
 private:
+    Make_Molecules_Whole m_M_W;
 
     string help_get_boundaries()
     {

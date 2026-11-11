@@ -24,6 +24,7 @@ HEADERS += \
     cell_list.h \
     cluster_analysis.h \
     data.h \
+    dsu.h \
     force_field.h \
     histogram.h \
     rdf.h \

@@ -57,6 +57,32 @@ public:
         return true;
     }
 
+    void set_central_image(Tensor_xyz& pos)
+    {
+        double xx = xhi-xlo;
+        double yy = yhi-ylo;
+        double zz = zhi-zlo;
+
+        while (pos.x < xlo) {
+            pos.x += xx;
+        }
+        while (pos.x > xhi) {
+            pos.x -= xx;
+        }
+        while (pos.y < ylo) {
+            pos.y += yy;
+        }
+        while (pos.y > yhi) {
+            pos.y -= yy;
+        }
+        while (pos.z < zlo) {
+            pos.z += zz;
+        }
+        while (pos.z > zhi) {
+            pos.z -= zz;
+        }
+    }
+
     Atom usePBC(Tensor_xyz& pos_orig, double scale) const // used by dodecahedron only, dont touch
     {
         Tensor_xyz pos = pos_orig;

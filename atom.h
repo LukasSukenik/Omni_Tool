@@ -348,6 +348,16 @@ public:
     //
     // Getters
     //
+    unordered_map<int, int> get_N_to_index_map() const
+    {
+        unordered_map<int, int> map_N;
+        for(size_t topo_i=0; topo_i<size(); ++topo_i)
+        {
+            map_N[ (*this)[topo_i].N ] = topo_i;
+        }
+        return map_N;
+    }
+
     vector<int> get_Atom_Types() const
     {
         vector<int> atom_types;
