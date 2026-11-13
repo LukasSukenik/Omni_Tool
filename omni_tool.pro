@@ -27,6 +27,7 @@ HEADERS += \
     dsu.h \
     force_field.h \
     histogram.h \
+    particles/ssrna.h \
     rdf.h \
     rng.h \
     sim_box.h \

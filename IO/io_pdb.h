@@ -20,6 +20,9 @@ class IO_PDB
 {
 public:
     IO_PDB(){}
+    IO_PDB(string fname) : filename(fname) {}
+
+    string filename = "";
 
     Atoms beads;
 
@@ -194,9 +197,18 @@ public:
         return "";
     }
 
-    void print_to_file(string filename)
+    void print_to_file()
     {
         std::ofstream file(filename);
+        for (Atom& atom : beads)
+        {
+            file << lammps_atom_to_pdb_string(atom);
+        }
+    }
+
+    void print_to_file(string fname)
+    {
+        std::ofstream file(fname);
         for (Atom& atom : beads)
         {
             file << lammps_atom_to_pdb_string(atom);
